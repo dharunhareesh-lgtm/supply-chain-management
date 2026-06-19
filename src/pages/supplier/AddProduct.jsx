@@ -10,7 +10,8 @@ function AddProduct() {
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  
+  const [category, setCategory] = useState("");
+const [imageUrl, setImageUrl] = useState("");
 
   const handleSubmit = async (e) => {
     const supplierId =
@@ -22,7 +23,9 @@ localStorage.getItem("supplierId");
       productName,
       price,
       stock,
-      supplierId: Number(supplierId)
+      supplierId: Number(supplierId),
+        category,
+  imageUrl
     };
 
     try {
@@ -96,6 +99,24 @@ localStorage.getItem("supplierId");
                 setStock(e.target.value)
               }
             />
+
+            <input
+  type="text"
+  placeholder="Category"
+  value={category}
+  onChange={(e) =>
+    setCategory(e.target.value)
+  }
+/>
+
+<input
+  type="text"
+  placeholder="Image URL"
+  value={imageUrl}
+  onChange={(e) =>
+    setImageUrl(e.target.value)
+  }
+/>
 
             
 

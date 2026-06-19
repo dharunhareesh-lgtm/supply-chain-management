@@ -8,6 +8,9 @@ function LogisticsSidebar() {
       <Link to="/logistics">Dashboard</Link>
       <Link to="/logistics/deliveries">Deliveries</Link>
       <Link to="/logistics/tracking">Tracking</Link>
+      <Link to="/logistics/history">
+  Order History
+</Link>
       <Link to="/">Logout</Link>
     </div>
   );

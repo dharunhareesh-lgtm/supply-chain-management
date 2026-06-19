@@ -12,6 +12,8 @@ function EditProduct() {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [category, setCategory] = useState("");
+const [imageUrl, setImageUrl] = useState("");
 
   useEffect(() => {
 
@@ -23,6 +25,8 @@ function EditProduct() {
         setPrice(data.price);
         setStock(data.stock);
         setSupplierId(data.supplierId);
+        setCategory(data.category);
+setImageUrl(data.imageUrl);
 
       });
 
@@ -33,12 +37,14 @@ function EditProduct() {
     e.preventDefault();
 
     const product = {
-      productId: id,
-      productName,
-      price,
-      stock,
-      supplierId
-    };
+  productId: id,
+  productName,
+  price,
+  stock,
+  supplierId,
+  category,
+  imageUrl
+};
 
     try {
 
@@ -57,7 +63,18 @@ function EditProduct() {
 
         alert("Product Updated Successfully");
 
-        navigate("/admin/products");
+        const role =
+  localStorage.getItem("role");
+
+if (role === "ADMIN") {
+
+  navigate("/admin/products");
+
+} else {
+
+  navigate("/supplier/products");
+
+}
 
       }
 
@@ -116,6 +133,23 @@ function EditProduct() {
                 setSupplierId(e.target.value)
               }
             />
+<input
+  type="text"
+  placeholder="Category"
+  value={category || ""}
+  onChange={(e) =>
+    setCategory(e.target.value)
+  }
+/>
+
+<input
+  type="text"
+  placeholder="Image URL"
+  value={imageUrl || ""}
+  onChange={(e) =>
+    setImageUrl(e.target.value)
+  }
+/>
 
             <button type="submit">
               Update Product

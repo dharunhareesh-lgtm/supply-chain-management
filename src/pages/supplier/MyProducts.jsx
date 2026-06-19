@@ -1,8 +1,11 @@
 import SupplierSidebar from "../../components/SupplierSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function MyProducts() {
+
+  const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
 
@@ -92,9 +95,16 @@ fetch( `http://localhost:8082/products/supplier/${supplierId}`)
 
                   <td>
 
-                    <button className="edit-btn">
-                      Edit
-                    </button>
+                    <button
+  className="edit-btn"
+  onClick={() =>
+    navigate(
+      `/supplier/edit-product/${product.productId}`
+    )
+  }
+>
+  Edit
+</button>
 
                     <button
                       className="delete-btn"

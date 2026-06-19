@@ -61,27 +61,38 @@ useEffect(() => {
 
                   <td>{order.quantity}</td>
 
-                  <td>{order.status}</td>
+                 <td>
+
+  {order.status ===
+  "Dispatched"
+    ? "In Transit"
+    : order.status}
+
+</td>
 
                   <td>
 
-                    <button
-                      className="edit-btn"
-                      onClick={() =>
-                        navigate("/customer/order-details")
-                      }
-                    >
-                      Details
-                    </button>
+<button
+  className="edit-btn"
+  onClick={() =>
+    navigate(
+      `/customer/order-details/${order.orderId}`
+    )
+  }
+>
+  Details
+</button>
 
-                    <button
-                      className="add-btn"
-                      onClick={() =>
-                        navigate("/customer/track-order")
-                      }
-                    >
-                      Track
-                    </button>
+<button
+  className="add-btn"
+  onClick={() =>
+    navigate(
+      `/customer/track-order/${order.orderId}`
+    )
+  }
+>
+  Track
+</button>
 
                   </td>
 

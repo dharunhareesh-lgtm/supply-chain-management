@@ -9,87 +9,104 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async (e) => {
+ const handleLogin = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  try {
 
-      const response = await fetch(
-        "http://localhost:8082/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            username,
-            password
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!data) {
-        alert("Invalid Username or Password");
-        return;
+    const response = await fetch(
+      "http://localhost:8082/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
       }
+    );
 
-      localStorage.setItem(
-        "userId",
-        data.userId
-      );
+    const data = await response.json();
 
-      localStorage.setItem(
-        "role",
-        data.role
-      );
+    console.log("LOGIN RESPONSE:", data);
 
-      localStorage.setItem(
-        "supplierId",
-        data.supplierId
-      );
-
-      
-
-      if (data.role === "ADMIN") {
-
-        navigate("/admin");
-
-      } else if (
-        data.role === "SUPPLIER"
-      ) {
-
-        navigate("/supplier");
-
-      } else if (
-        data.role === "CUSTOMER"
-      ) {
-
-        navigate("/customer");
-
-      } else if (
-        data.role === "WAREHOUSE"
-      ) {
-
-        navigate("/warehouse");
-
-      } else if (
-        data.role === "LOGISTICS"
-      ) {
-
-        navigate("/logistics");
-
-      }
-
-    } catch (error) {
-
-      console.log(error);
-      alert("Login Failed");
-
+    if (!data) {
+      alert("Invalid Username or Password");
+      return;
     }
-  };
+
+    localStorage.setItem(
+      "userId",
+      data.userId
+    );
+
+    localStorage.setItem(
+      "role",
+      data.role
+    );
+
+    localStorage.setItem(
+      "supplierId",
+      data.supplierId
+    );
+
+    localStorage.setItem(
+      "username",
+      data.username
+    );
+
+    console.log(
+      "Stored Username:",
+      localStorage.getItem("username")
+    );
+
+    console.log(
+      "Stored Role:",
+      localStorage.getItem("role")
+    );
+
+    // navigation code...
+
+    if (data.role === "ADMIN") {
+
+  navigate("/admin");
+
+} else if (
+  data.role === "SUPPLIER"
+) {
+
+  navigate("/supplier");
+
+} else if (
+  data.role === "CUSTOMER"
+) {
+
+  navigate("/customer");
+
+} else if (
+  data.role === "WAREHOUSE"
+) {
+
+  navigate("/warehouse");
+
+} else if (
+  data.role === "LOGISTICS"
+) {
+
+  navigate("/logistics");
+
+}
+
+  } catch (error) {
+
+    console.log(error);
+    alert("Login Failed");
+
+  }
+};
 
   return (
     <div className="login-container">
@@ -131,20 +148,23 @@ function Login() {
             Login
           </button>
 
-          <p style={{ marginTop: "10px" }}>
+          <div style={{ marginTop: "15px" }}>
 
-            <p style={{ marginTop: "10px" }}>
-  New Customer?{" "}
-  <Link to="/register-customer">
-    Register Here
-  </Link>
-</p>
-<p style={{ marginTop: "10px" }}></p>
-  New Supplier?{" "}
-  <Link to="/register-supplier">
-    Register Here
-  </Link>
-</p>
+  <p>
+    New Customer?{" "}
+    <Link to="/register-customer">
+      Register Here
+    </Link>
+  </p>
+
+  <p>
+    New Supplier?{" "}
+    <Link to="/register-supplier">
+      Register Here
+    </Link>
+  </p>
+
+</div>
 
 
 

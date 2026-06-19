@@ -1,29 +1,55 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {
   FaTachometerAlt,
-  FaShoppingCart,
+  FaShoppingBag,
   FaClipboardList,
+  FaShoppingCart,
+  FaHeart,
   FaSignOutAlt
 } from "react-icons/fa";
+import { useCart } from "../context/CartContext";
 
 function CustomerSidebar() {
+  const { cartCount, wishlistCount } = useCart();
+
+  const linkClass = ({ isActive }) =>
+    isActive ? "active" : undefined;
+
+  const handleLogout = () => {
+    localStorage.clear();
+  };
+
   return (
     <div className="sidebar">
       <h2>Customer Panel</h2>
 
-      <Link to="/customer">
+      <NavLink to="/customer" end className={linkClass}>
         <FaTachometerAlt /> Dashboard
-      </Link>
+      </NavLink>
 
-      <Link to="/customer/products">
-        <FaShoppingCart /> Products
-      </Link>
+      <NavLink to="/customer/products" className={linkClass}>
+        <FaShoppingBag /> Products
+      </NavLink>
 
-      <Link to="/customer/orders">
+      <NavLink to="/customer/orders" className={linkClass}>
         <FaClipboardList /> Orders
-      </Link>
+      </NavLink>
 
-      <Link to="/">
+      <NavLink to="/customer/cart" className={linkClass}>
+        <FaShoppingCart /> Cart
+        {cartCount > 0 && (
+          <span className="sidebar-badge">{cartCount}</span>
+        )}
+      </NavLink>
+
+      <NavLink to="/customer/wishlist" className={linkClass}>
+        <FaHeart /> Wishlist
+        {wishlistCount > 0 && (
+          <span className="sidebar-badge">{wishlistCount}</span>
+        )}
+      </NavLink>
+
+      <Link to="/" onClick={handleLogout} className="sidebar-logout-link">
         <FaSignOutAlt /> Logout
       </Link>
     </div>

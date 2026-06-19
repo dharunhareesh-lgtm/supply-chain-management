@@ -4,12 +4,14 @@ import {
   FaUsers,
   FaBox,
   FaChartBar,
+  FaUserTie,
   FaSignOutAlt
 } from "react-icons/fa";
 
 function AdminSidebar() {
   return (
     <div className="sidebar">
+
       <h2>Admin Panel</h2>
 
       <Link to="/admin">
@@ -24,6 +26,10 @@ function AdminSidebar() {
         <FaBox /> Products
       </Link>
 
+      <Link to="/admin/managers">
+        <FaUserTie /> Managers
+      </Link>
+
       <Link to="/admin/reports">
         <FaChartBar /> Reports
       </Link>
@@ -31,6 +37,7 @@ function AdminSidebar() {
       <Link to="/">
         <FaSignOutAlt /> Logout
       </Link>
+
     </div>
   );
 }
