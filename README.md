@@ -1,6 +1,6 @@
-# SCM Dashboard - Supply Chain Management System
+# Supply Chain Management System (SCM)
 
-SCM Dashboard is an enterprise-grade, highly interactive Supply Chain Management web application designed with futuristic UI/UX aesthetics. Built using React, Vite, Tailwind CSS v4, and Three.js, it offers comprehensive role-based access control, interactive geospatial tracking, real-time analytics, and 3D visualization.
+An enterprise-grade, highly interactive Supply Chain Management System featuring a custom React + Vite frontend and a secure Spring Boot Maven backend. It offers comprehensive role-based access control, interactive geospatial tracking, real-time analytics, and 3D visualization.
 
 ---
 
@@ -21,59 +21,74 @@ SCM Dashboard is an enterprise-grade, highly interactive Supply Chain Management
 
 ## 🛠️ Tech Stack
 
-*   **Frontend Core:** React 19 (Functional Components, Context API)
-*   **Build Tool:** Vite 8 (Hot Module Replacement, ES Modules)
+### Frontend
+*   **Core:** React 19 (Functional Components, Context API), Vite 8
 *   **Styling & Motion:** Tailwind CSS v4, Framer Motion, GSAP (GreenSock Animation Platform)
 *   **Data Visualization:** Recharts, Leaflet, React Leaflet
 *   **3D Graphics:** Three.js, React Three Fiber, React Three Drei
 *   **Icons:** Lucide React, React Icons
 
+### Backend
+*   **Core Framework:** Spring Boot (Java 17/21)
+*   **Build Tool:** Maven
+*   **Database & Persistence:** MySQL, Spring Data JPA / Hibernate
+*   **Security & OTP:** Custom OTP Service for secure actions
+*   **Integrations:** Spring Mail (SMTP integration for notifications), Spring AI (OpenAI integrations)
+
 ---
 
-## 📦 Folder Structure
+## 📦 Repository Structure
 
 ```text
-supply-chain-system/
-├── public/                 # Static assets (videos, icons, images)
-├── src/
-│   ├── components/         # Reusable components
-│   │   ├── auth/           # Login & Registration widgets
-│   │   ├── landing/        # Hero section & animations
-│   │   ├── logistics/      # Fleet & route viewer
-│   │   ├── map/            # Interactive Leaflet maps
-│   │   └── ...             # Navigation, wrappers, notification centers
-│   ├── context/            # Global State Management (e.g., CartContext)
-│   ├── pages/              # Core application screens
-│   │   ├── admin/          # Admin dashboards & management pages
-│   │   ├── customer/       # Customer store & order tracking pages
-│   │   ├── logistics/      # Delivery status, revenue & tracking pages
-│   │   ├── settings/       # Strict role-based settings panels
-│   │   ├── supplier/       # Supplier inventory, forecasts & revenue pages
-│   │   └── warehouse/      # Warehouse inventory, dispatch & claim pages
-│   ├── utils/              # Helper utility scripts
-│   ├── App.jsx             # Root layout & routing configuration
-│   ├── index.css           # Global Tailwind directives & theme configurations
-│   └── main.jsx            # React mounting entry point
-├── .gitignore              # Ignored build & OS-specific files
-├── LICENSE                 # MIT License details
-├── package.json            # Node dependencies and scripts
-└── vite.config.js          # Vite optimization & plugin setup
+capstone/
+├── supply-chain-system/     # React Frontend Application
+│   ├── public/              # Static assets (videos, icons, images)
+│   ├── src/                 # React source code
+│   ├── package.json         # Frontend dependencies and scripts
+│   └── vite.config.js       # Vite build configurations
+├── supply-chain-backend/    # Spring Boot Backend API
+│   ├── src/                 # Java source code
+│   ├── pom.xml              # Maven dependencies & configurations
+│   └── mvnw/mvnw.cmd        # Maven wrapper scripts
+├── .gitignore               # Root gitignore covering both stacks
+├── LICENSE                  # MIT License
+└── README.md                # Project documentation
 ```
 
 ---
 
 ## ⚙️ Installation & Setup
 
-### Prerequisites
+### 1. Backend Setup (Spring Boot)
 
-*   [Node.js](https://nodejs.org/) (v18.0.0 or higher recommended)
-*   [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-
-### Step-by-Step Guide
-
-1.  **Clone the Repository:**
+1.  **Navigate to backend directory:**
     ```bash
-    git clone https://github.com/dharunhareesh-lgtm/supply-chain-frontend.git
+    cd supply-chain-backend
+    ```
+
+2.  **Configure Environment Variables:**
+    The backend uses environment placeholders in `application.properties`. Set the following environment variables (or configure a local `.env` / system variables):
+    ```env
+    SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/supply_chain_db?createDatabaseIfNotExist=true
+    SPRING_DATASOURCE_USERNAME=root
+    SPRING_DATASOURCE_PASSWORD=your_mysql_password
+    SPRING_MAIL_USERNAME=your_gmail_username@gmail.com
+    SPRING_MAIL_PASSWORD=your_gmail_app_password
+    OPENAI_API_KEY=your_openai_api_key
+    ```
+
+3.  **Run the Backend:**
+    ```bash
+    ./mvnw spring-boot:run
+    ```
+    The API server will run at `http://localhost:8082`.
+
+---
+
+### 2. Frontend Setup (React + Vite)
+
+1.  **Navigate to frontend directory:**
+    ```bash
     cd supply-chain-system
     ```
 
@@ -83,7 +98,7 @@ supply-chain-system/
     ```
 
 3.  **Configure Environment Variables:**
-    Create a `.env` file in the root of the project:
+    Create a `.env` file inside `supply-chain-system/`:
     ```env
     VITE_API_URL=http://localhost:8082
     ```
@@ -92,33 +107,7 @@ supply-chain-system/
     ```bash
     npm run dev
     ```
-    The application will be available at `http://localhost:5173`.
-
-5.  **Build for Production:**
-    ```bash
-    npm run build
-    ```
-
----
-
-## 📸 Screenshots
-
-*(Screenshots of dashboards, 3D tracking, and settings will be placed here)*
-
----
-
-## 🔮 Future Enhancements
-
-*   **Real-time WebSockets:** Implement live order and coordinate tracking updates via WebSocket server.
-*   **Offline Mode:** Service worker integration for offline stock counting and local queueing.
-*   **PWA Support:** Convert the app to a Progressive Web App for mobile installations.
-*   **Enhanced 3D Assets:** Support custom GLTF models for fleet vehicles and warehouses.
-
----
-
-## ✍️ Author
-
-*   **Dharun** - [@dharunhareesh-lgtm](https://github.com/dharunhareesh-lgtm)
+    The frontend client will start at `http://localhost:5173`.
 
 ---
 
