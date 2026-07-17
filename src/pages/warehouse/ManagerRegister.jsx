@@ -1,184 +1,202 @@
-import Navbar from "../../components/Navbar";
-import WarehouseSidebar from "../../components/WarehouseSidebar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { User, Mail, Lock, KeyRound, ArrowRight } from "lucide-react";
+import {
+  AuthLayout, AuthCard, AuthTopBar, AuthHeader,
+  AuthInput, AuthPasswordInput, AuthPrimaryButton,
+  AuthError, AuthFooter
+} from "../../components/auth/AuthComponents";
 
 function ManagerRegister() {
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  const [username, setUsername] =
-    useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [email, setEmail] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [confirmPassword,
-    setConfirmPassword] =
-    useState("");
-
-  const handleSubmit = async (
-    e
-  ) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    if (
-      password !==
-      confirmPassword
-    ) {
-
-      alert(
-        "Passwords Do Not Match"
-      );
-
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
+      // Look up the specific manager by email — secure, does not expose all managers
+      const lookupResponse = await fetch(
+        `http://localhost:8082/managers/by-email?email=${encodeURIComponent(email)}`
+      );
 
-      const managersResponse =
-        await fetch(
-          "http://localhost:8082/managers"
-        );
-
-      const managers =
-        await managersResponse.json();
-
-      const manager =
-        managers.find(
-          (m) =>
-            m.username ===
-              username &&
-            m.email === email
-        );
-
-      if (!manager) {
-
-        alert(
-          "Manager Not Found"
-        );
-
+      if (!lookupResponse.ok) {
+        setError("No manager account found with this email. Please check with your administrator.");
+        setLoading(false);
         return;
       }
 
-      manager.password =
-        password;
+      const manager = await lookupResponse.json();
 
-      manager.status =
-        "ACTIVE";
+      // Verify username matches (case-insensitive)
+      if (manager.username.toLowerCase().trim() !== username.toLowerCase().trim()) {
+        setError("Username does not match the registered manager account.");
+        setLoading(false);
+        return;
+      }
 
-      await fetch(
-        "http://localhost:8082/managers",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-          body:
-            JSON.stringify(
-              manager
-            )
+      // Check if already registered
+      if (manager.status === "ACTIVE") {
+        setError("This account is already activated. Please use the login page.");
+        setLoading(false);
+        return;
+      }
+
+      // Build the update payload for activation
+      const updatePayload = {
+        managerId: manager.managerId,
+        username: manager.username,
+        email: manager.email,
+        password: password, // Plain text — backend will BCrypt encode
+        category: manager.category,
+        warehouseId: manager.warehouseId,
+        status: "ACTIVE",
+        otp: otp,
+        otpStatus: "USED",
+        isWarehouseAccount: false
+      };
+
+      const response = await fetch("http://localhost:8082/managers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (response.ok) {
+        alert("Registration Successful! Manager account activated successfully.");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setOtp("");
+        navigate("/warehouse/manager-login");
+      } else {
+        let errMsg = "Invalid or Expired OTP";
+        try {
+          // Try parsing Spring Boot error JSON
+          const errData = await response.clone().json();
+          if (errData && errData.message) {
+            errMsg = errData.message;
+          } else if (errData && errData.error) {
+            errMsg = errData.error;
+          }
+        } catch (e) {
+          try {
+            const txt = await response.text();
+            if (txt) errMsg = txt;
+          } catch (e2) {}
         }
-      );
-
-      alert("Registration Successful");
-
-setUsername("");
-setEmail("");
-setPassword("");
-setConfirmPassword("");
-
-navigate("/warehouse/manager-login");
-
+        setError("Registration Failed: " + errMsg);
+      }
     } catch (error) {
-
       console.log(error);
-
+      setError("Error connecting to server. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <Navbar />
+    <AuthLayout>
+      <AuthCard wide>
+        <AuthTopBar backTo="/warehouse" backLabel="Back" />
 
-      <div className="layout">
+        <AuthHeader
+          title="Manager Registration"
+          subtitle="Please enter the 6-digit OTP code sent to your email when the administrator registered you."
+        />
 
-        <WarehouseSidebar />
+        {error && <AuthError>{error}</AuthError>}
 
-        <div className="content">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <AuthInput
+            label="Username"
+            icon={User}
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
 
-          <h1>
-            Manager Register
-          </h1>
+          <AuthInput
+            label="Email Address"
+            icon={Mail}
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-          <form
-            className="product-form"
-            onSubmit={handleSubmit}
-          >
+          <AuthInput
+            label="OTP Verification Code"
+            icon={KeyRound}
+            type="text"
+            placeholder="Enter 6-digit OTP code"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            required
+          />
 
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) =>
-                setUsername(
-                  e.target.value
-                )
-              }
-            />
+          <AuthPasswordInput
+            label="Password"
+            icon={Lock}
+            placeholder="Create a password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) =>
-                setEmail(
-                  e.target.value
-                )
-              }
-            />
+          <AuthPasswordInput
+            label="Confirm Password"
+            icon={Lock}
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) =>
-                setPassword(
-                  e.target.value
-                )
-              }
-            />
+          <AuthPrimaryButton disabled={loading}>
+            {loading ? "Registering..." : "Register"} {!loading && <ArrowRight style={{ width: 18, height: 18 }} />}
+          </AuthPrimaryButton>
+        </form>
 
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={
-                confirmPassword
-              }
-              onChange={(e) =>
-                setConfirmPassword(
-                  e.target.value
-                )
-              }
-            />
-
-            <button
-              type="submit"
-            >
-              Register
-            </button>
-
-          </form>
-
-        </div>
-
-      </div>
-    </>
+        <AuthFooter
+          text="Already registered?"
+          linkText="Manager Login"
+          linkTo="/warehouse/manager-login"
+        />
+      </AuthCard>
+    </AuthLayout>
   );
 }
 

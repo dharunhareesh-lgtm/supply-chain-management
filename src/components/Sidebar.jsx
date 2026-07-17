@@ -9,6 +9,7 @@ function Sidebar() {
       <Link to="/admin/suppliers">Manage Suppliers</Link>
       <Link to="/admin/products">Manage Products</Link>
       <Link to="/admin/reports">Reports</Link>
+      <Link to="/settings">Settings</Link>
       <Link to="/">Logout</Link>
     </div>
   );

@@ -8,6 +8,7 @@ function MyProducts() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
 
   useEffect(() => {
 
@@ -16,6 +17,11 @@ function MyProducts() {
 fetch( `http://localhost:8082/products/supplier/${supplierId}`)
       .then((response) => response.json())
       .then((data) => setProducts(data))
+      .catch((error) => console.log(error));
+
+    fetch("http://localhost:8082/warehouse-locations?includeInactive=true")
+      .then((response) => response.json())
+      .then((data) => setWarehouses(data))
       .catch((error) => console.log(error));
 
   }, []);
@@ -71,6 +77,7 @@ fetch( `http://localhost:8082/products/supplier/${supplierId}`)
               <tr>
                 <th>ID</th>
                 <th>Product</th>
+                <th>Warehouse</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Supplier ID</th>
@@ -86,6 +93,13 @@ fetch( `http://localhost:8082/products/supplier/${supplierId}`)
                   <td>{product.productId}</td>
 
                   <td>{product.productName}</td>
+
+                  <td>
+                    {(() => {
+                      const wh = warehouses.find(w => w.id === product.warehouseId);
+                      return wh ? `${wh.warehouseName} (${wh.district})` : "Not Assigned";
+                    })()}
+                  </td>
 
                   <td>₹{product.price}</td>
 

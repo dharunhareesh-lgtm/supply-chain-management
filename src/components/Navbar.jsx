@@ -7,9 +7,13 @@ import {
   FaBell,
   FaSignOutAlt,
   FaChevronDown,
-  FaUserCircle
+  FaUserCircle,
+  FaSun,
+  FaMoon
 } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
+import NotificationCenter from "./NotificationCenter";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -18,6 +22,12 @@ function Navbar() {
   const username = localStorage.getItem("username");
   const role = localStorage.getItem("role");
   const isCustomer = role === "CUSTOMER";
+
+  // Light/Dark Theme Switcher (Removed, hardcoded to dark)
+  useEffect(() => {
+    document.documentElement.classList.remove("light-mode");
+    localStorage.setItem("theme", "dark");
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,7 +70,7 @@ function Navbar() {
   };
 
   const roleLabel = role
-    ? role.charAt(0) + role.slice(1).toLowerCase()
+    ? role.replace(/_/g, " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")
     : "";
 
   const firstLetter = username ? username.charAt(0).toUpperCase() : "U";
@@ -92,6 +102,8 @@ function Navbar() {
       )}
 
       <div className="nav-right">
+
+
         {isCustomer && (
           <>
             <button
@@ -118,42 +130,7 @@ function Navbar() {
           </>
         )}
 
-        <div className="navbar-popover" ref={notifRef}>
-          <button
-            className="icon-btn"
-            title="Notifications"
-            onClick={() => setNotifOpen((open) => !open)}
-          >
-            <FaBell />
-            {stockAlerts.length > 0 && (
-              <span className="icon-badge">{stockAlerts.length}</span>
-            )}
-          </button>
-
-          {notifOpen && (
-            <div className="navbar-dropdown notif-dropdown">
-              <div className="navbar-dropdown-header">Notifications</div>
-
-              {stockAlerts.length === 0 ? (
-                <p className="navbar-dropdown-empty">
-                  Nothing new right now.
-                </p>
-              ) : (
-                stockAlerts.map((item) => (
-                  <div className="notif-item" key={item.productId}>
-                    <span className="notif-dot" />
-                    <div>
-                      <p className="notif-title">{item.productName}</p>
-                      <p className="notif-sub">
-                        Only {item.stock} left in stock — wishlisted
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        <NotificationCenter />
 
         <div className="navbar-popover" ref={menuRef}>
           <button
@@ -168,21 +145,29 @@ function Navbar() {
             <FaChevronDown className="profile-chevron" />
           </button>
 
-          {menuOpen && (
-            <div className="navbar-dropdown profile-dropdown">
-              <div className="profile-dropdown-header">
-                <FaUserCircle className="profile-dropdown-icon" />
-                <div>
-                  <p className="profile-name">{username || "User"}</p>
-                  <span className="role-pill">{roleLabel}</span>
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="navbar-dropdown profile-dropdown"
+              >
+                <div className="profile-dropdown-header">
+                  <FaUserCircle className="profile-dropdown-icon" />
+                  <div>
+                    <p className="profile-name">{username || "User"}</p>
+                    <span className="role-pill">{roleLabel}</span>
+                  </div>
                 </div>
-              </div>
 
-              <button className="dropdown-action" onClick={handleLogout}>
-                <FaSignOutAlt /> Logout
-              </button>
-            </div>
-          )}
+                <button className="dropdown-action" onClick={handleLogout}>
+                  <FaSignOutAlt /> Logout
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

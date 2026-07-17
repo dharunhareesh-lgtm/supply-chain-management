@@ -6,11 +6,39 @@ import { FaCheck } from "react-icons/fa";
 function ManageOrders() {
   const [orders, setOrders] = useState([]);
 
+  const [warehouseId, setWarehouseId] = useState(null);
+
   useEffect(() => {
-    fetch("http://localhost:8082/orders/status/Pending")
-      .then((response) => response.json())
-      .then((data) => setOrders(data))
-      .catch((error) => console.log(error));
+    const managerEmail = localStorage.getItem("username");
+    const cachedWhId = localStorage.getItem("warehouseId");
+    
+    const fetchPendingOrders = (whId) => {
+      fetch(`http://localhost:8082/orders/status/Pending?warehouseId=${whId}`, {
+        headers: { "X-User-Email": managerEmail || "" }
+      })
+        .then((response) => response.json())
+        .then((data) => setOrders(data))
+        .catch((error) => console.log(error));
+    };
+
+    if (cachedWhId && cachedWhId !== "null" && cachedWhId !== "undefined") {
+      const parsedId = parseInt(cachedWhId);
+      setWarehouseId(parsedId);
+      fetchPendingOrders(parsedId);
+      return;
+    }
+
+    if (managerEmail) {
+      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+        .then((res) => res.ok ? res.json() : null)
+        .then((wl) => {
+          if (wl) {
+            setWarehouseId(wl.id);
+            fetchPendingOrders(wl.id);
+          }
+        })
+        .catch(err => console.error(err));
+    }
   }, []);
 
   const approveOrder = async (order) => {
@@ -19,7 +47,10 @@ function ManageOrders() {
     try {
       const response = await fetch("http://localhost:8082/orders", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-User-Email": localStorage.getItem("username") || ""
+        },
         body: JSON.stringify(updatedOrder)
       });
 

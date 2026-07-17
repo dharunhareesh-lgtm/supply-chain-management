@@ -1,7 +1,9 @@
 import WarehouseSidebar from "../../components/WarehouseSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import "./warehouse.css";
+import WarehouseMapDashboard from "../../components/map/WarehouseMapDashboard";
 import {
   FaBoxes,
   FaWarehouse,
@@ -31,55 +33,126 @@ function capacityStatus(used, max) {
 
 function WarehouseDashboard() {
   const [totalProducts, setTotalProducts] = useState(0);
-  const [availableStock, setAvailableStock] = useState(0);
-  const [lowStockItems, setLowStockItems] = useState(0);
   const [inventoryData, setInventoryData] = useState([]);
   const [capacities, setCapacities] = useState([]);
   const [recentApprovals, setRecentApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [warehouseId, setWarehouseId] = useState(null);
+  const [supplierCount, setSupplierCount] = useState(0);
+
+  const [warehouseLocation, setWarehouseLocation] = useState(null);
+  const [mapSuppliers, setMapSuppliers] = useState([]);
+  const [mapCustomers, setMapCustomers] = useState([]);
+  const [mapVehicles, setMapVehicles] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8082/products")
-      .then((response) => response.json())
-      .then((data) => {
-        setTotalProducts(data.length);
+    const managerEmail = localStorage.getItem("username");
+    const cachedWhId = localStorage.getItem("warehouseId");
 
-        // "Recent approvals" = the most recently approved products,
-        // derived from existing /products data — no new endpoint needed.
-        const approved = data
-          .filter((p) => p.status === "APPROVED")
-          .slice(-5)
-          .reverse();
-        setRecentApprovals(approved);
-      })
-      .catch((error) => console.log(error));
+    const loadDashboardData = (whId) => {
+      // Fetch warehouse full details
+      fetch(`http://localhost:8082/warehouse-locations/${whId}`)
+        .then(res => res.json())
+        .then(data => setWarehouseLocation(data))
+        .catch(console.error);
 
-    fetch("http://localhost:8082/inventory")
-      .then((response) => response.json())
-      .then((data) => {
-        setInventoryData(data);
+      // Fetch suppliers and filter by warehouseId
+      fetch("http://localhost:8082/suppliers")
+        .then(res => res.json())
+        .then(data => {
+          const filtered = data.filter(s => s.warehouseId === whId);
+          setMapSuppliers(filtered);
+        })
+        .catch(console.error);
 
-        const totalStock = data.reduce(
-          (sum, item) => sum + item.quantity,
-          0
-        );
-        setAvailableStock(totalStock);
+      // Fetch orders and extract customer locations
+      fetch("http://localhost:8082/orders", { headers: { "X-User-Email": managerEmail || "" } })
+        .then(res => res.json())
+        .then(data => {
+          const custs = data
+            .filter(o => o.customerLatitude && o.customerLongitude)
+            .map(o => ({
+              customerName: o.customerName,
+              latitude: o.customerLatitude,
+              longitude: o.customerLongitude
+            }));
+          const uniqueCusts = [];
+          const seen = new Set();
+          for (const c of custs) {
+            if (!seen.has(c.customerName)) {
+              seen.add(c.customerName);
+              uniqueCusts.push(c);
+            }
+          }
+          setMapCustomers(uniqueCusts);
+        })
+        .catch(console.error);
 
-        const lowStock = data.filter((item) => item.quantity < 50).length;
-        setLowStockItems(lowStock);
-      })
-      .catch((error) => console.log(error));
+      // Fetch vehicle locations
+      fetch("http://localhost:8082/vehicle-locations")
+        .then(res => res.json())
+        .then(data => setMapVehicles(data))
+        .catch(console.error);
 
-    fetch("http://localhost:8082/category-capacity")
-      .then((response) => response.json())
-      .then((data) => {
-        setCapacities(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-      });
+      fetch(`http://localhost:8082/products?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+        .then((response) => response.json())
+        .then((data) => {
+          setTotalProducts(data.length);
+          const approved = data
+            .filter((p) => p.status === "APPROVED")
+            .slice(-5)
+            .reverse();
+          setRecentApprovals(approved);
+          
+          const uniqueSuppliers = [...new Set(data.map(p => p.supplierId))].length;
+          setSupplierCount(uniqueSuppliers);
+        })
+        .catch((error) => console.log(error));
+
+      fetch(`http://localhost:8082/inventory/details?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+        .then((response) => response.json())
+        .then((data) => {
+          setInventoryData(data);
+        })
+        .catch((error) => console.log(error));
+
+      fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+        .then((response) => response.json())
+        .then((data) => {
+          setCapacities(data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+    };
+
+    if (cachedWhId && cachedWhId !== "null" && cachedWhId !== "undefined") {
+      const parsedId = parseInt(cachedWhId);
+      setWarehouseId(parsedId);
+      loadDashboardData(parsedId);
+      return;
+    }
+
+    if (managerEmail) {
+      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+        .then((res) => res.ok ? res.json() : null)
+        .then((wl) => {
+          if (wl) {
+            setWarehouseId(wl.id);
+            loadDashboardData(wl.id);
+          } else {
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const totalCapacity = capacities.reduce((sum, c) => sum + c.maxCapacity, 0);
@@ -106,7 +179,12 @@ function WarehouseDashboard() {
       <div className="layout wh-shell">
         <WarehouseSidebar />
 
-        <div className="content">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="content"
+        >
           <div className="wh-page-head">
             <div>
               <span className="eyebrow">Warehouse Operations</span>
@@ -181,7 +259,45 @@ function WarehouseDashboard() {
               </div>
               <div className="wh-kpi-value">{totalProducts}</div>
             </div>
+
+            <div className="wh-kpi-card">
+              <div className="wh-kpi-top">
+                <span className="wh-kpi-label">Active Suppliers</span>
+                <span className="wh-kpi-icon icon-blue">
+                  <FaWarehouse />
+                </span>
+              </div>
+              <div className="wh-kpi-value">{supplierCount}</div>
+            </div>
           </div>
+
+          {/* ---- Interactive Map Section ---- */}
+          {warehouseLocation && (
+            <div style={{ marginBottom: "30px" }}>
+              <WarehouseMapDashboard
+                warehouses={warehouseLocation ? [{
+                  id: warehouseLocation.id,
+                  warehouseName: warehouseLocation.warehouseName,
+                  latitude: warehouseLocation.latitude,
+                  longitude: warehouseLocation.longitude,
+                  address: warehouseLocation.address,
+                  district: warehouseLocation.district,
+                  state: warehouseLocation.state,
+                  coverageRadiusKm: warehouseLocation.coverageRadiusKm,
+                  status: warehouseLocation.status,
+                  totalCapacityKg: totalCapacity,
+                  usedCapacityKg: totalUsed,
+                  capacityUtilization: utilizationPct
+                }] : []}
+                suppliers={mapSuppliers}
+                customers={mapCustomers}
+                vehicles={mapVehicles}
+                showCoverage={true}
+                title={`Live Map: ${warehouseLocation.warehouseName}`}
+                height="400px"
+              />
+            </div>
+          )}
 
           {/* ---- Warehouse utilization ---- */}
           <div className="wh-section">
@@ -322,7 +438,7 @@ function WarehouseDashboard() {
               </table>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </>
   );

@@ -15,16 +15,54 @@ function Inventory() {
 
   const [inventory, setInventory] = useState([]);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [warehouseId, setWarehouseId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8082/inventory")
-      .then((response) => response.json())
-      .then((data) => setInventory(data))
-      .catch((error) => console.log(error));
+    const managerEmail = localStorage.getItem("username");
+    const cachedWhId = localStorage.getItem("warehouseId");
+    
+    const loadInventoryData = (whId) => {
+      fetch(`http://localhost:8082/inventory/details?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+        .then((response) => response.json())
+        .then((data) => {
+          setInventory(data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading(false);
+        });
+    };
+
+    if (cachedWhId && cachedWhId !== "null" && cachedWhId !== "undefined") {
+      const parsedId = parseInt(cachedWhId);
+      setWarehouseId(parsedId);
+      loadInventoryData(parsedId);
+      return;
+    }
+
+    if (managerEmail) {
+      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+        .then((res) => res.ok ? res.json() : null)
+        .then((wl) => {
+          if (wl) {
+            setWarehouseId(wl.id);
+            loadInventoryData(wl.id);
+          } else {
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const deleteInventory = async (id) => {
+  const deleteInventory = async (productId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this stock?"
     );
@@ -32,11 +70,11 @@ function Inventory() {
     if (!confirmDelete) return;
 
     try {
-      await fetch(`http://localhost:8082/inventory/${id}`, {
+      await fetch(`http://localhost:8082/products/${productId}`, {
         method: "DELETE"
       });
 
-      setInventory(inventory.filter((item) => item.inventoryId !== id));
+      setInventory(inventory.filter((item) => item.productId !== productId));
 
       alert("Stock Deleted Successfully");
     } catch (error) {
@@ -48,15 +86,13 @@ function Inventory() {
     return inventory.filter((item) => {
       const matchesSearch =
         item.productName?.toLowerCase().includes(search.toLowerCase()) ||
-        item.warehouseLocation?.toLowerCase().includes(search.toLowerCase());
+        item.productCategory?.toLowerCase().includes(search.toLowerCase()) ||
+        item.supplierName?.toLowerCase().includes(search.toLowerCase()) ||
+        item.supplierCompany?.toLowerCase().includes(search.toLowerCase());
 
-      if (!matchesSearch) return false;
-
-      if (filter === "all") return true;
-      const status = stockStatus(item.quantity).cls;
-      return status === filter;
+      return matchesSearch;
     });
-  }, [inventory, search, filter]);
+  }, [inventory, search]);
 
   return (
     <>
@@ -65,12 +101,12 @@ function Inventory() {
       <div className="layout wh-shell">
         <WarehouseSidebar />
 
-        <div className="content">
+        <div className="content" style={{ maxWidth: "1400px" }}>
           <div className="wh-page-head">
             <div>
               <span className="eyebrow">Warehouse Operations</span>
-              <h1>Inventory</h1>
-              <p>{inventory.length} stock records across all locations.</p>
+              <h1>Inventory View</h1>
+              <p>{filtered.length} detailed stock records stored physically in this warehouse.</p>
             </div>
 
             <div className="wh-page-head-actions">
@@ -84,103 +120,86 @@ function Inventory() {
           </div>
 
           <div className="wh-toolbar">
-            <div className="wh-search">
+            <div className="wh-search" style={{ flex: 1 }}>
               <FaSearch size={13} />
               <input
                 type="text"
-                placeholder="Search by product or location..."
+                placeholder="Search by product, category, or supplier..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-
-            <div className="wh-filter-pills">
-              {["all", "healthy", "pending", "danger"].map((key) => {
-                const labelMap = {
-                  all: "All",
-                  healthy: "Healthy",
-                  pending: "Low",
-                  danger: "Critical"
-                };
-                // map ui filter keys to badge classes used in stockStatus
-                const clsMap = {
-                  all: "all",
-                  healthy: "delivered",
-                  pending: "pending",
-                  danger: "danger"
-                };
-                return (
-                  <button
-                    key={key}
-                    className={`wh-filter-pill ${
-                      filter === clsMap[key] ? "active" : ""
-                    }`}
-                    onClick={() => setFilter(clsMap[key])}
-                  >
-                    {labelMap[key]}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          <div className="wh-table-wrap">
-            <table className="table">
+          <div className="wh-table-wrap" style={{ overflowX: "auto" }}>
+            <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Status</th>
-                  <th>Location</th>
-                  <th>Action</th>
+                <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
+                  <th style={{ padding: "12px 8px" }}>Product & Category</th>
+                  <th style={{ padding: "12px 8px" }}>Supplier & Company</th>
+                  <th style={{ padding: "12px 8px" }}>Supplier Contact</th>
+                  <th style={{ padding: "12px 8px" }}>Package Sizes</th>
+                  <th style={{ padding: "12px 8px" }}>Current Stock</th>
+                  <th style={{ padding: "12px 8px" }}>Total Weight</th>
+                  <th style={{ padding: "12px 8px" }}>Storage Date & Status</th>
+                  <th style={{ padding: "12px 8px" }}>Warehouse Location</th>
+                  <th style={{ padding: "12px 8px" }}>Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center" }}>
+                    <td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>
+                      Loading inventory details...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>
                       No matching inventory records.
                     </td>
                   </tr>
                 ) : (
                   filtered.map((item) => {
-                    const status = stockStatus(item.quantity);
                     return (
-                      <tr key={item.inventoryId}>
-                        <td>{item.inventoryId}</td>
-                        <td>{item.productName}</td>
-                        <td>{item.quantity}</td>
-                        <td>
-                          <span className={`badge ${status.cls}`}>
-                            {status.label}
+                      <tr key={item.productId} style={{ borderBottom: "1px solid var(--border)" }}>
+                        <td style={{ padding: "12px 8px" }}>
+                          <div style={{ fontWeight: "600" }}>{item.productName}</div>
+                          <span style={{ fontSize: "11px", color: "var(--ink-soft)" }}>{item.productCategory}</span>
+                        </td>
+                        <td style={{ padding: "12px 8px" }}>
+                          <div>{item.supplierName}</div>
+                          <span style={{ fontSize: "11px", color: "var(--ink-soft)" }}>{item.supplierCompany}</span>
+                        </td>
+                        <td style={{ padding: "12px 8px", fontSize: "12px" }}>
+                          {item.supplierContact}
+                        </td>
+                        <td style={{ padding: "12px 8px" }}>
+                          {item.packageSizes}
+                        </td>
+                        <td style={{ padding: "12px 8px", fontSize: "12px" }}>
+                          {item.currentStock}
+                        </td>
+                        <td style={{ padding: "12px 8px", fontWeight: "600" }}>
+                          {item.totalWeight} kg
+                        </td>
+                        <td style={{ padding: "12px 8px" }}>
+                          <div style={{ fontSize: "12px" }}>{item.storageDate}</div>
+                          <span style={{ fontSize: "11px", color: "#10B981", background: "rgba(16,185,129,0.1)", padding: "1px 4px", borderRadius: "3px" }}>
+                            {item.productStatus}
                           </span>
                         </td>
-                        <td>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6
-                            }}
-                          >
-                            <FaMapMarkerAlt
-                              size={11}
-                              style={{ color: "var(--ink-mute)" }}
-                            />
+                        <td style={{ padding: "12px 8px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "12px" }}>
+                            <FaMapMarkerAlt size={10} style={{ color: "var(--ink-mute)" }} />
                             {item.warehouseLocation}
                           </span>
                         </td>
-                        <td>
-                          {/*
-                            Update / Add-Stock buttons intentionally left out here —
-                            they were commented out in the previous version of this
-                            page, so that decision is preserved rather than reversed.
-                          */}
+                        <td style={{ padding: "12px 8px" }}>
                           <button
                             className="delete-btn"
-                            onClick={() => deleteInventory(item.inventoryId)}
+                            onClick={() => deleteInventory(item.productId)}
                           >
                             <FaTrash size={11} /> Delete
                           </button>

@@ -13,17 +13,43 @@ function capacityStatus(used, max) {
 
 function StockManagement() {
   const [capacities, setCapacities] = useState([]);
+  const [warehouseId, setWarehouseId] = useState(null);
+
+  const loadCapacities = async (whId) => {
+    try {
+      const managerEmail = localStorage.getItem("username");
+      const response = await fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`, {
+        headers: { "X-User-Email": managerEmail || "" }
+      });
+      const data = await response.json();
+      setCapacities(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    loadCapacities();
-  }, []);
+    const managerEmail = localStorage.getItem("username");
+    const cachedWhId = localStorage.getItem("warehouseId");
+    if (cachedWhId && cachedWhId !== "null" && cachedWhId !== "undefined") {
+      const parsedId = parseInt(cachedWhId);
+      setWarehouseId(parsedId);
+      loadCapacities(parsedId);
+      return;
+    }
 
-  const loadCapacities = () => {
-    fetch("http://localhost:8082/category-capacity")
-      .then((response) => response.json())
-      .then((data) => setCapacities(data))
-      .catch((error) => console.log(error));
-  };
+    if (managerEmail) {
+      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+        .then((res) => res.ok ? res.json() : null)
+        .then((wl) => {
+          if (wl) {
+            setWarehouseId(wl.id);
+            loadCapacities(wl.id);
+          }
+        })
+        .catch(err => console.error(err));
+    }
+  }, []);
 
   const updateCapacity = async (item) => {
     try {
@@ -32,13 +58,13 @@ function StockManagement() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item)
+          body: JSON.stringify({ ...item, warehouseId })
         }
       );
 
       if (response.ok) {
         alert("Capacity Updated");
-        loadCapacities();
+        loadCapacities(warehouseId);
       }
     } catch (error) {
       console.log(error);

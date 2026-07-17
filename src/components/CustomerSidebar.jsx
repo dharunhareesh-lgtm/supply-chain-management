@@ -49,6 +49,10 @@ function CustomerSidebar() {
         )}
       </NavLink>
 
+      <NavLink to="/settings" className={linkClass}>
+        <FaHeart /> Settings
+      </NavLink>
+
       <Link to="/" onClick={handleLogout} className="sidebar-logout-link">
         <FaSignOutAlt /> Logout
       </Link>

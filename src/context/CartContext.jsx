@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useContext,
@@ -53,7 +54,7 @@ export function CartProvider({ children }) {
 
   /* ---------------- Cart ---------------- */
 
-  const addToCart = useCallback((product, quantity = 1) => {
+  const addToCart = useCallback((product, quantity = 1, packageBreakdown = null) => {
     setCartItems((prev) => {
       const existing = prev.find(
         (item) => item.productId === product.productId
@@ -62,7 +63,7 @@ export function CartProvider({ children }) {
       if (existing) {
         return prev.map((item) =>
           item.productId === product.productId
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, packageBreakdown: packageBreakdown || item.packageBreakdown }
             : item
         );
       }
@@ -76,7 +77,8 @@ export function CartProvider({ children }) {
           imageUrl: product.imageUrl,
           category: product.category,
           stock: product.stock,
-          quantity
+          quantity,
+          packageBreakdown
         }
       ];
     });

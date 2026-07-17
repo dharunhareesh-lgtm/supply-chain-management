@@ -9,7 +9,12 @@ function Deliveries() {
 useEffect(() => {
 
   fetch(
-    "http://localhost:8082/orders"
+    "http://localhost:8082/orders",
+    {
+      headers: {
+        "X-User-Email": localStorage.getItem("username") || ""
+      }
+    }
   )
     .then((response) => response.json())
     .then((data) => {
@@ -107,6 +112,27 @@ const deliverOrder = async (order) => {
             item.orderId !== order.orderId
         )
       );
+
+      // Auto-sync vehicle location to destination
+      try {
+        const companyName = localStorage.getItem("username");
+        const vRes = await fetch("http://localhost:8082/logistics-vehicles");
+        const vData = await vRes.json();
+        const myVehicle = vData.find(v => v.companyName === companyName);
+        if (myVehicle && order.customerLatitude && order.customerLongitude) {
+           await fetch(`http://localhost:8082/logistics-vehicles/${myVehicle.id}/location`, {
+             method: 'PUT',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ 
+               latitude: order.customerLatitude, 
+               longitude: order.customerLongitude 
+             })
+           });
+           console.log(`Auto-synced vehicle ${myVehicle.id} to destination ${order.customerLatitude}, ${order.customerLongitude}`);
+        }
+      } catch (e) {
+        console.error("Auto-sync location failed:", e);
+      }
 
     }
 

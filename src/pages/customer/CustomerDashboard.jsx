@@ -1,33 +1,35 @@
 import CustomerSidebar from "../../components/CustomerSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaBoxOpen,
   FaClipboardList,
   FaTruck,
   FaArrowRight,
-  FaLaptop,
-  FaTshirt,
-  FaHome,
-  FaUtensils,
-  FaBook,
-  FaFutbol,
+  FaSeedling,
+  FaLeaf,
+  FaPepperHot,
   FaShoppingCart
 } from "react-icons/fa";
+import {
+  GiWheat,
+  GiAlmond,
+  GiDroplets,
+  GiBowlOfRice
+} from "react-icons/gi";
 import { useCart } from "../../context/CartContext";
 
 const CATEGORY_ICONS = {
-  electronics: FaLaptop,
-  clothing: FaTshirt,
-  apparel: FaTshirt,
-  fashion: FaTshirt,
-  home: FaHome,
-  furniture: FaHome,
-  food: FaUtensils,
-  grocery: FaUtensils,
-  books: FaBook,
-  sports: FaFutbol
+  "pulses and dals": FaSeedling,
+  "grains": GiWheat,
+  "cereals": GiBowlOfRice,
+  "spices": FaPepperHot,
+  "dry fruits": GiAlmond,
+  "oil seeds": GiDroplets,
+  "packaged food items": FaBoxOpen,
+  "non-perishable agricultural products": FaLeaf
 };
 
 function getCategoryIcon(category) {
@@ -42,9 +44,11 @@ function CustomerDashboard() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [custLat, setCustLat] = useState("");
+  const [custLon, setCustLon] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8082/products")
+    fetch("http://localhost:8082/products?status=APPROVED")
       .then((response) => response.json())
       .then((data) => setProducts(data))
       .catch((error) => console.log(error))
@@ -56,6 +60,19 @@ function CustomerDashboard() {
       .then((response) => response.json())
       .then((data) => setOrders(data))
       .catch((error) => console.log(error));
+
+    if (customerName) {
+      fetch(`http://localhost:8082/users/username/${customerName}`)
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error("User not found");
+        })
+        .then((data) => {
+          if (data.latitude) setCustLat(data.latitude.toString());
+          if (data.longitude) setCustLon(data.longitude.toString());
+        })
+        .catch((err) => console.error("Failed to load user location:", err));
+    }
   }, []);
 
   const username = localStorage.getItem("username");
@@ -97,7 +114,12 @@ function CustomerDashboard() {
       <div className="layout">
         <CustomerSidebar />
 
-        <div className="content">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="content"
+        >
           <div className="hero-banner">
             <div className="hero-banner-text">
               <span className="hero-eyebrow">Welcome back</span>
@@ -106,6 +128,12 @@ function CustomerDashboard() {
                 Browse the latest catalog, track your orders, and re-order
                 your essentials in a couple of clicks.
               </p>
+              
+              {custLat && custLon && (
+                <div className="text-[12px] font-semibold mt-2 opacity-90">
+                  📍 Shop Coordinates: {custLat}, {custLon}
+                </div>
+              )}
               <button
                 className="hero-cta"
                 onClick={() => navigate("/customer/products")}
@@ -297,7 +325,7 @@ function CustomerDashboard() {
               </div>
             </section>
           )}
-        </div>
+        </motion.div>
       </div>
     </>
   );

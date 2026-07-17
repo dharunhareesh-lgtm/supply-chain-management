@@ -1,0 +1,210 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+
+export default function AdminSettings({ email, fetchUrl, updateUrl }) {
+  const [data, setData] = useState({ name: "", email: "", phone: "", role: "", notificationPreferences: "", systemPreferences: {} });
+  const [loading, setLoading] = useState(true);
+
+  // Edit states
+  const [phone, setPhone] = useState("");
+  const [notification, setNotification] = useState("Email");
+
+  // Change Password States
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  // Status Alerts
+  const [profileMsg, setProfileMsg] = useState("");
+  const [profileErr, setProfileErr] = useState("");
+  const [secMsg, setSecMsg] = useState("");
+  const [secErr, setSecErr] = useState("");
+
+  const loadData = async () => {
+    try {
+      const res = await fetch(`http://localhost:8082/api/settings/admin?email=${email}`);
+      if (res.ok) {
+        const d = await res.json();
+        setData(d);
+        setPhone(d.phone || "");
+        setNotification(d.notificationPreferences || "Email");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [email]);
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileMsg("");
+    setProfileErr("");
+    try {
+      const res = await fetch(`http://localhost:8082/api/settings/admin/profile?email=${email}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, notificationPreferences: notification }),
+      });
+      if (res.ok) {
+        setProfileMsg("Admin preferences saved successfully.");
+        loadData();
+      } else {
+        setProfileErr("Failed to update settings.");
+      }
+    } catch (err) {
+      setProfileErr("Error updating settings.");
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setSecMsg("");
+    setSecErr("");
+    setSendingOtp(true);
+    try {
+      const res = await fetch(`http://localhost:8082/api/settings/send-otp?email=${email}`, { method: "POST" });
+      if (res.ok) {
+        setOtpSent(true);
+        setSecMsg("OTP sent to your email!");
+      } else {
+        setSecErr("Failed to send OTP.");
+      }
+    } catch (e) {
+      setSecErr("Error sending OTP.");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setSecMsg("");
+    setSecErr("");
+
+    if (newPassword !== confirmPassword) {
+      setSecErr("Passwords do not match.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8082/api/settings/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, currentPassword, otp, newPassword, confirmPassword }),
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        setSecMsg("Password changed successfully.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setOtp("");
+        setOtpSent(false);
+      } else {
+        setSecErr(resData.error || "Failed to change password.");
+      }
+    } catch (err) {
+      setSecErr("Error updating password.");
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+      {/* Profile & Notifications Card */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
+        <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>👤 Admin Profile</h2>
+        {profileMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{profileMsg}</div>}
+        {profileErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{profileErr}</div>}
+
+        <form onSubmit={handleProfileSave} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Administrator Name (Read-Only)</label>
+            <input type="text" disabled value={data.name || ""} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Admin Email (Read-Only)</label>
+            <input type="text" disabled value={data.email || ""} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Mobile Number</label>
+            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Notification Channel</label>
+            <select value={notification} onChange={(e) => setNotification(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ink)" }}>
+              <option value="Email">Email Only</option>
+              <option value="SMS">SMS Only</option>
+              <option value="Both">Both Email & SMS</option>
+            </select>
+          </div>
+          <button className="btn-premium-primary" type="submit" style={{ marginTop: "15px" }}>Save Preferences</button>
+        </form>
+      </div>
+
+      {/* Security settings, Backup / Audit & Change Password */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        
+        {/* System Settings & Policies */}
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
+          <h2 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "12px", color: "var(--ink)" }}>⚙️ System Settings & Policies</h2>
+          <div style={{ fontSize: "13px", color: "var(--ink-soft)", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Preferred SCM Theme:</span> <strong style={{ color: "#16C784" }}>Green Enterprise</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Backup Scheduler:</span> <strong style={{ color: "#16C784" }}>Daily (Auto)</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Packaging Standards:</span> <strong>Active</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Insurance Policies:</span> <strong>Active</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Audit Logs Retention:</span> <strong>90 Days</strong></div>
+          </div>
+        </div>
+
+        {/* Change Password Card */}
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
+          <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>🔒 Change Password</h2>
+          {secMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{secMsg}</div>}
+          {secErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{secErr}</div>}
+
+          <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Current Password</label>
+              <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+            </div>
+
+            {otpSent ? (
+              <>
+                <div style={{ padding: "10px", background: "rgba(22,199,132,0.06)", border: "1px solid rgba(22,199,132,0.2)", borderRadius: "8px", fontSize: "12px", color: "#16C784" }}>
+                  OTP verification email sent. Enter it below to unlock password updates.
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>OTP Code</label>
+                  <input type="text" required placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>New Password</label>
+                  <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Confirm New Password</label>
+                  <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+                </div>
+                <button className="btn-premium-primary" type="submit" style={{ marginTop: "10px" }}>Update Password</button>
+              </>
+            ) : (
+              <button type="button" disabled={sendingOtp || !currentPassword} onClick={handleSendOtp} className="btn-premium-primary" style={{ width: "100%", marginTop: "10px" }}>
+                {sendingOtp ? "Sending OTP..." : "Verify & Send OTP"}
+              </button>
+            )}
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+}

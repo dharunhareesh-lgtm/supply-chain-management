@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
-import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 
 import RegisterSupplier from "./pages/RegisterSupplier";
+import RegisterWarehouse from "./pages/RegisterWarehouse";
 import RegisterCustomer from "./pages/RegisterCustomer";
+import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageSuppliers from "./pages/admin/ManageSuppliers";
 import ManageProducts from "./pages/admin/ManageProducts";
@@ -12,6 +14,7 @@ import Reports from "./pages/admin/Reports";
 import ManageManagers from "./pages/admin/ManageManagers";
 import AddManager from "./pages/admin/AddManager";
 import EditManager from "./pages/admin/EditManager";
+import ManageWarehouses from "./pages/admin/ManageWarehouses";
 import SupplierDashboard from "./pages/supplier/SupplierDashboard";
 import AddProduct from "./pages/supplier/AddProduct";
 import MyProducts from "./pages/supplier/MyProducts";
@@ -23,10 +26,13 @@ import Orders from "./pages/customer/Orders";
 import CartPage from "./pages/customer/CartPage";
 import WishlistPage from "./pages/customer/WishlistPage";
 import ComparePage from "./pages/customer/ComparePage";
+import MarketForecast from "./pages/supplier/MarketForecast";
+import SupplierRevenue from "./pages/supplier/SupplierRevenue";
 
 import LogisticsDashboard from "./pages/logistics/LogisticsDashboard";
 import Deliveries from "./pages/logistics/Deliveries";
 import Tracking from "./pages/logistics/Tracking";
+import LogisticsRevenue from "./pages/logistics/LogisticsRevenue";
 import ManagerDashboard from "./pages/warehouse/ManagerDashboard";
 import WarehouseDashboard from "./pages/warehouse/WarehouseDashboard";
 import Inventory from "./pages/warehouse/Inventory";
@@ -48,15 +54,35 @@ import EditStock from "./pages/warehouse/EditStock";
 import OrderHistory from "./pages/logistics/OrderHistory";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { CartProvider } from "./context/CartContext";
+import FuturisticDashboardWrapper from "./components/FuturisticDashboardWrapper";
+
+// Custom agricultural features
+import AdminPackaging from "./pages/admin/AdminPackaging";
+import AdminInsurance from "./pages/admin/AdminInsurance";
+import SupplierInsurance from "./pages/supplier/SupplierInsurance";
+import WarehouseRevenue from "./pages/warehouse/WarehouseRevenue";
+import WarehouseClaims from "./pages/warehouse/WarehouseClaims";
+import WarehouseDispatch from "./pages/warehouse/WarehouseDispatch";
+import LogisticsVehicles from "./pages/logistics/LogisticsVehicles";
+import ManageLogistics from "./pages/admin/ManageLogistics";
+import RegisterLogistics from "./pages/RegisterLogistics";
+import WarehousePartnerships from "./pages/warehouse/WarehousePartnerships";
+import LogisticsPartnerships from "./pages/logistics/LogisticsPartnerships";
 
 function App() {
   return (
     <BrowserRouter>
       <CartProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
+        <FuturisticDashboardWrapper>
+          <Routes>
+            <Route path="/" element={<Home />} />
 
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Home autoOpenLogin />} />
+
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
 
           <Route
             path="/register-customer"
@@ -66,6 +92,21 @@ function App() {
           <Route
             path="/register-supplier"
             element={<RegisterSupplier />}
+          />
+
+          <Route
+            path="/register-logistics"
+            element={<RegisterLogistics />}
+          />
+
+          <Route
+            path="/register-warehouse"
+            element={<RegisterWarehouse />}
+          />
+
+          <Route
+            path="/settings"
+            element={<Settings />}
           />
 
           <Route
@@ -149,6 +190,24 @@ function App() {
 />
 
 <Route
+  path="/admin/logistics"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <ManageLogistics />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/warehouses"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <ManageWarehouses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
   path="/admin/add-manager"
   element={
     <ProtectedRoute role="ADMIN">
@@ -188,6 +247,24 @@ function App() {
             element={
               <ProtectedRoute role="SUPPLIER">
                 <MyProducts />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/supplier/revenue"
+            element={
+              <ProtectedRoute role="SUPPLIER">
+                <SupplierRevenue />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/supplier/edit-product/:id"
+            element={
+              <ProtectedRoute role="SUPPLIER">
+                <AdminEditProduct />
               </ProtectedRoute>
             }
           />
@@ -275,6 +352,15 @@ function App() {
           />
 
           <Route
+            path="/supplier/forecast"
+            element={
+              <ProtectedRoute role="SUPPLIER">
+                <MarketForecast />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/warehouse"
             element={
               <ProtectedRoute role="WAREHOUSE">
@@ -283,6 +369,14 @@ function App() {
             }
           />
 
+          <Route
+            path="/warehouse/revenue"
+            element={
+              <ProtectedRoute role="WAREHOUSE">
+                <WarehouseRevenue />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/warehouse/inventory"
             element={
@@ -311,6 +405,15 @@ function App() {
           />
 
           <Route
+            path="/warehouse/partnerships"
+            element={
+              <ProtectedRoute role="WAREHOUSE">
+                <WarehousePartnerships />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/warehouse/add-stock"
             element={
               <ProtectedRoute role="WAREHOUSE">
@@ -329,38 +432,46 @@ function App() {
           />
           <Route
   path="/warehouse/manager-register"
-  element={
-    <ProtectedRoute role="WAREHOUSE">
-      <ManagerRegister />
-    </ProtectedRoute>
-  }
+  element={<ManagerRegister />}
 />
 
 <Route
   path="/warehouse/manager-login"
-  element={
-    <ProtectedRoute role="WAREHOUSE">
-      <ManagerLogin />
-    </ProtectedRoute>
-  }
+  element={<ManagerLogin />}
 />
 <Route
   path="/warehouse/manager-dashboard"
   element={
-    <ProtectedRoute role="WAREHOUSE">
+    <ProtectedRoute role="WAREHOUSE_MANAGER">
       <ManagerDashboard />
     </ProtectedRoute>
   }
 />
 
-<Route
-  path="/warehouse/pending-products"
-  element={
-    <ProtectedRoute role="WAREHOUSE">
-      <PendingProducts />
-    </ProtectedRoute>
-  }
-/>
+          <Route
+            path="/warehouse/revenue"
+            element={
+              <ProtectedRoute role="WAREHOUSE">
+                <WarehouseRevenue />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/supplier/revenue"
+            element={
+              <ProtectedRoute role="SUPPLIER">
+                <SupplierRevenue />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/warehouse/pending-products"
+            element={
+              <ProtectedRoute role="WAREHOUSE">
+                <PendingProducts />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/logistics"
             element={
@@ -375,6 +486,15 @@ function App() {
             element={
               <ProtectedRoute role="LOGISTICS">
                 <Deliveries />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/logistics/revenue"
+            element={
+              <ProtectedRoute role="LOGISTICS">
+                <LogisticsRevenue />
               </ProtectedRoute>
             }
           />
@@ -399,10 +519,69 @@ function App() {
     </ProtectedRoute>
   }
 />
+
+{/* New custom routes */}
+<Route
+  path="/admin/packaging"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <AdminPackaging />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/insurance"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <AdminInsurance />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/supplier/insurance-claims"
+  element={
+    <ProtectedRoute role="SUPPLIER">
+      <SupplierInsurance />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/warehouse/claims"
+  element={
+    <ProtectedRoute role="WAREHOUSE">
+      <WarehouseClaims />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/warehouse/dispatch"
+  element={
+    <ProtectedRoute role="WAREHOUSE">
+      <WarehouseDispatch />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/logistics/vehicles"
+  element={
+    <ProtectedRoute role="LOGISTICS">
+      <LogisticsVehicles />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/logistics/partnership-requests"
+  element={
+    <ProtectedRoute role="LOGISTICS">
+      <LogisticsPartnerships />
+    </ProtectedRoute>
+  }
+/>
         </Routes>
-      </CartProvider>
-    </BrowserRouter>
-  );
+      </FuturisticDashboardWrapper>
+    </CartProvider>
+  </BrowserRouter>
+);
 }
 
 export default App;

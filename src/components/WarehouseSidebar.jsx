@@ -19,7 +19,12 @@ const NAV_ITEMS = [
   { to: "/warehouse", label: "Dashboard", icon: FaTachometerAlt, exact: true },
   { to: "/warehouse/inventory", label: "Inventory", icon: FaBoxes },
   { to: "/warehouse/stock", label: "Stock Management", icon: FaLayerGroup },
-  { to: "/warehouse/orders", label: "Orders", icon: FaClipboardList }
+  { to: "/warehouse/orders", label: "Orders", icon: FaClipboardList },
+  { to: "/warehouse/revenue", label: "Revenue & Settlements", icon: FaTachometerAlt },
+  { to: "/warehouse/dispatch", label: "AI Dispatch", icon: FaBoxes },
+  { to: "/warehouse/claims", label: "Verify Claims", icon: FaClipboardList },
+  { to: "/warehouse/partnerships", label: "Partnerships", icon: FaUserPlus },
+  { to: "/settings", label: "Settings", icon: FaUserPlus }
 ];
 
 const MANAGER_ITEMS = [

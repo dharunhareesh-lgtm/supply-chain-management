@@ -17,16 +17,9 @@ function Products() {
   const search = searchParams.get("search") || "";
 
   useEffect(() => {
-    fetch("http://localhost:8082/products")
+    fetch("http://localhost:8082/products?status=APPROVED")
       .then((response) => response.json())
-     .then((data) =>
-  setProducts(
-    data.filter(
-      (product) =>
-        product.status === "APPROVED"
-    )
-  )
-)
+      .then((data) => setProducts(data))
       .catch((error) => console.log(error))
       .finally(() => setLoading(false));
   }, []);

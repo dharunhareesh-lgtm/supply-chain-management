@@ -7,7 +7,11 @@ import {
   FaTag,
   FaRupeeSign,
   FaBoxOpen,
-  FaLayerGroup
+  FaLayerGroup,
+  FaWarehouse,
+  FaWeightHanging,
+  FaUser,
+  FaChartLine
 } from "react-icons/fa";
 
 function ManagerDashboard() {
@@ -15,91 +19,154 @@ function ManagerDashboard() {
 
   const [products, setProducts] = useState([]);
   const [capacities, setCapacities] = useState([]);
+  const [warehouseId, setWarehouseId] = useState(null);
+  const [warehouseInfo, setWarehouseInfo] = useState(null);
+  const [suppliers, setSuppliers] = useState({});
+  const [approvedCount, setApprovedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
-    fetch("http://localhost:8082/products")
-      .then((response) => response.json())
-      .then((data) => {
-        const filtered = data.filter(
-          (product) =>
-            product.category === managerCategory &&
-            product.status === "PENDING"
-        );
-        setProducts(filtered);
-      })
-      .catch((error) => console.log(error));
+    const managerEmail = localStorage.getItem("username");
+    const cachedWhId = localStorage.getItem("warehouseId");
 
-    fetch("http://localhost:8082/category-capacity")
-      .then((response) => response.json())
-      .then((data) => setCapacities(data))
-      .catch((error) => console.log(error));
+    const loadManagerData = (whId) => {
+      Promise.all([
+        fetch(`http://localhost:8082/products?warehouseId=${whId}&includeInactive=true&status=ALL`, {
+          headers: { "X-User-Email": managerEmail || "" }
+        }).then((r) => r.json()),
+
+        fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`).then((r) => r.json()),
+
+        fetch("http://localhost:8082/suppliers").then((r) => r.json())
+      ])
+        .then(([productsData, capsData, suppliersData]) => {
+          let allForCategory = productsData;
+          if (managerCategory) {
+            allForCategory = productsData.filter((p) => p.category === managerCategory);
+          }
+
+          const pending = allForCategory.filter((p) => p.status === "PENDING");
+          const approved = allForCategory.filter((p) => p.status === "APPROVED");
+
+          setProducts(pending);
+          setApprovedCount(approved.length);
+          setCapacities(capsData);
+
+          const sMap = {};
+          suppliersData.forEach((s) => {
+            sMap[s.supplierId] = s;
+          });
+          setSuppliers(sMap);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setLoading(false);
+        });
+    };
+
+    if (cachedWhId && cachedWhId !== "null" && cachedWhId !== "undefined") {
+      const parsedId = parseInt(cachedWhId);
+      setWarehouseId(parsedId);
+      loadManagerData(parsedId);
+      return;
+    }
+
+    if (!managerEmail) {
+      setLoading(false);
+      return;
+    }
+
+    fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((wl) => {
+        if (!wl) {
+          setLoading(false);
+          return;
+        }
+        setWarehouseId(wl.id);
+        setWarehouseInfo(wl);
+        loadManagerData(wl.id);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, [managerCategory]);
 
-  const updateStatus = async (product, status) => {
+  const handleApprove = async (product) => {
+    setActionLoading(product.productId);
     try {
-      if (status === "APPROVED") {
-        const capacity = capacities.find(
-          (c) => c.category === product.category
-        );
-
-        if (!capacity) {
-          alert("Category Capacity Not Found");
-          return;
-        }
-
-        const available = capacity.maxCapacity - capacity.usedCapacity;
-
-        if (product.stock > available) {
-          alert("Warehouse Capacity Exceeded");
-          return;
-        }
-
-        const updatedCapacity = {
-          ...capacity,
-          usedCapacity: capacity.usedCapacity + product.stock
-        };
-
-        await fetch("http://localhost:8082/category-capacity", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedCapacity)
-        });
-
-        setCapacities(
-          capacities.map((item) =>
-            item.capacityId === capacity.capacityId
-              ? updatedCapacity
-              : item
-          )
-        );
-      }
-
-      const updatedProduct = { ...product, status };
-
-      const response = await fetch("http://localhost:8082/products", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProduct)
+      const response = await fetch(`http://localhost:8082/products/${product.productId}/approve`, {
+        method: "POST"
       });
 
       if (response.ok) {
-        alert(`Product ${status}`);
-        setProducts(
-          products.filter((item) => item.productId !== product.productId)
+        showToast(`✅ ${product.productName} approved!`, "success");
+        setProducts(products.filter((p) => p.productId !== product.productId));
+        setApprovedCount((prev) => prev + 1);
+        setCapacities((prev) =>
+          prev.map((c) => {
+            if (c.category === product.category) {
+              return { ...c, usedCapacity: c.usedCapacity + product.stock };
+            }
+            return c;
+          })
         );
+      } else {
+        const errData = await response.json();
+        showToast(`❌ ${errData.error || "Approval failed"}`, "error");
       }
     } catch (error) {
-      console.log(error);
-      alert("Error Updating Product");
+      console.error(error);
+      showToast("❌ Error connecting to server.", "error");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const categoryCapacity = capacities.find(
-    (c) => c.category === managerCategory
-  );
+  const handleReject = async (product) => {
+    setActionLoading(product.productId);
+    try {
+      const response = await fetch(`http://localhost:8082/products/${product.productId}/reject`, {
+        method: "POST"
+      });
+
+      if (response.ok) {
+        showToast(`🚫 ${product.productName} rejected.`, "warning");
+        setProducts(products.filter((p) => p.productId !== product.productId));
+      } else {
+        const errData = await response.json();
+        showToast(`❌ ${errData.error || "Rejection failed"}`, "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("❌ Error connecting to server.", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const categoryCapacity = capacities.find((c) => c.category === managerCategory);
   const categoryAvailable = categoryCapacity
     ? categoryCapacity.maxCapacity - categoryCapacity.usedCapacity
     : null;
+
+  const getExpectedWarehouseRevenue = (product) => {
+    if (product.pricingStrategy === "PROFIT_PER_KG") {
+      return product.marginValue * product.stock;
+    } else if (product.pricingStrategy === "PROFIT_PERCENTAGE") {
+      return (product.price * product.stock * product.marginValue) / 100;
+    }
+    return 0;
+  };
 
   return (
     <>
@@ -109,11 +176,41 @@ function ManagerDashboard() {
         <WarehouseSidebar />
 
         <div className="content">
+          {/* Toast notification */}
+          {toast && (
+            <div
+              style={{
+                position: "fixed",
+                top: 20,
+                right: 20,
+                zIndex: 9999,
+                padding: "14px 22px",
+                borderRadius: 10,
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: 14,
+                boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+                background:
+                  toast.type === "success"
+                    ? "linear-gradient(135deg, #10B981, #059669)"
+                    : toast.type === "warning"
+                    ? "linear-gradient(135deg, #F59E0B, #D97706)"
+                    : "linear-gradient(135deg, #EF4444, #DC2626)",
+                animation: "fadeIn 0.3s ease"
+              }}
+            >
+              {toast.message}
+            </div>
+          )}
+
           <div className="wh-page-head">
             <div>
               <span className="eyebrow">Category Manager</span>
               <h1>Manager Dashboard</h1>
-              <p>Review and act on pending product requests.</p>
+              <p>
+                Review and act on pending product requests
+                {warehouseInfo ? ` for ${warehouseInfo.warehouseName}` : ""}.
+              </p>
             </div>
           </div>
 
@@ -140,19 +237,27 @@ function ManagerDashboard() {
               <div className="wh-kpi-value">{products.length}</div>
             </div>
 
+            <div className="wh-kpi-card">
+              <div className="wh-kpi-top">
+                <span className="wh-kpi-label">Approved Products</span>
+                <span className="wh-kpi-icon icon-green">
+                  <FaCheck />
+                </span>
+              </div>
+              <div className="wh-kpi-value">{approvedCount}</div>
+            </div>
+
             {categoryCapacity && (
               <div className="wh-kpi-card">
                 <div className="wh-kpi-top">
                   <span className="wh-kpi-label">Available Capacity</span>
-                  <span className="wh-kpi-icon icon-green">
-                    <FaLayerGroup />
+                  <span className="wh-kpi-icon icon-blue">
+                    <FaWarehouse />
                   </span>
                 </div>
                 <div className="wh-kpi-value">
                   {categoryAvailable}
-                  <span className="unit">
-                    / {categoryCapacity.maxCapacity}
-                  </span>
+                  <span className="unit"> / {categoryCapacity.maxCapacity} KG</span>
                 </div>
               </div>
             )}
@@ -163,7 +268,11 @@ function ManagerDashboard() {
               <h2>Pending Approval Requests</h2>
             </div>
 
-            {products.length === 0 ? (
+            {loading ? (
+              <div className="empty-state">
+                <h3>Loading...</h3>
+              </div>
+            ) : products.length === 0 ? (
               <div className="empty-state">
                 <h3>No pending requests</h3>
                 <p>New product submissions for this category will appear here.</p>
@@ -172,8 +281,10 @@ function ManagerDashboard() {
               <div className="wh-approval-grid">
                 {products.map((product) => {
                   const willExceed =
-                    categoryAvailable !== null &&
-                    product.stock > categoryAvailable;
+                    categoryAvailable !== null && product.stock > categoryAvailable;
+                  const supplier = suppliers[product.supplierId];
+                  const expectedRevenue = getExpectedWarehouseRevenue(product);
+                  const isProcessing = actionLoading === product.productId;
 
                   return (
                     <div className="wh-approval-card" key={product.productId}>
@@ -194,11 +305,74 @@ function ManagerDashboard() {
                           <FaTag /> {product.category}
                         </span>
                         <span className="wh-meta-chip">
-                          <FaRupeeSign /> {product.price}
+                          <FaRupeeSign /> ₹{product.price?.toFixed(2)}/KG
                         </span>
                         <span className="wh-meta-chip">
-                          <FaBoxOpen /> {product.stock} units
+                          <FaWeightHanging /> {product.stock} KG
                         </span>
+                        {supplier && (
+                          <span className="wh-meta-chip">
+                            <FaUser /> {supplier.supplierName}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Warehouse Charge Plan details */}
+                      <div
+                        style={{
+                          background: "rgba(139,92,246,0.06)",
+                          border: "1px solid rgba(139,92,246,0.15)",
+                          borderRadius: 8,
+                          padding: "12px 14px",
+                          margin: "8px 0"
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            color: "var(--ink-mute)",
+                            marginBottom: 8
+                          }}
+                        >
+                          Warehouse Charge Plan
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>Strategy</div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>
+                              {product.pricingStrategy === "PROFIT_PER_KG"
+                                ? "Charge Per KG"
+                                : product.pricingStrategy === "PROFIT_PERCENTAGE"
+                                ? "Sales Percentage"
+                                : product.pricingStrategy || "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>
+                              Warehouse Receives
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#8B5CF6" }}>
+                              {product.pricingStrategy === "PROFIT_PER_KG"
+                                ? `₹${product.marginValue}/KG Sold`
+                                : product.pricingStrategy === "PROFIT_PERCENTAGE"
+                                ? `${product.marginValue}% of Sales`
+                                : "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>
+                              Expected Revenue
+                            </div>
+                            <div
+                              style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}
+                            >
+                              ₹{expectedRevenue.toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       {categoryCapacity && (
@@ -208,22 +382,29 @@ function ManagerDashboard() {
                           }`}
                         >
                           {willExceed
-                            ? `Exceeds available capacity (${categoryAvailable} left)`
-                            : `Fits within capacity (${categoryAvailable} available)`}
+                            ? `⚠ Exceeds available capacity (${categoryAvailable} KG left)`
+                            : `✓ Fits within capacity (${categoryAvailable} KG available)`}
                         </div>
                       )}
 
                       <div className="wh-approval-actions">
                         <button
                           className="wh-approve-btn"
-                          disabled={willExceed}
-                          onClick={() => updateStatus(product, "APPROVED")}
+                          disabled={willExceed || isProcessing}
+                          onClick={() => handleApprove(product)}
                         >
-                          <FaCheck size={12} /> Approve
+                          {isProcessing ? (
+                            "Processing..."
+                          ) : (
+                            <>
+                              <FaCheck size={12} /> Approve
+                            </>
+                          )}
                         </button>
                         <button
                           className="wh-reject-btn"
-                          onClick={() => updateStatus(product, "REJECTED")}
+                          disabled={isProcessing}
+                          onClick={() => handleReject(product)}
                         >
                           <FaTimes size={12} /> Reject
                         </button>

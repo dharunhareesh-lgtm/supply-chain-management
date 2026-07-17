@@ -1,7 +1,11 @@
-import Navbar from "../../components/Navbar";
-import WarehouseSidebar from "../../components/WarehouseSidebar";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { User, Lock, ArrowRight } from "lucide-react";
+import {
+  AuthLayout, AuthCard, AuthTopBar, AuthHeader,
+  AuthInput, AuthPasswordInput, AuthPrimaryButton,
+  AuthError, AuthFooter
+} from "../../components/auth/AuthComponents";
 
 function ManagerLogin() {
 
@@ -13,119 +17,107 @@ function ManagerLogin() {
   const [password, setPassword] =
     useState("");
 
-  const handleSubmit = async (
-    e
-  ) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     try {
+      const response = await fetch("http://localhost:8082/managers/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+      });
 
-      const response =
-        await fetch(
-          "http://localhost:8082/managers"
-        );
+      if (response.ok) {
+        const manager = await response.json();
 
-      const managers =
-        await response.json();
+        // Store ALL session data required by warehouse pages
+        localStorage.setItem("managerId", manager.managerId);
+        localStorage.setItem("managerCategory", manager.category);
+        localStorage.setItem("username", manager.email); // Used by check-email for warehouse resolution
+        localStorage.setItem("warehouseId", manager.warehouseId);
+        localStorage.setItem("role", manager.role || "WAREHOUSE_MANAGER");
+        if (manager.token) {
+          localStorage.setItem("token", manager.token);
+        }
 
-      const manager =
-        managers.find(
-          (m) =>
-            m.username ===
-              username &&
-            m.password ===
-              password &&
-            m.status ===
-              "ACTIVE"
-        );
-
-      if (manager) {
-
-        localStorage.setItem(
-          "managerId",
-          manager.managerId
-        );
-
-        localStorage.setItem(
-          "managerCategory",
-          manager.category
-        );
-
-        alert(
-          "Login Successful"
-        );
-
-        navigate(
-          "/warehouse/manager-dashboard"
-        );
-
+        alert("Login Successful");
+        navigate("/warehouse/manager-dashboard");
       } else {
-
-        alert(
-          "Invalid Credentials"
-        );
-
+        setError("Invalid credentials. Please check your username/email and password.");
       }
-
     } catch (error) {
-
       console.log(error);
-
+      setError("Error connecting to server. Please try again.");
     }
   };
 
   return (
-    <>
-      <Navbar />
+    <AuthLayout>
+      <AuthCard>
+        <AuthTopBar backTo="/warehouse" backLabel="Back" />
 
-      <div className="layout">
+        <AuthHeader
+          title="Manager Login"
+          subtitle="Sign in to your warehouse manager account"
+        />
 
-        <WarehouseSidebar />
+        {error && <AuthError>{error}</AuthError>}
 
-        <div className="content">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <AuthInput
+            label="Username or Email"
+            icon={User}
+            type="text"
+            placeholder="Enter your username or email"
+            value={username}
+            onChange={(e) =>
+              setUsername(
+                e.target.value
+              )
+            }
+            required
+          />
 
-          <h1>Manager Login</h1>
+          <AuthPasswordInput
+            label="Password"
+            icon={Lock}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+            required
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
 
-          <form
-            className="product-form"
-            onSubmit={handleSubmit}
-          >
+          <div className="auth-checkbox-row">
+            <div />
+            <Link to="/forgot-password" className="auth-forgot-link">
+              Forgot Password?
+            </Link>
+          </div>
 
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) =>
-                setUsername(
-                  e.target.value
-                )
-              }
-            />
+          <AuthPrimaryButton>
+            Login <ArrowRight style={{ width: 18, height: 18 }} />
+          </AuthPrimaryButton>
+        </form>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) =>
-                setPassword(
-                  e.target.value
-                )
-              }
-            />
-
-            <button
-              type="submit"
-            >
-              Login
-            </button>
-
-          </form>
-
-        </div>
-
-      </div>
-    </>
+        <AuthFooter
+          text="Need to register?"
+          linkText="Manager Register"
+          linkTo="/warehouse/manager-register"
+        />
+      </AuthCard>
+    </AuthLayout>
   );
 }
 

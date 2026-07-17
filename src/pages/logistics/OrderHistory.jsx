@@ -8,7 +8,11 @@ function OrderHistory() {
 
   useEffect(() => {
 
-    fetch("http://localhost:8082/orders")
+    fetch("http://localhost:8082/orders", {
+      headers: {
+        "X-User-Email": localStorage.getItem("username") || ""
+      }
+    })
       .then((response) => response.json())
       .then((data) => {
 

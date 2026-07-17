@@ -3,7 +3,10 @@ import {
   FaTachometerAlt,
   FaPlusCircle,
   FaBox,
-  FaSignOutAlt
+  FaChartLine,
+  FaSignOutAlt,
+  FaChartBar,
+  FaShieldAlt
 } from "react-icons/fa";
 
 function SupplierSidebar() {
@@ -23,6 +26,22 @@ function SupplierSidebar() {
         <FaBox /> My Products
       </Link>
 
+      <Link to="/supplier/revenue">
+        <FaChartBar /> Revenue &amp; Earnings
+      </Link>
+
+      <Link to="/supplier/forecast">
+        <FaChartLine /> Market Forecast
+      </Link>
+
+      <Link to="/supplier/insurance-claims">
+        <FaShieldAlt /> Insurance Claims
+      </Link>
+
+      <Link to="/settings">
+        <FaShieldAlt /> Settings
+      </Link>
+
       <Link to="/">
         <FaSignOutAlt /> Logout
       </Link>
@@ -30,4 +49,4 @@ function SupplierSidebar() {
   );
 }
 
-export default SupplierSidebar;
+export default SupplierSidebar;

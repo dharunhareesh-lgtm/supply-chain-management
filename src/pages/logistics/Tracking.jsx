@@ -9,7 +9,12 @@ function Tracking() {
   useEffect(() => {
 
     fetch(
-      "http://localhost:8082/orders/status/In Transit"
+      "http://localhost:8082/orders/status/In Transit",
+      {
+        headers: {
+          "X-User-Email": localStorage.getItem("username") || ""
+        }
+      }
     )
       .then((response) => response.json())
       .then((data) => setOrders(data))

@@ -30,8 +30,28 @@ function AdminSidebar() {
         <FaUserTie /> Managers
       </Link>
 
+      <Link to="/admin/logistics">
+        <FaUsers /> Logistics Partners
+      </Link>
+
+      <Link to="/admin/warehouses">
+        <FaBox /> Warehouses
+      </Link>
+
       <Link to="/admin/reports">
         <FaChartBar /> Reports
+      </Link>
+
+      <Link to="/admin/packaging">
+        <FaBox /> Packaging standards
+      </Link>
+
+      <Link to="/admin/insurance">
+        <FaUserTie /> Insurance policies
+      </Link>
+
+      <Link to="/settings">
+        <FaUserTie /> Settings
       </Link>
 
       <Link to="/">

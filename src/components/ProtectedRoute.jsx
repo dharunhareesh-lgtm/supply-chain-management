@@ -5,13 +5,15 @@ function ProtectedRoute({
   role
 }) {
 
-  const userRole =
-    localStorage.getItem("role");
+  const userRole = localStorage.getItem("role");
 
-  if (userRole !== role) {
+  // Allow matching if userRole matches target role exactly, or if user is WAREHOUSE_MANAGER and target is WAREHOUSE
+  const isAllowed = userRole === role || 
+                    (role === "WAREHOUSE" && userRole === "WAREHOUSE_MANAGER") ||
+                    (Array.isArray(role) && role.includes(userRole));
 
+  if (!isAllowed) {
     return <Navigate to="/login" />;
-
   }
 
   return children;

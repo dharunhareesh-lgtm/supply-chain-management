@@ -1,6 +1,7 @@
 import SupplierSidebar from "../../components/SupplierSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 function SupplierDashboard() {
 
@@ -17,30 +18,29 @@ function SupplierDashboard() {
       `http://localhost:8082/products/supplier/${supplierId}`
     )
       .then((response) => response.json())
-      .then((data) => {
+      .then((myProducts) => {
+        setProductCount(myProducts.length);
+        const myProductNames = myProducts.map((p) => p.productName);
 
-        setProductCount(data.length);
+        fetch("http://localhost:8082/orders")
+          .then((response) => response.json())
+          .then((data) => {
+            const myOrders = data.filter((order) =>
+              myProductNames.includes(order.productName)
+            );
 
-      })
-      .catch((error) => console.log(error));
+            const pending = myOrders.filter(
+              (order) => order.status === "Pending"
+            ).length;
 
-    fetch("http://localhost:8082/orders")
-      .then((response) => response.json())
-      .then((data) => {
+            const delivered = myOrders.filter(
+              (order) => order.status === "Delivered"
+            ).length;
 
-        const pending = data.filter(
-          (order) =>
-            order.status === "Pending"
-        ).length;
-
-        const delivered = data.filter(
-          (order) =>
-            order.status === "Delivered"
-        ).length;
-
-        setPendingOrders(pending);
-        setDeliveredOrders(delivered);
-
+            setPendingOrders(pending);
+            setDeliveredOrders(delivered);
+          })
+          .catch((error) => console.log(error));
       })
       .catch((error) => console.log(error));
 
@@ -54,7 +54,12 @@ function SupplierDashboard() {
 
         <SupplierSidebar />
 
-        <div className="content">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="content"
+        >
 
           <h1>Supplier Dashboard</h1>
 
@@ -77,7 +82,7 @@ function SupplierDashboard() {
 
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
     </>
