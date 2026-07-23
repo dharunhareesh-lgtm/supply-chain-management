@@ -4,7 +4,7 @@ const originalFetch = window.fetch;
 window.fetch = function (input, init) {
   let url = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : null);
   if (url) {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082';
+    const API_URL = import.meta.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:8082';
     if (url.startsWith('http://localhost:8082')) {
       url = url.replace('http://localhost:8082', API_URL);
     } else if (url.startsWith('/')) {

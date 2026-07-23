@@ -15,9 +15,15 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // 256-bit secure key for HS256 algorithm
-    private static final String SECRET_KEY_STRING = "d2d5OTlhMzJmY2I3YTI1NzRlY2U4NWJiYWMyZDU2YjFhMmU4NWI5YmFjMmQ1NmIxYTJlODViOWI=";
-    private final Key secretKey = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
+    @org.springframework.beans.factory.annotation.Value("${jwt.secret:d2d5OTlhMzJmY2I3YTI1NzRlY2U4NWJiYWMyZDU2YjFhMmU4NWI5YmFjMmQ1NmIxYTJlODViOWI=}")
+    private String secretKeyString;
+
+    private Key secretKey;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
+    }
 
     public String generateToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
