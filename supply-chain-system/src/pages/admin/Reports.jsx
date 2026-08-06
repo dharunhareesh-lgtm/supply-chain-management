@@ -1,3 +1,7 @@
+/**
+ * Reports.jsx — Premium redesign for Marketplace Financial Distribution.
+ * All business logic PRESERVED.
+ */
 import AdminSidebar from "../../components/AdminSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useState, useCallback } from "react";
@@ -7,9 +11,27 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  CartesianGrid
 } from "recharts";
-import { FaCheckCircle, FaExchangeAlt, FaHourglassHalf, FaMoneyBillWave, FaShieldAlt } from "react-icons/fa";
+import {
+  DollarSign, RefreshCw, BarChart3, Users, Warehouse, Truck, Clock, CheckCircle2, ShieldAlert
+} from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBadge, DashBtn, TableWrap, EmptyState, StatCard, StatGrid, InfoRow
+} from "../../components/dashboard/DashboardEngine";
+
+/* ── Custom recharts tooltip ── */
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "rgba(8,11,20,0.95)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
+      <p style={{ fontSize: 11, color: "rgba(16,185,129,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 16, fontWeight: 800, color: "#fff", margin: 0 }}>₹{payload[0].value.toLocaleString("en-IN")}</p>
+    </div>
+  );
+}
 
 function Reports() {
   const [activeTab, setActiveTab] = useState("METRICS"); // METRICS, DISTRIBUTIONS
@@ -87,238 +109,203 @@ function Reports() {
   return (
     <>
       <Navbar />
-
       <div className="layout">
         <AdminSidebar />
-
-        <div className="content" style={{ background: "#0a0f0d", minHeight: "100vh", padding: "24px", color: "#fff" }}>
-          
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-            <div>
-              <span style={{ color: "var(--primary)", fontWeight: "700", textTransform: "uppercase", fontSize: "12px", letterSpacing: "1px" }}>Financial Settlement Panel</span>
-              <h1 style={{ color: "#fff", fontSize: "28px", marginTop: "4px", fontWeight: "800" }}>Marketplace Financial Distribution</h1>
-            </div>
-
-            {/* Tab Toggles */}
-            <div style={{ display: "flex", gap: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", padding: "4px", borderRadius: "8px" }}>
-              <button 
-                onClick={() => setActiveTab("METRICS")}
-                style={{
-                  padding: "8px 16px",
-                  background: activeTab === "METRICS" ? "var(--primary)" : "transparent",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s"
-                }}
-              >
-                Financial Metrics
-              </button>
-              <button 
-                onClick={() => setActiveTab("DISTRIBUTIONS")}
-                style={{
-                  padding: "8px 16px",
-                  background: activeTab === "DISTRIBUTIONS" ? "var(--primary)" : "transparent",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s"
-                }}
-              >
-                Financial Distribution Console
-              </button>
-            </div>
-          </div>
+        <PageShell>
+          <PageHeader
+            title="Marketplace Finance"
+            subtitle="Admin clearinghouse ledger and revenue sharing console"
+            breadcrumb={["Admin", "Financial Distributions"]}
+            actions={
+              <div style={{ display: "flex", gap: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", padding: "4px", borderRadius: "10px" }}>
+                <DashBtn 
+                  variant={activeTab === "METRICS" ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab("METRICS")}
+                >
+                  Metrics Summary
+                </DashBtn>
+                <DashBtn 
+                  variant={activeTab === "DISTRIBUTIONS" ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab("DISTRIBUTIONS")}
+                >
+                  Distribution Console
+                </DashBtn>
+              </div>
+            }
+          />
 
           {activeTab === "METRICS" ? (
             <>
               {/* KPI Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "28px" }}>
-                {[
-                  { label: "Total Customer Payments", val: totalCustomerPayments, color: "#10b981", icon: <FaMoneyBillWave /> },
-                  { label: "Total Supplier Earnings", val: totalSupplierAmount, color: "#22c55e", icon: <FaExchangeAlt /> },
-                  { label: "Total Warehouse Revenue", val: totalWarehouseAmount, color: "#f59e0b", icon: <FaHourglassHalf /> },
-                  { label: "Total Logistics Revenue", val: totalLogisticsAmount, color: "#3b82f6", icon: <FaShieldAlt /> },
-                  { label: "Pending Revenue Distribution", val: pendingDistributionAmount, color: "#f97316", icon: <FaHourglassHalf /> },
-                  { label: "Distributed Revenue", val: distributedAmount, color: "#10b981", icon: <FaCheckCircle /> },
-                  { label: "Orders Waiting Distribution", val: ordersWaitingCount, color: "#a855f7", icon: <FaRegClock />, isRaw: true }
-                ].map((k, i) => (
-                  <div key={i} style={{ border: `1px solid ${k.color}33`, background: "#0d1a10", padding: "18px 16px", borderRadius: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", color: "#6b7280", fontSize: "11px", textTransform: "uppercase", fontWeight: "700" }}>
-                      <span>{k.label}</span>
-                      <span style={{ color: k.color }}>{k.icon}</span>
-                    </div>
-                    <div style={{ fontSize: "22px", fontWeight: "800", color: k.color, marginTop: "8px" }}>
-                      {k.isRaw ? k.val : fmt(k.val)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <StatGrid>
+                <StatCard title="Total Payments" value={fmt(totalCustomerPayments)} icon={DollarSign} color="emerald" index={0} />
+                <StatCard title="Supplier Shares" value={fmt(totalSupplierAmount)} icon={Users} color="blue" index={1} />
+                <StatCard title="Warehouse Shares" value={fmt(totalWarehouseAmount)} icon={Warehouse} color="violet" index={2} />
+                <StatCard title="Logistics Shares" value={fmt(totalLogisticsAmount)} icon={Truck} color="cyan" index={3} />
+                <StatCard title="Pending Clearing" value={fmt(pendingDistributionAmount)} icon={Clock} color="amber" index={4} />
+                <StatCard title="Total Cleared" value={fmt(distributedAmount)} icon={CheckCircle2} color="emerald" index={5} />
+                <StatCard title="Awaiting Orders" value={ordersWaitingCount} icon={ShieldAlert} color="red" index={6} trendLabel="to clear" />
+              </StatGrid>
 
               {/* Chart */}
-              <div style={{ background: "#0d1a10", border: "1px solid #1f2d22", padding: "24px", borderRadius: "16px" }}>
-                <h3 style={{ marginBottom: "16px", color: "var(--primary)" }}>Stakeholder Revenue Shares Distribution</h3>
+              <DashCard>
+                <CardHeader
+                  title="Stakeholder Revenue Share Distributions"
+                  subtitle="Earnings breakdown by role tier across Dravix Network"
+                  icon={BarChart3}
+                />
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
-                    <XAxis dataKey="name" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip contentStyle={{ background: "#0a0f0d", border: "1px solid rgba(255,255,255,0.1)" }} />
-                    <Bar dataKey="amount" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(16,185,129,0.05)" }} />
+                    <Bar dataKey="amount" fill="url(#reportsBarGrad)" radius={[6, 6, 0, 0]} />
+                    <defs>
+                      <linearGradient id="reportsBarGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#059669" stopOpacity={0.4} />
+                      </linearGradient>
+                    </defs>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </DashCard>
             </>
           ) : (
             /* Distribution Control Panel Tab */
-            <div style={{ background: "#0d1a10", border: "1px solid #1f2d22", borderRadius: "16px", padding: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "18px", color: "var(--primary)", fontWeight: "800" }}>Active Marketplace Revenue Distributions</h3>
-                <button onClick={fetchDistributions} style={{ padding: "6px 12px", background: "transparent", border: "1px solid #1f2d22", borderRadius: "6px", color: "#4ade80", cursor: "pointer", fontWeight: "600" }}>
-                  Refresh List
-                </button>
-              </div>
+            <DashCard noPad>
+              <CardHeader
+                title="Active Distributions Console"
+                subtitle="Clear settlement parameters and dispatch funds to stakeholder accounts"
+                icon={DollarSign}
+                actions={
+                  <DashBtn variant="ghost" size="sm" icon={RefreshCw} onClick={fetchDistributions}>
+                    Refresh List
+                  </DashBtn>
+                }
+              />
 
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #1f2d22", color: "#6b7280" }}>
-                      <th style={{ padding: "12px" }}>Order ID</th>
-                      <th style={{ padding: "12px" }}>Supplier</th>
-                      <th style={{ padding: "12px" }}>Warehouse</th>
-                      <th style={{ padding: "12px" }}>Logistics</th>
-                      <th style={{ padding: "12px" }}>Gross Revenue</th>
-                      <th style={{ padding: "12px" }}>Supplier Net</th>
-                      <th style={{ padding: "12px" }}>WH Share</th>
-                      <th style={{ padding: "12px" }}>Logistics Share</th>
-                      <th style={{ padding: "12px" }}>Status</th>
-                      <th style={{ padding: "12px" }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {distributions.map((d) => (
-                      <tr key={d.id} style={{ borderBottom: "1px solid #111a14" }}>
-                        <td style={{ padding: "12px", fontWeight: "700", color: "#22c55e" }}>ORD-{String(d.orderId).padStart(4, "0")}</td>
-                        <td style={{ padding: "12px" }}>Supplier #{d.supplierId}</td>
-                        <td style={{ padding: "12px" }}>Warehouse #{d.warehouseId}</td>
-                        <td style={{ padding: "12px" }}>{d.logisticsId ? `Logistics #${d.logisticsId}` : "Self Pickup"}</td>
-                        <td style={{ padding: "12px", color: "#10b981" }}>{fmt(d.supplierAmount + d.warehouseAmount + d.logisticsAmount + d.platformFee)}</td>
-                        <td style={{ padding: "12px", color: "#4ade80", fontWeight: "700" }}>{fmt(d.supplierAmount)}</td>
-                        <td style={{ padding: "12px", color: "#f59e0b" }}>{fmt(d.warehouseAmount)}</td>
-                        <td style={{ padding: "12px", color: "#3b82f6" }}>{fmt(d.logisticsAmount)}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            background: d.status === "PENDING_DISTRIBUTION" ? "rgba(245, 158, 11, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                            color: d.status === "PENDING_DISTRIBUTION" ? "#f59e0b" : "#10b981"
-                          }}>
-                            {d.status === "PENDING_DISTRIBUTION" ? "Pending Distribution" : "Distributed"}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px" }}>
-                          <div style={{ display: "flex", gap: "6px" }}>
-                            <button 
-                              onClick={() => { setSelectedItem(d); setShowDetailModal(true); }}
-                              style={{ background: "#1e293b", color: "#ccc", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
+              <TableWrap>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Supplier</th>
+                    <th>Warehouse</th>
+                    <th>Logistics</th>
+                    <th>Gross Payment</th>
+                    <th>Supplier Net</th>
+                    <th>WH Commission</th>
+                    <th>Logistics Freight</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {distributions.map((d) => (
+                    <tr key={d.id}>
+                      <td style={{ fontWeight: "700" }}>ORD-{String(d.orderId).padStart(4, "0")}</td>
+                      <td style={{ fontSize: 12 }}>Supplier #{d.supplierId}</td>
+                      <td style={{ fontSize: 12 }}>Warehouse #{d.warehouseId}</td>
+                      <td style={{ fontSize: 12 }}>{d.logisticsId ? `Logistics #${d.logisticsId}` : "Self Pickup"}</td>
+                      <td style={{ color: "#10b981", fontWeight: "600" }}>{fmt(d.supplierAmount + d.warehouseAmount + d.logisticsAmount + d.platformFee)}</td>
+                      <td style={{ color: "#10b981", fontWeight: "700" }}>{fmt(d.supplierAmount)}</td>
+                      <td style={{ color: "#f59e0b" }}>{fmt(d.warehouseAmount)}</td>
+                      <td style={{ color: "#3b82f6" }}>{fmt(d.logisticsAmount)}</td>
+                      <td>
+                        <DashBadge
+                          status={d.status === "PENDING_DISTRIBUTION" ? "pending" : "approved"}
+                          label={d.status === "PENDING_DISTRIBUTION" ? "Pending" : "Cleared"}
+                        />
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <DashBtn 
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSelectedItem(d); setShowDetailModal(true); }}
+                          >
+                            Breakdown
+                          </DashBtn>
+                          {d.status === "PENDING_DISTRIBUTION" && (
+                            <DashBtn 
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleDistribute(d.orderId)}
                             >
-                              View Breakdown
-                            </button>
-                            {d.status === "PENDING_DISTRIBUTION" && (
-                              <button 
-                                onClick={() => handleDistribute(d.orderId)}
-                                style={{ background: "#16a34a", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                Distribute Revenue
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {distributions.length === 0 && (
-                      <tr>
-                        <td colSpan={10} style={{ padding: "20px", textAlign: "center", color: "#6b7280" }}>No distribution records resolved.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                              Clear Payout
+                            </DashBtn>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {distributions.length === 0 && (
+                    <tr>
+                      <td colSpan={10}>
+                        <EmptyState
+                          icon={DollarSign}
+                          title="No records found"
+                          subtitle="Distribution ledgers are empty."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </TableWrap>
+            </DashCard>
           )}
-
-        </div>
+        </PageShell>
       </div>
 
       {/* Detail Breakdown Modal */}
       {showDetailModal && selectedItem && (
         <div style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          inset: 0,
           background: "rgba(0,0,0,0.8)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 9999
+          zIndex: 9999,
+          backdropFilter: "blur(8px)"
         }}>
           <div style={{
-            background: "#0d0e12",
-            border: "1px solid #1f2d22",
-            borderRadius: "12px",
-            padding: "24px",
-            width: "420px",
-            color: "#fff"
+            background: "rgba(10, 14, 26, 0.95)",
+            border: "1px solid rgba(16,185,129,0.22)",
+            borderRadius: "20px",
+            padding: "28px",
+            width: "440px",
+            color: "#fff",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.6)"
           }}>
-            <h3 style={{ marginBottom: "16px", color: "var(--primary)", fontWeight: "800" }}>Revenue Distribution Breakdown</h3>
+            <h3 style={{ marginBottom: "20px", color: "#fff", fontWeight: "800", fontSize: "16px" }}>Clearinghouse Allocation Breakdown</h3>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px", fontSize: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Order Reference:</span><strong>ORD-{String(selectedItem.orderId).padStart(4, "0")}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Supplier ID:</span><strong>Supplier #{selectedItem.supplierId}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Warehouse ID:</span><strong>Warehouse #{selectedItem.warehouseId}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Logistics ID:</span><strong>{selectedItem.logisticsId ? `Logistics #${selectedItem.logisticsId}` : "Self Pickup"}</strong>
-              </div>
-              <hr style={{ border: "none", borderTop: "1px solid #1f2d22" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#10b981" }}>
-                <span>Supplier Net Share:</span><strong>{fmt(selectedItem.supplierAmount)}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#f59e0b" }}>
-                <span>Warehouse Commission:</span><strong>{fmt(selectedItem.warehouseAmount)}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#3b82f6" }}>
-                <span>Logistics Freight Share:</span><strong>{fmt(selectedItem.logisticsAmount)}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#ef4444" }}>
-                <span>Platform Service Fee (1%):</span><strong>{fmt(selectedItem.platformFee)}</strong>
-              </div>
-              <hr style={{ border: "none", borderTop: "1px solid #1f2d22" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", fontWeight: "700" }}>
-                <span>Gross Customer Paid:</span><strong>{fmt(selectedItem.supplierAmount + selectedItem.warehouseAmount + selectedItem.logisticsAmount + selectedItem.platformFee)}</strong>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "24px" }}>
+              <InfoRow label="Order Reference" value={`ORD-${String(selectedItem.orderId).padStart(4, "0")}`} />
+              <InfoRow label="Supplier Account" value={`Supplier #${selectedItem.supplierId}`} />
+              <InfoRow label="Warehouse Account" value={`Warehouse #${selectedItem.warehouseId}`} />
+              <InfoRow label="Logistics Carrier" value={selectedItem.logisticsId ? `Logistics #${selectedItem.logisticsId}` : "Self Pickup"} />
+              <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "8px 0" }} />
+              <InfoRow label="Supplier Yield Payout" value={fmt(selectedItem.supplierAmount)} />
+              <InfoRow label="Warehouse Comm. (5%)" value={fmt(selectedItem.warehouseAmount)} />
+              <InfoRow label="Logistics Freight Cost" value={fmt(selectedItem.logisticsAmount)} />
+              <InfoRow label="Platform Commission (1%)" value={fmt(selectedItem.platformFee)} />
+              <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "8px 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px", fontWeight: "700", paddingTop: "4px" }}>
+                <span>Gross Clearing Volume:</span>
+                <span style={{ color: "#10b981" }}>{fmt(selectedItem.supplierAmount + selectedItem.warehouseAmount + selectedItem.logisticsAmount + selectedItem.platformFee)}</span>
               </div>
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button 
+              <DashBtn 
+                variant="primary"
                 onClick={() => setShowDetailModal(false)}
-                style={{ padding: "8px 16px", background: "var(--primary)", border: "none", color: "#fff", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}
               >
                 Close Breakdown
-              </button>
+              </DashBtn>
             </div>
           </div>
         </div>
@@ -326,7 +313,5 @@ function Reports() {
     </>
   );
 }
-
-import { FaRegClock } from "react-icons/fa";
 
 export default Reports;

@@ -31,17 +31,23 @@ function useDebounce(fn, delay) {
 // Reverse geocode using Nominatim
 async function reverseGeocode(lat, lng) {
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`,
-    { headers: { "User-Agent": "SCMS-AgriSupplyChain/1.0" } }
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`
   );
+  if (!res.ok) {
+    throw new Error(`Reverse geocoding HTTP error ${res.status}`);
+  }
   const data = await res.json();
   if (!data || !data.address) return null;
   const a = data.address;
+  const streetName = [a.road, a.neighbourhood, a.suburb].filter(Boolean).join(", ");
+  const areaName = a.village || a.town || a.hamlet || a.subdistrict || a.taluk || "";
+  
   return {
     displayName: data.display_name || "",
-    street: [a.road, a.neighbourhood, a.suburb].filter(Boolean).join(", "),
-    area: a.village || a.town || a.hamlet || "",
-    city: a.city || a.town || a.state_district || "",
+    street: streetName,
+    area: areaName,
+    village: a.village || a.hamlet || "",
+    town: a.town || a.city || "",
     district: a.state_district || a.county || a.city || "",
     state: a.state || "",
     country: a.country || "",
@@ -123,9 +129,16 @@ export default function InteractiveMapPicker({
   );
   const [geocodedAddress, setGeocodedAddress] = useState(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
   const [flyTarget, setFlyTarget] = useState(
     initialPosition ? initialPosition : null
   );
+
+  const showToast = (text, type = "info") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Sync when initialPosition changes (for edit mode)
   useEffect(() => {
@@ -135,65 +148,155 @@ export default function InteractiveMapPicker({
     }
   }, [initialPosition?.[0], initialPosition?.[1]]);
 
-  // Debounced reverse geocoding
+  // Reverse geocoding execution
   const performReverseGeocode = useDebounce(async (lat, lng) => {
     setIsGeocoding(true);
     try {
       const result = await reverseGeocode(lat, lng);
       setGeocodedAddress(result);
-      if (onLocationSelect && result) {
-        onLocationSelect({
-          latitude: lat,
-          longitude: lng,
-          address: result.street ? `${result.street}, ${result.area}`.replace(/, $/, '') : result.displayName,
-          district: result.district,
-          state: result.state,
-          country: result.country,
-          postalCode: result.postalCode,
-        });
+      if (onLocationSelect) {
+        if (result) {
+          const streetAddr = result.street 
+            ? `${result.street}${result.area ? ', ' + result.area : ''}` 
+            : (result.area || result.displayName || "");
+          onLocationSelect({
+            latitude: lat,
+            longitude: lng,
+            address: streetAddr || result.displayName || "",
+            village: result.village || "",
+            district: result.district || "",
+            state: result.state || "",
+            country: result.country || "",
+            postalCode: result.postalCode || "",
+          });
+        } else {
+          onLocationSelect({
+            latitude: lat,
+            longitude: lng,
+            address: `GPS (${lat.toFixed(5)}, ${lng.toFixed(5)})`,
+            village: "",
+            district: "",
+            state: "",
+            country: "",
+            postalCode: "",
+          });
+        }
       }
     } catch (err) {
       console.error("Reverse geocoding failed:", err);
+      showToast("Could not retrieve detailed address for selected point.", "error");
+      if (onLocationSelect) {
+        onLocationSelect({
+          latitude: lat,
+          longitude: lng,
+          address: `GPS (${lat.toFixed(5)}, ${lng.toFixed(5)})`,
+          village: "",
+          district: "",
+          state: "",
+          country: "",
+          postalCode: "",
+        });
+      }
     } finally {
       setIsGeocoding(false);
     }
-  }, 400);
+  }, 300);
+
+  const updateLocation = (lat, lng, fly = false, directPlaceData = null) => {
+    if (readOnly) return;
+    // Clear stale state immediately before fetching new place info
+    setGeocodedAddress(null);
+    const pos = [lat, lng];
+    setMarkerPosition(pos);
+    if (fly) {
+      setFlyTarget(pos);
+    }
+
+    if (directPlaceData && directPlaceData.address) {
+      const a = directPlaceData.address;
+      const streetName = [a.road, a.neighbourhood, a.suburb].filter(Boolean).join(", ");
+      const areaName = a.village || a.town || a.hamlet || a.subdistrict || a.taluk || "";
+      const parsed = {
+        displayName: directPlaceData.display_name || "",
+        street: streetName,
+        area: areaName,
+        village: a.village || a.hamlet || "",
+        town: a.town || a.city || "",
+        district: a.state_district || a.county || a.city || "",
+        state: a.state || "",
+        country: a.country || "",
+        postalCode: a.postcode || "",
+      };
+      setGeocodedAddress(parsed);
+      const streetAddr = parsed.street 
+        ? `${parsed.street}${parsed.area ? ', ' + parsed.area : ''}` 
+        : (parsed.area || parsed.displayName || "");
+      if (onLocationSelect) {
+        onLocationSelect({
+          latitude: lat,
+          longitude: lng,
+          address: streetAddr || parsed.displayName || "",
+          village: parsed.village || "",
+          district: parsed.district || "",
+          state: parsed.state || "",
+          country: parsed.country || "",
+          postalCode: parsed.postalCode || "",
+        });
+      }
+    } else {
+      performReverseGeocode(lat, lng);
+    }
+  };
 
   const handleMapClick = (latlng) => {
-    if (readOnly) return;
-    const pos = [latlng.lat, latlng.lng];
-    setMarkerPosition(pos);
-    performReverseGeocode(latlng.lat, latlng.lng);
+    updateLocation(latlng.lat, latlng.lng, false);
   };
 
   const handleMarkerDrag = (latlng) => {
-    const pos = [latlng.lat, latlng.lng];
-    setMarkerPosition(pos);
-    performReverseGeocode(latlng.lat, latlng.lng);
+    updateLocation(latlng.lat, latlng.lng, false);
   };
 
   const handleSearchSelect = (place) => {
-    const pos = [parseFloat(place.lat), parseFloat(place.lon)];
-    setMarkerPosition(pos);
-    setFlyTarget(pos);
-    performReverseGeocode(pos[0], pos[1]);
+    const lat = parseFloat(place.lat);
+    const lng = parseFloat(place.lon);
+    updateLocation(lat, lng, true, place);
+  };
+
+  const handleClearLocation = () => {
+    setMarkerPosition(null);
+    setGeocodedAddress(null);
+    setFlyTarget(DEFAULT_CENTER);
+    if (onLocationSelect) {
+      onLocationSelect({
+        latitude: null,
+        longitude: null,
+        address: "",
+        village: "",
+        district: "",
+        state: "",
+        country: "",
+        postalCode: "",
+      });
+    }
+    showToast("Location cleared", "info");
   };
 
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      showToast("Geolocation is not supported by your browser.", "error");
       return;
     }
+    setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const latlng = [pos.coords.latitude, pos.coords.longitude];
-        setMarkerPosition(latlng);
-        setFlyTarget(latlng);
-        performReverseGeocode(latlng[0], latlng[1]);
+        setIsLocating(false);
+        updateLocation(pos.coords.latitude, pos.coords.longitude, true);
+        showToast("Location updated to GPS position", "success");
       },
       (err) => {
-        alert("Unable to retrieve your location. Please allow location access.");
-        console.error(err);
+        setIsLocating(false);
+        showToast("Unable to retrieve your location. Please check location permissions.", "error");
+        console.error("Geolocation error:", err);
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -211,13 +314,21 @@ export default function InteractiveMapPicker({
 
   return (
     <div>
+      {/* Toast notification banner */}
+      {toastMessage && (
+        <div className={`map-toast-notification map-toast-${toastMessage.type}`}>
+          <span>{toastMessage.type === "error" ? "⚠️" : toastMessage.type === "success" ? "✓" : "ℹ️"}</span>
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       <div className="map-picker-container" style={{ position: "relative" }}>
         {/* Geocoding loading overlay */}
-        {isGeocoding && (
+        {(isGeocoding || isLocating) && (
           <div className="map-geocoding-overlay">
             <div className="map-geocoding-spinner">
               <div className="spinner"></div>
-              Fetching address...
+              {isLocating ? "Acquiring GPS Location..." : "Fetching location details..."}
             </div>
           </div>
         )}
@@ -236,7 +347,7 @@ export default function InteractiveMapPicker({
           {/* Search bar */}
           {!readOnly && (
             <div className="map-search-overlay">
-              <LocationSearchBar onSelect={handleSearchSelect} />
+              <LocationSearchBar onSelect={handleSearchSelect} onClear={handleClearLocation} />
             </div>
           )}
 
@@ -246,7 +357,7 @@ export default function InteractiveMapPicker({
           {/* Fly to location */}
           <FlyToLocation position={flyTarget} />
 
-          {/* Draggable marker */}
+          {/* Single Draggable Marker */}
           {markerPosition && (
             <DraggableMarker
               position={markerPosition}
@@ -286,47 +397,78 @@ export default function InteractiveMapPicker({
               type="button"
               className="map-control-btn"
               onClick={handleCurrentLocation}
-              title="Use current location"
+              title="Use Current Location (GPS)"
             >
               📍
             </button>
+            {markerPosition && (
+              <button
+                type="button"
+                className="map-control-btn map-control-btn-clear"
+                onClick={handleClearLocation}
+                title="Clear Selected Location"
+              >
+                🗑️
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Address card */}
-      {geocodedAddress && markerPosition && (
+      {markerPosition && (
         <div className="map-address-card">
-          <div className="map-address-card-header">
-            <div className="icon">📍</div>
-            Selected Location
+          <div className="map-address-card-header flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="icon">📍</div>
+              <span>Selected Location Details</span>
+            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={handleClearLocation}
+                className="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
           <div className="map-address-grid">
             <div className="map-address-field full">
               <span className="map-address-label">Address</span>
               <div className="map-address-value">
-                {geocodedAddress.street || geocodedAddress.displayName || "—"}
+                {geocodedAddress
+                  ? (geocodedAddress.street || geocodedAddress.displayName || "—")
+                  : isGeocoding ? "Fetching address..." : "Selected on Map"}
               </div>
             </div>
             <div className="map-address-field">
               <span className="map-address-label">District</span>
-              <div className="map-address-value">{geocodedAddress.district || "—"}</div>
+              <div className="map-address-value">
+                {geocodedAddress?.district || (isGeocoding ? "..." : "—")}
+              </div>
             </div>
             <div className="map-address-field">
               <span className="map-address-label">State</span>
-              <div className="map-address-value">{geocodedAddress.state || "—"}</div>
+              <div className="map-address-value">
+                {geocodedAddress?.state || (isGeocoding ? "..." : "—")}
+              </div>
             </div>
             <div className="map-address-field">
               <span className="map-address-label">Country</span>
-              <div className="map-address-value">{geocodedAddress.country || "—"}</div>
+              <div className="map-address-value">
+                {geocodedAddress?.country || (isGeocoding ? "..." : "—")}
+              </div>
             </div>
             <div className="map-address-field">
               <span className="map-address-label">Postal Code</span>
-              <div className="map-address-value">{geocodedAddress.postalCode || "—"}</div>
+              <div className="map-address-value">
+                {geocodedAddress?.postalCode || (isGeocoding ? "..." : "—")}
+              </div>
             </div>
           </div>
           <div style={{ marginTop: 8, fontSize: 11, color: "var(--ink-soft)" }}>
-            GPS: {markerPosition[0].toFixed(6)}, {markerPosition[1].toFixed(6)}
+            GPS Coordinates: {markerPosition[0].toFixed(6)}, {markerPosition[1].toFixed(6)}
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@ import CustomerSidebar from "../../components/CustomerSidebar";
 import Navbar from "../../components/Navbar";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FaMinus, FaPlus, FaShoppingBag, FaTrash, FaShippingFast, FaStore, FaCreditCard, FaCheckCircle, FaSpinner } from "react-icons/fa";
+import { Minus, Plus, ShoppingBag, Trash2, Truck, Store, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 function CartPage() {
@@ -74,12 +74,10 @@ function CartPage() {
         )
       );
 
-      alert("Order Placed Successfully via " + (paymentMethod === "COD" ? "Cash on Delivery" : "Razorpay Secure Gateway"));
       clearCart();
       navigate("/customer/orders");
     } catch (error) {
-      console.log(error);
-      alert("Failed to place order");
+      console.error(error);
     } finally {
       setPlacingOrder(false);
     }
@@ -93,11 +91,14 @@ function CartPage() {
         <CustomerSidebar />
 
         <div className="content">
-          <h1 style={{ marginBottom: "20px" }}>Shopping Cart</h1>
+          <div className="page-header">
+            <h1>Shopping Cart</h1>
+            <p>Review your items and proceed to checkout.</p>
+          </div>
 
           {cartItems.length === 0 ? (
             <div className="empty-state">
-              <FaShoppingBag style={{ fontSize: 32, marginBottom: 10, color: "var(--primary)" }} />
+              <ShoppingBag className="empty-state-icon" />
               <h3>Your cart is empty</h3>
               <p>
                 <Link to="/customer/products">Browse products</Link> to add something.
@@ -153,7 +154,7 @@ function CartPage() {
                       onClick={() => removeFromCart(item.productId)}
                       style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "18px" }}
                     >
-                      <FaTrash />
+                      <Trash2 className="w-[16px] h-[16px]" />
                     </button>
                   </div>
                 ))}
@@ -181,7 +182,7 @@ function CartPage() {
                         gap: "12px"
                       }}
                     >
-                      <FaShippingFast style={{ fontSize: "24px", color: "var(--primary)" }} />
+                      <Truck style={{ width: 24, height: 24, color: "var(--brand-400)" }} />
                       <div>
                         <p style={{ fontWeight: "600", fontSize: "14px" }}>Platform Logistics</p>
                         <p style={{ fontSize: "11px", color: "var(--ink-soft)" }}>Delivery by platform partners</p>
@@ -201,7 +202,7 @@ function CartPage() {
                         gap: "12px"
                       }}
                     >
-                      <FaStore style={{ fontSize: "24px", color: "var(--primary)" }} />
+                      <Store style={{ width: 24, height: 24, color: "var(--brand-400)" }} />
                       <div>
                         <p style={{ fontWeight: "600", fontSize: "14px" }}>Self Pickup</p>
                         <p style={{ fontSize: "11px", color: "var(--ink-soft)" }}>Collect from warehouse directly</p>
@@ -375,13 +376,13 @@ function CartPage() {
             boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
           }}>
             <h2 style={{ fontSize: "20px", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-              <FaCreditCard style={{ color: "#3399cc" }} /> Razorpay Secure
+              <CreditCard style={{ color: "#3399cc", width: 18, height: 18 }} /> Razorpay Secure
             </h2>
             <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginBottom: "24px" }}>Transaction ID: WXT-{Date.now() % 100000}</p>
 
             {razorpayStep === "processing" && (
               <div style={{ padding: "20px 0" }}>
-                <FaSpinner className="spinner" style={{ fontSize: "40px", color: "#3399cc", animation: "spin 1.5s linear infinite", marginBottom: "16px" }} />
+                <Loader2 style={{ width: 40, height: 40, color: "#3399cc", animation: "spin 1.5s linear infinite", marginBottom: "16px" }} />
                 <p style={{ fontWeight: "500" }}>Processing Secure Payment...</p>
                 <p style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "4px" }}>Authorized partner transaction of ₹{advanceAmount}</p>
               </div>
@@ -389,7 +390,7 @@ function CartPage() {
 
             {razorpayStep === "success" && (
               <div style={{ padding: "20px 0" }}>
-                <FaCheckCircle style={{ fontSize: "48px", color: "#10b981", marginBottom: "16px" }} />
+                <CheckCircle style={{ width: 48, height: 48, color: "#10b981", marginBottom: "16px" }} />
                 <p style={{ fontWeight: "600", fontSize: "18px", color: "#10b981" }}>Payment Successful!</p>
                 <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "6px" }}>50% Advance amount (₹{advanceAmount}) has been escrowed in the Platform Wallet.</p>
                 

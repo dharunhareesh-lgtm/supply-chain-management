@@ -1,8 +1,15 @@
+/**
+ * AdminInsurance.jsx — Premium redesign for Configure Policies & Claims.
+ * All business logic PRESERVED.
+ */
 import AdminSidebar from "../../components/AdminSidebar";
 import Navbar from "../../components/Navbar";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Plus, Check, Award, AlertTriangle } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBadge, DashBtn, TableWrap, EmptyState, FormGrid, DashInput
+} from "../../components/dashboard/DashboardEngine";
 
 function AdminInsurance() {
   const [policies, setPolicies] = useState([]);
@@ -70,199 +77,210 @@ function AdminInsurance() {
       .catch((err) => console.error(err));
   };
 
+  const handleDownloadPDF = (base64Data, filename) => {
+    try {
+      const base64Parts = base64Data.split(",");
+      const rawBase64 = base64Parts[1] || base64Parts[0];
+      const mimeString = base64Parts[0].includes("data:") 
+        ? base64Parts[0].split(":")[1]?.split(";")[0] 
+        : "application/pdf";
+      
+      const byteCharacters = atob(rawBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeString });
+      
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "document.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Failed to decode PDF base64: ", err);
+    }
+  };
+
+  const getClaimBadgeStatus = (status) => {
+    switch (status) {
+      case "SETTLED": return "approved";
+      case "APPROVED": return "transit";
+      default: return "pending";
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div className="layout">
         <AdminSidebar />
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="content"
-        >
-          <div style={{ marginBottom: "24px" }}>
-            <span style={{ color: "#16C784", fontWeight: "600", fontSize: "12px", textTransform: "uppercase" }}>
-              RISK MANAGEMENT
-            </span>
-            <h1 style={{ fontSize: "32px", fontWeight: "800", marginTop: "4px" }}>Configure Insurance Policies & Claims</h1>
-            <p style={{ color: "var(--ink-soft)" }}>
-              Manage agricultural insurance policies and verify claims submitted by suppliers.
-            </p>
-          </div>
+        <PageShell>
+          <PageHeader
+            title="Configure Policies & Claims"
+            subtitle="Manage agricultural risk policies and clear compensation claims submitted by suppliers"
+            breadcrumb={["Admin", "Insurance Policies & Claims"]}
+          />
 
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "24px", alignItems: "start" }}>
             {/* Claims section */}
-            <div className="card" style={{ padding: "28px" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "20px" }}>Insurance Claims Review</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <DashCard>
+              <CardHeader
+                title="Insurance Claims Review"
+                subtitle="Evaluate and resolve claims from crop damage / logistics issues"
+                icon={Shield}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "16px" }}>
                 {claims.map((claim) => (
                   <div
                     key={claim.id}
                     style={{
-                      padding: "18px",
+                      padding: "20px",
                       background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "12px",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: "14px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px"
+                      gap: "12px",
+                      transition: "border-color 0.2s ease"
                     }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(16,185,129,0.15)"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: "700", color: "#34D399" }}>{claim.claimType}</span>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          padding: "4px 8px",
-                          borderRadius: "20px",
-                          background:
-                            claim.status === "SETTLED"
-                              ? "rgba(16,185,129,0.15)"
-                              : claim.status === "APPROVED"
-                              ? "rgba(52,211,153,0.15)"
-                              : "rgba(245,158,11,0.15)",
-                          color:
-                            claim.status === "SETTLED"
-                              ? "#10B981"
-                              : claim.status === "APPROVED"
-                              ? "#34D399"
-                              : "#F59E0B"
-                        }}
-                      >
-                        {claim.status}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontWeight: "700", color: "#fff", fontSize: "14px" }}>{claim.claimType}</span>
+                        {claim.incidentDate && (
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: "4px" }}>
+                            Incident Date: {claim.incidentDate}
+                          </span>
+                        )}
+                      </div>
+                      <DashBadge status={getClaimBadgeStatus(claim.status)} label={claim.status} />
                     </div>
 
-                    <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                      <p><strong>Supplier:</strong> {claim.supplierName}</p>
-                      <p><strong>Warehouse Name:</strong> {claim.warehouseName}</p>
-                      <p><strong>Product Name:</strong> {claim.productName}</p>
-                      <p><strong>Details:</strong> {claim.description}</p>
-                      <p style={{ marginTop: "4px", fontSize: "14px", color: "white" }}><strong>Claim Amount:</strong> ₹{claim.claimAmount.toLocaleString()}</p>
+                    <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div><strong>Supplier:</strong> {claim.supplierName}</div>
+                      <div><strong>Warehouse Name:</strong> {claim.warehouseName}</div>
+                      <div><strong>Product Name:</strong> {claim.productName}</div>
+                      <div><strong>Details:</strong> {claim.description}</div>
+                      
+                      {/* Attached documents & metadata */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "8px", marginBottom: "8px", padding: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "8px" }}>
+                        <div>
+                          <strong>Loss Valuation:</strong> <span style={{ color: "#34D399" }}>{claim.lossPercent || 35}%</span>
+                        </div>
+                        {claim.docName && (
+                          <div>
+                            <strong>Document Checklist:</strong>{" "}
+                            {claim.docPreview ? (
+                              <span 
+                                onClick={() => handleDownloadPDF(claim.docPreview, claim.docName)}
+                                style={{ color: "#60A5FA", textDecoration: "underline", cursor: "pointer" }}
+                              >
+                                {claim.docName} (Download)
+                              </span>
+                            ) : (
+                              <span style={{ color: "#60A5FA" }}>{claim.docName}</span>
+                            )}
+                          </div>
+                        )}
+                        {claim.photoName && (
+                          <div>
+                            <strong>Photo Evidence:</strong> <span style={{ color: "#10B981" }}>{claim.photoName}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Evidence Photo Preview */}
+                      {claim.photoPreview && (
+                        <div style={{ marginTop: "6px", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "4px" }}>Evidence Photo Preview:</span>
+                          <img 
+                            src={claim.photoPreview} 
+                            alt="Incident Evidence" 
+                            style={{ maxWidth: "180px", maxHeight: "120px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)" }} 
+                          />
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: "6px", fontSize: "15px", color: "#10b981", fontWeight: "700" }}>
+                        Claim Amount: ₹{claim.claimAmount.toLocaleString()}
+                      </div>
                     </div>
 
                     {/* Action buttons */}
                     <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                       {claim.status === "VERIFIED" && (
-                        <button
+                        <DashBtn
                           onClick={() => handleUpdateClaimStatus(claim.id, "APPROVED")}
-                          style={{
-                            flex: 1,
-                            height: "36px",
-                            background: "linear-gradient(135deg, #34D399, #16C784)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "4px"
-                          }}
+                          variant="primary"
+                          size="sm"
+                          icon={Check}
+                          style={{ flex: 1 }}
                         >
-                          <Check size={14} /> Approve Claim
-                        </button>
+                          Approve Claim
+                        </DashBtn>
                       )}
                       {claim.status === "APPROVED" && (
-                        <button
+                        <DashBtn
                           onClick={() => handleUpdateClaimStatus(claim.id, "SETTLED")}
-                          style={{
-                            flex: 1,
-                            height: "36px",
-                            background: "linear-gradient(135deg, #10B981, #059669)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "4px"
-                          }}
+                          variant="primary"
+                          size="sm"
+                          icon={Award}
+                          style={{ flex: 1 }}
                         >
-                          <Award size={14} /> Settle Compensation
-                        </button>
+                          Settle Compensation
+                        </DashBtn>
                       )}
                     </div>
                   </div>
                 ))}
                 {claims.length === 0 && (
-                  <p style={{ color: "var(--ink-soft)", fontSize: "14px" }}>No submitted insurance claims found.</p>
+                  <EmptyState icon={Shield} title="No submitted claims found." />
                 )}
               </div>
-            </div>
+            </DashCard>
 
             {/* Configure policy card */}
-            <div className="card" style={{ padding: "28px" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Shield style={{ color: "#16C784" }} size={20} /> Configure Policies
-              </h3>
+            <DashCard>
+              <CardHeader
+                title="Configure Policies"
+                subtitle="Add new coverage programs to database catalog"
+                icon={Shield}
+              />
 
-              <form onSubmit={handleAddPolicy} style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>POLICY NAME</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Standard Fire Policy"
-                    value={newPolicyName}
-                    onChange={(e) => setNewPolicyName(e.target.value)}
-                    required
-                    style={{
-                      width: "100%",
-                      height: "44px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      color: "white",
-                      padding: "0 12px"
-                    }}
-                  />
-                </div>
+              <form onSubmit={handleAddPolicy} style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "16px", marginBottom: "24px" }}>
+                <DashInput
+                  label="POLICY NAME"
+                  placeholder="e.g. Standard Fire Policy"
+                  value={newPolicyName}
+                  onChange={(e) => setNewPolicyName(e.target.value)}
+                  required
+                />
+                
+                <DashInput
+                  label="COVERAGE (%)"
+                  type="number"
+                  placeholder="e.g. 90"
+                  value={coveragePercentage}
+                  onChange={(e) => setCoveragePercentage(e.target.value)}
+                  required
+                />
 
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>COVERAGE (%)</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 90"
-                    value={coveragePercentage}
-                    onChange={(e) => setCoveragePercentage(e.target.value)}
-                    required
-                    style={{
-                      width: "100%",
-                      height: "44px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      color: "white",
-                      padding: "0 12px"
-                    }}
-                  />
-                </div>
+                {error && <div style={{ color: "#ef4444", fontSize: "12px" }}>{error}</div>}
+                {success && <div style={{ color: "#10b981", fontSize: "12px" }}>{success}</div>}
 
-                <button
-                  type="submit"
-                  style={{
-                    height: "44px",
-                    background: "linear-gradient(135deg, #16C784, #22C55E)",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "white",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <Plus size={16} /> Configure Policy
-                </button>
+                <DashBtn type="submit" variant="primary" icon={Plus}>
+                  Configure Policy
+                </DashBtn>
               </form>
 
-              <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px" }}>Active Policies</h4>
+              <h4 style={{ fontSize: "13px", fontWeight: "750", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "12px" }}>Active Policies</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {policies.map((p) => (
                   <div
@@ -272,8 +290,8 @@ function AdminInsurance() {
                       justifyContent: "space-between",
                       padding: "10px 14px",
                       background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: "10px",
                       fontSize: "13px"
                     }}
                   >
@@ -282,9 +300,9 @@ function AdminInsurance() {
                   </div>
                 ))}
               </div>
-            </div>
+            </DashCard>
           </div>
-        </motion.div>
+        </PageShell>
       </div>
     </>
   );

@@ -187,10 +187,10 @@ export default function WarehouseRevenue() {
       <div className="layout wh-shell">
         <WarehouseSidebar />
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           className="content"
-          style={{ background: "#0a0f0d", minHeight: "100vh" }}
+          style={{ background: "#0a0f0d" }}
         >
           <div className="wh-page-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
             <div>

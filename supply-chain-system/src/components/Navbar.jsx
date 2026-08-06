@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FaSearch,
-  FaShoppingCart,
-  FaHeart,
-  FaBell,
-  FaSignOutAlt,
-  FaChevronDown,
-  FaUserCircle,
-  FaSun,
-  FaMoon
-} from "react-icons/fa";
+  Search,
+  ShoppingCart,
+  Heart,
+  LogOut,
+  ChevronDown,
+  UserCircle,
+  Command
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationCenter from "./NotificationCenter";
@@ -23,7 +21,7 @@ function Navbar() {
   const role = localStorage.getItem("role");
   const isCustomer = role === "CUSTOMER";
 
-  // Light/Dark Theme Switcher (Removed, hardcoded to dark)
+  // Dark mode only
   useEffect(() => {
     document.documentElement.classList.remove("light-mode");
     localStorage.setItem("theme", "dark");
@@ -31,18 +29,13 @@ function Navbar() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const menuRef = useRef(null);
-  const notifRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
-        setNotifOpen(false);
       }
     }
 
@@ -75,13 +68,6 @@ function Navbar() {
 
   const firstLetter = username ? username.charAt(0).toUpperCase() : "U";
 
-  // Low-stock alerts double as a lightweight, real notification feed for
-  // customers (no fake/mock data, no new API calls — it's derived from
-  // products already sitting in the customer's wishlist).
-  const stockAlerts = wishlistItems.filter(
-    (item) => Number(item.stock) <= 5
-  );
-
   return (
     <div className="navbar">
       <div className="brand">
@@ -91,18 +77,33 @@ function Navbar() {
 
       {isCustomer && (
         <form className="nav-search" onSubmit={handleSearchSubmit}>
-          <FaSearch className="nav-search-icon" />
+          <Search className="nav-search-icon w-[14px] h-[14px]" />
           <input
             type="text"
-            placeholder="Search products, categories..."
+            placeholder="Search products, categories, orders..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <kbd style={{
+            fontSize: '10px',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            color: 'var(--ink-mute)',
+            fontFamily: 'inherit',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            flexShrink: 0
+          }}>
+            <Command className="w-[10px] h-[10px]" />K
+          </kbd>
         </form>
       )}
 
       <div className="nav-right">
-
 
         {isCustomer && (
           <>
@@ -110,8 +111,9 @@ function Navbar() {
               className="icon-btn"
               title="Wishlist"
               onClick={() => navigate("/customer/wishlist")}
+              aria-label="View wishlist"
             >
-              <FaHeart />
+              <Heart className="w-[14px] h-[14px]" />
               {wishlistCount > 0 && (
                 <span className="icon-badge">{wishlistCount}</span>
               )}
@@ -121,8 +123,9 @@ function Navbar() {
               className="icon-btn"
               title="Cart"
               onClick={() => navigate("/customer/cart")}
+              aria-label="View cart"
             >
-              <FaShoppingCart />
+              <ShoppingCart className="w-[14px] h-[14px]" />
               {cartCount > 0 && (
                 <span className="icon-badge">{cartCount}</span>
               )}
@@ -136,13 +139,14 @@ function Navbar() {
           <button
             className="profile-trigger"
             onClick={() => setMenuOpen((open) => !open)}
+            aria-label="Open profile menu"
           >
             <span className="avatar">{firstLetter}</span>
             <span className="profile-trigger-text">
               <span className="profile-name">{username || "User"}</span>
               <span className="profile-role">{roleLabel}</span>
             </span>
-            <FaChevronDown className="profile-chevron" />
+            <ChevronDown className="profile-chevron w-[10px] h-[10px]" />
           </button>
 
           <AnimatePresence>
@@ -155,7 +159,7 @@ function Navbar() {
                 className="navbar-dropdown profile-dropdown"
               >
                 <div className="profile-dropdown-header">
-                  <FaUserCircle className="profile-dropdown-icon" />
+                  <UserCircle className="profile-dropdown-icon w-[30px] h-[30px]" />
                   <div>
                     <p className="profile-name">{username || "User"}</p>
                     <span className="role-pill">{roleLabel}</span>
@@ -163,7 +167,7 @@ function Navbar() {
                 </div>
 
                 <button className="dropdown-action" onClick={handleLogout}>
-                  <FaSignOutAlt /> Logout
+                  <LogOut className="w-[14px] h-[14px]" /> Logout
                 </button>
               </motion.div>
             )}

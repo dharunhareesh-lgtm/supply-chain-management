@@ -69,6 +69,15 @@ import RegisterLogistics from "./pages/RegisterLogistics";
 import WarehousePartnerships from "./pages/warehouse/WarehousePartnerships";
 import LogisticsPartnerships from "./pages/logistics/LogisticsPartnerships";
 
+import CustomerVerificationPage from "./pages/customer/CustomerVerificationPage";
+import ManageCustomers from "./pages/admin/ManageCustomers";
+import CustomerDetailView from "./pages/admin/CustomerDetailView";
+import BecomePartner from "./pages/BecomePartner";
+import AdminPartnerRequests from "./pages/admin/AdminPartnerRequests";
+import AdminPartnerDetail from "./pages/admin/AdminPartnerDetail";
+import CustomerVerifications from "./pages/admin/CustomerVerifications";
+import ForcePasswordChange from "./pages/ForcePasswordChange";
+
 function App() {
   return (
     <BrowserRouter>
@@ -76,6 +85,34 @@ function App() {
         <FuturisticDashboardWrapper>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/customer/verification" element={<CustomerVerificationPage />} />
+            <Route path="/admin/customers" element={
+              <ProtectedRoute role="ADMIN">
+                <ManageCustomers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/customers/:id" element={
+              <ProtectedRoute role="ADMIN">
+                <CustomerDetailView />
+              </ProtectedRoute>
+            } />
+            <Route path="/become-partner" element={<BecomePartner />} />
+            <Route path="/change-password" element={<ForcePasswordChange />} />
+            <Route path="/admin/partner-requests" element={
+              <ProtectedRoute role="ADMIN">
+                <AdminPartnerRequests />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/partner-requests/:id" element={
+              <ProtectedRoute role="ADMIN">
+                <AdminPartnerDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/kyc-verifications" element={
+              <ProtectedRoute role="ADMIN">
+                <CustomerVerifications />
+              </ProtectedRoute>
+            } />
 
           <Route path="/login" element={<Home autoOpenLogin />} />
 

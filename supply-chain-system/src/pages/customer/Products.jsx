@@ -2,7 +2,7 @@ import CustomerSidebar from "../../components/CustomerSidebar";
 import Navbar from "../../components/Navbar";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FaHeart, FaSearch, FaShoppingCart } from "react-icons/fa";
+import { Search, Heart, ShoppingCart, Package } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 function Products() {
@@ -54,6 +54,12 @@ function Products() {
     setSearchParams(next);
   };
 
+  const getStockLabel = (stock) => {
+    if (stock <= 0) return { text: "Out of stock", className: "stock out-of-stock" };
+    if (stock <= 5) return { text: `${stock} left — Low stock`, className: "stock low-stock" };
+    return { text: `${stock} in stock`, className: "stock" };
+  };
+
   return (
     <>
       <Navbar />
@@ -62,12 +68,14 @@ function Products() {
         <CustomerSidebar />
 
         <div className="content">
-          <h1>Products</h1>
-          <p>Browse the full catalog and add items to your cart.</p>
+          <div className="page-header">
+            <h1>Products</h1>
+            <p>Browse the full catalog and add items to your cart.</p>
+          </div>
 
           <div className="products-toolbar">
             <div className="products-search">
-              <FaSearch />
+              <Search className="w-[14px] h-[14px]" />
               <input
                 type="text"
                 placeholder="Search by product name..."
@@ -89,32 +97,50 @@ function Products() {
             </select>
           </div>
 
+          {/* Results count */}
+          {!loading && (
+            <div className="results-header">
+              <span className="results-count">
+                Showing <strong>{filteredProducts.length}</strong> of{" "}
+                <strong>{products.length}</strong> products
+              </span>
+            </div>
+          )}
+
           {loading ? (
             <div className="product-grid">
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div className="product-card" key={n}>
-                  <div className="skeleton" style={{ height: 150 }} />
-                  <div
-                    className="skeleton"
-                    style={{ height: 14, marginTop: 12, width: "75%" }}
-                  />
-                  <div
-                    className="skeleton"
-                    style={{ height: 14, marginTop: 8, width: "35%" }}
-                  />
+                <div className="skeleton-product-card" key={n}>
+                  <div className="skeleton-img" />
+                  <div className="skeleton-body">
+                    <div className="skeleton" style={{ height: 14, width: '75%', marginBottom: 8 }} />
+                    <div className="skeleton" style={{ height: 14, width: '35%', marginBottom: 8 }} />
+                    <div className="skeleton" style={{ height: 36, width: '100%', borderRadius: 'var(--r-sm)' }} />
+                  </div>
                 </div>
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="empty-state">
+              <Package className="empty-state-icon" />
               <h3>No products match your filters</h3>
-              <p>Try a different search term or category.</p>
+              <p>Try a different search term or category to find what you're looking for.</p>
+              <button
+                className="btn-primary btn-md"
+                onClick={() => {
+                  updateParam("search", "");
+                  updateParam("category", "");
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
           ) : (
             <div className="product-grid">
               {filteredProducts.map((product) => {
                 const inCart = isInCart(product.productId);
                 const wishlisted = isInWishlist(product.productId);
+                const stockInfo = getStockLabel(product.stock);
 
                 return (
                   <div className="product-card" key={product.productId}>
@@ -122,9 +148,10 @@ function Products() {
                       <img
                         src={
                           product.imageUrl ||
-                          "https://via.placeholder.com/240"
+                          "https://via.placeholder.com/240x180?text=No+Image"
                         }
                         alt={product.productName}
+                        loading="lazy"
                       />
 
                       <button
@@ -137,44 +164,47 @@ function Products() {
                             : "Add to wishlist"
                         }
                         onClick={() => toggleWishlist(product)}
+                        aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
                       >
-                        <FaHeart />
+                        <Heart className="w-[14px] h-[14px]" />
                       </button>
                     </div>
 
-                    {product.category && (
-                      <span className="product-category-tag">
-                        {product.category}
-                      </span>
-                    )}
+                    <div className="product-card-body">
+                      {product.category && (
+                        <span className="product-category-tag">
+                          {product.category}
+                        </span>
+                      )}
 
-                    <h3>{product.productName}</h3>
-                    <p className="price">₹{product.price}</p>
-                    <p className="stock">
-                      {product.stock > 0
-                        ? `${product.stock} in stock`
-                        : "Out of stock"}
-                    </p>
+                      <h3>{product.productName}</h3>
+                      <p className="price">₹{product.price != null && !isNaN(product.price) ? Number(product.price).toLocaleString("en-IN") : "—"}</p>
+                      <p className={stockInfo.className}>
+                        {stockInfo.text}
+                      </p>
+                    </div>
 
-                    <div className="product-card-actions">
-                      <button
-                        className="edit-btn"
-                        onClick={() =>
-                          navigate(
-                            `/customer/product/${product.productId}`
-                          )
-                        }
-                      >
-                        View Details
-                      </button>
+                    <div className="product-card-footer">
+                      <div className="product-card-actions">
+                        <button
+                          className="edit-btn"
+                          onClick={() =>
+                            navigate(
+                              `/customer/product/${product.productId}`
+                            )
+                          }
+                        >
+                          View Details
+                        </button>
 
-                      <button
-                        disabled={product.stock <= 0}
-                        onClick={() => addToCart(product)}
-                      >
-                        <FaShoppingCart />{" "}
-                        {inCart ? "Add More" : "Add to Cart"}
-                      </button>
+                        <button
+                          disabled={product.stock <= 0}
+                          onClick={() => addToCart(product)}
+                        >
+                          <ShoppingCart className="w-[13px] h-[13px]" />{" "}
+                          {inCart ? "Add More" : "Add to Cart"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

@@ -2,27 +2,22 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Lock, ArrowRight } from "lucide-react";
 import {
-  AuthLayout, AuthCard, AuthTopBar, AuthHeader,
-  AuthInput, AuthPasswordInput, AuthPrimaryButton,
-  AuthError, AuthFooter
-} from "../../components/auth/AuthComponents";
+  OnboardingPage, OnboardingNav, GlassCard, PremiumInput, PremiumPasswordInput,
+  SubmitButton, ServerError, StaggerForms, cardVariants, TOKENS as T
+} from "../../components/site/OnboardingLayout";
 
 function ManagerLogin() {
-
   const navigate = useNavigate();
-
-  const [username, setUsername] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const response = await fetch("http://localhost:8082/managers/login", {
@@ -54,70 +49,84 @@ function ManagerLogin() {
     } catch (error) {
       console.log(error);
       setError("Error connecting to server. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <AuthLayout>
-      <AuthCard>
-        <AuthTopBar backTo="/warehouse" backLabel="Back" />
+    <OnboardingPage>
+      <OnboardingNav backTo="/" backLabel="Back to Home" />
 
-        <AuthHeader
-          title="Manager Login"
-          subtitle="Sign in to your warehouse manager account"
-        />
+      <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 24px 60px" }}>
+        <div style={{ width: "100%", maxWidth: 480 }}>
+          <StaggerForms>
+            
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <h1 style={{ margin: "0 0 10px", fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)", fontWeight: 800, letterSpacing: "-0.03em", color: T.text }}>
+                Manager Login
+              </h1>
+              <p style={{ margin: 0, fontSize: 15, color: T.muted, lineHeight: 1.6 }}>
+                Sign in to your warehouse manager account
+              </p>
+            </div>
 
-        {error && <AuthError>{error}</AuthError>}
+            <GlassCard variants={cardVariants}>
+              <ServerError message={error} />
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <AuthInput
-            label="Username or Email"
-            icon={User}
-            type="text"
-            placeholder="Enter your username or email"
-            value={username}
-            onChange={(e) =>
-              setUsername(
-                e.target.value
-              )
-            }
-            required
-          />
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <PremiumInput
+                  label="Username or Email"
+                  icon={User}
+                  type="text"
+                  placeholder="Enter your username or email"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
 
-          <AuthPasswordInput
-            label="Password"
-            icon={Lock}
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) =>
-              setPassword(
-                e.target.value
-              )
-            }
-            required
-            showPassword={showPassword}
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
+                <PremiumPasswordInput
+                  label="Password"
+                  icon={Lock}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  showPassword={showPassword}
+                  onTogglePassword={() => setShowPassword(!showPassword)}
+                />
 
-          <div className="auth-checkbox-row">
-            <div />
-            <Link to="/forgot-password" className="auth-forgot-link">
-              Forgot Password?
-            </Link>
-          </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: -8 }}>
+                  <Link 
+                    to="/forgot-password" 
+                    style={{ fontSize: 13, fontWeight: 600, color: T.em, textDecoration: "none" }}
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
 
-          <AuthPrimaryButton>
-            Login <ArrowRight style={{ width: 18, height: 18 }} />
-          </AuthPrimaryButton>
-        </form>
+                <SubmitButton loading={loading}>
+                  Login <ArrowRight size={18} />
+                </SubmitButton>
+              </form>
+            </GlassCard>
 
-        <AuthFooter
-          text="Need to register?"
-          linkText="Manager Register"
-          linkTo="/warehouse/manager-register"
-        />
-      </AuthCard>
-    </AuthLayout>
+            {/* Footer */}
+            <div style={{ textAlign: "center", marginTop: 24 }}>
+              <span style={{ fontSize: 14, color: T.muted }}>Need to register? </span>
+              <Link 
+                to="/warehouse/manager-register" 
+                style={{ fontSize: 14, fontWeight: 600, color: T.em, textDecoration: "none" }}
+              >
+                Manager Register
+              </Link>
+            </div>
+
+          </StaggerForms>
+        </div>
+      </div>
+    </OnboardingPage>
   );
 }
 

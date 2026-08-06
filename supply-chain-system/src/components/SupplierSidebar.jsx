@@ -1,52 +1,45 @@
-import { Link } from "react-router-dom";
+/**
+ * SupplierSidebar.jsx — Premium Supplier navigation sidebar.
+ * Routes and permissions are UNCHANGED. Visual redesign only.
+ */
 import {
-  FaTachometerAlt,
-  FaPlusCircle,
-  FaBox,
-  FaChartLine,
-  FaSignOutAlt,
-  FaChartBar,
-  FaShieldAlt
-} from "react-icons/fa";
+  LayoutDashboard,
+  PlusCircle,
+  Package,
+  BarChart2,
+  TrendingUp,
+  ShieldCheck,
+  Settings,
+  LogOut
+} from "lucide-react";
+import { PremiumSidebar } from "./dashboard/DashboardEngine";
+
+const NAV_ITEMS = [
+  // ── Overview ──
+  { to: "/supplier",                  label: "Dashboard",         icon: LayoutDashboard, exact: true, section: "Overview"   },
+
+  // ── Catalog ──
+  { to: "/supplier/add-product",      label: "Add Product",       icon: PlusCircle,                  section: "Catalog"    },
+  { to: "/supplier/products",         label: "My Products",       icon: Package,                     section: "Catalog"    },
+
+  // ── Financials ──
+  { to: "/supplier/revenue",          label: "Revenue & Earnings",icon: BarChart2,                   section: "Financials" },
+  { to: "/supplier/forecast",         label: "Market Forecast",   icon: TrendingUp,                  section: "Financials" },
+  { to: "/supplier/insurance-claims", label: "Insurance Claims",  icon: ShieldCheck,                 section: "Financials" },
+
+  // ── Account ──
+  { to: "/settings",                  label: "Settings",          icon: Settings,                    section: "Account"    },
+  {                                   label: "Logout",             icon: LogOut, isLogout: true,      section: "Account"    },
+];
 
 function SupplierSidebar() {
   return (
-    <div className="sidebar">
-      <h2>Supplier Panel</h2>
-
-      <Link to="/supplier">
-        <FaTachometerAlt /> Dashboard
-      </Link>
-
-      <Link to="/supplier/add-product">
-        <FaPlusCircle /> Add Product
-      </Link>
-
-      <Link to="/supplier/products">
-        <FaBox /> My Products
-      </Link>
-
-      <Link to="/supplier/revenue">
-        <FaChartBar /> Revenue &amp; Earnings
-      </Link>
-
-      <Link to="/supplier/forecast">
-        <FaChartLine /> Market Forecast
-      </Link>
-
-      <Link to="/supplier/insurance-claims">
-        <FaShieldAlt /> Insurance Claims
-      </Link>
-
-      <Link to="/settings">
-        <FaShieldAlt /> Settings
-      </Link>
-
-      <Link to="/">
-        <FaSignOutAlt /> Logout
-      </Link>
-    </div>
+    <PremiumSidebar
+      panelTitle="Supplier Panel"
+      panelIconLetter="S"
+      navItems={NAV_ITEMS}
+    />
   );
 }
 
-export default SupplierSidebar;
+export default SupplierSidebar;

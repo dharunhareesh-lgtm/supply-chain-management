@@ -414,7 +414,7 @@ export function Navbar({ onSignInClick }) {
               <Leaf className="w-5 h-5 text-white" />
             </motion.div>
             <div className="flex flex-col">
-              <span className="font-black text-lg leading-tight tracking-tight text-white">AgriChain</span>
+              <span className="font-black text-lg leading-tight tracking-tight text-white">Dravix SCM</span>
               <span className="text-[9px] text-green-400/80 tracking-widest font-black uppercase -mt-0.5">SCM Platform</span>
             </div>
           </Link>

@@ -322,65 +322,130 @@ function WarehouseDispatch() {
     fetchData();
   }, []);
 
-  const handleConfirm = async () => {
+  /**
+   * "Ready For Dispatch" button handler:
+   *  1. Assign vehicle to order(s) via PUT /orders (order appears in dispatch tab immediately)
+   *  2. Generate BCrypt OTP + email customer via new endpoint
+   *  3. Auto-switch to the "Ready for Dispatch" tab
+   *  4. Re-fetch assigned orders so the tab shows the newly ready order(s)
+   */
+  const handleReadyForDispatch = async () => {
     if (!activeOrder || !selectedVehicle) return;
     setIsConfirming(true);
     try {
       const ordersToUpdate = Array.isArray(activeOrder) ? activeOrder : [activeOrder];
+
+      // Step 1: Assign vehicle for all orders in the batch
       for (const order of ordersToUpdate) {
-        const updatedOrder = { ...order, status: "Processing", vehicleId: selectedVehicle.id };
-        await fetch("http://localhost:8082/orders", {
-          method: "PUT",
-          headers: { 
-            "Content-Type": "application/json",
-            "X-User-Email": localStorage.getItem("username") || ""
+        const updatedOrder = { ...order, status: 'Processing', vehicleId: selectedVehicle.id };
+        const res = await fetch('http://localhost:8082/orders', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Email': localStorage.getItem('username') || ''
           },
           body: JSON.stringify(updatedOrder)
         });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(`Failed to assign vehicle to Order #${order.orderId}: ${err.message || 'Server error'}`);
+          setIsConfirming(false);
+          return;
+        }
       }
-      
-      alert(`Vehicle ${selectedVehicle.companyName} successfully assigned to ${ordersToUpdate.length} order(s)!`);
-      window.location.reload();
+
+      // Step 2: Generate BCrypt OTP for the first/primary order and email customer
+      const primaryOrderId = ordersToUpdate[0].orderId;
+      try {
+        const otpRes = await fetch(`http://localhost:8082/orders/${primaryOrderId}/generate-dispatch-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Email': localStorage.getItem('username') || ''
+          }
+        });
+        const otpData = await otpRes.json();
+        if (!otpData.success) {
+          console.warn('OTP generation warning:', otpData.message);
+          // Non-fatal: vehicle is already assigned; proceed to dispatch tab
+        }
+      } catch (otpErr) {
+        console.warn('OTP generation network error:', otpErr);
+        // Non-fatal
+      }
+
+      // Step 3: Re-fetch assigned orders and switch to dispatch tab
+      const managerEmail = localStorage.getItem('username') || '';
+      const whId = localStorage.getItem('warehouseId');
+      const orderUrl = whId && whId !== 'null' && whId !== 'undefined'
+        ? `http://localhost:8082/orders/status/Processing?warehouseId=${whId}`
+        : 'http://localhost:8082/orders/status/Processing';
+      const refreshRes = await fetch(orderUrl, { headers: { 'X-User-Email': managerEmail } });
+      const refreshData = await refreshRes.json();
+      const newAssigned = (refreshData || []).filter(o => o.vehicleId);
+
+      // Populate checklist state for new orders
+      const newChecklist = { ...checklist };
+      const newOtpInputs = { ...otpInputs };
+      const newOtpVerified = { ...otpVerifiedOrders };
+      newAssigned.forEach(o => {
+        if (!newChecklist[o.orderId]) {
+          newChecklist[o.orderId] = { packed: false, verified: false, invoice: false, vehicle: true, driver: true, otp: false };
+        }
+        if (!newOtpInputs[o.orderId]) newOtpInputs[o.orderId] = '';
+        if (newOtpVerified[o.orderId] === undefined) newOtpVerified[o.orderId] = false;
+      });
+      setAssignedOrders(newAssigned);
+      setChecklist(newChecklist);
+      setOtpInputs(newOtpInputs);
+      setOtpVerifiedOrders(newOtpVerified);
+
+      // Step 4: Switch to dispatch tab
+      setDispatchTab('dispatch');
     } catch (error) {
       console.error(error);
-      alert("Failed to assign vehicle");
+      alert('Failed to mark order as Ready For Dispatch. Please try again.');
     } finally {
       setIsConfirming(false);
     }
   };
 
-  const handleVerifyOtp = (orderId, correctOtp) => {
+
+
+  // Legacy OTP verify for the Dispatch tab (now uses backend)
+  const handleVerifyOtp = async (orderId, correctOtp) => {
     const inputOtp = otpInputs[orderId];
-    if (String(inputOtp).trim() === String(correctOtp).trim()) {
-      alert("OTP Verified Successfully!");
-      setOtpVerifiedOrders({ ...otpVerifiedOrders, [orderId]: true });
-      setChecklist({
-        ...checklist,
-        [orderId]: {
-          ...checklist[orderId],
-          otp: true
-        }
+    try {
+      const res = await fetch(`http://localhost:8082/orders/${orderId}/verify-dispatch-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Email': localStorage.getItem('username') || '' },
+        body: JSON.stringify({ otp: inputOtp, verifiedBy: localStorage.getItem('username') || 'warehouse-manager' })
       });
-    } else {
-      alert("Invalid OTP! Do not dispatch.");
+      const data = await res.json();
+      if (data.success) {
+        alert('OTP Verified Successfully!');
+        setOtpVerifiedOrders({ ...otpVerifiedOrders, [orderId]: true });
+        setChecklist({ ...checklist, [orderId]: { ...checklist[orderId], otp: true } });
+      } else {
+        alert(data.message || 'Invalid OTP!');
+      }
+    } catch (e) {
+      alert('OTP verification failed. Please try again.');
     }
   };
+
 
   const handleDispatchOrder = async (order) => {
     const list = checklist[order.orderId] || {};
     if (!list.packed || !list.verified || !list.invoice || !list.vehicle || !list.driver || !list.otp) {
-      alert("Cannot dispatch: Complete all checklist requirements first.");
+      alert('Cannot dispatch: Complete all checklist requirements first.');
       return;
     }
-
     try {
-      const updatedOrder = { ...order, status: "Dispatched" };
-      const response = await fetch("http://localhost:8082/orders", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User-Email": localStorage.getItem("username") || ""
-        },
+      const updatedOrder = { ...order, status: 'Dispatched' };
+      const response = await fetch('http://localhost:8082/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-User-Email': localStorage.getItem('username') || '' },
         body: JSON.stringify(updatedOrder)
       });
       if (response.ok) {
@@ -388,13 +453,14 @@ function WarehouseDispatch() {
         window.location.reload();
       } else {
         const errData = await response.json();
-        alert(`Dispatch failed: ${errData.message || "Server Error"}`);
+        alert(`Dispatch failed: ${errData.message || 'Server Error'}`);
       }
     } catch (e) {
       console.error(e);
-      alert("Dispatch request failed.");
+      alert('Dispatch request failed.');
     }
   };
+
 
   return (
     <>
@@ -404,9 +470,9 @@ function WarehouseDispatch() {
         <WarehouseSidebar />
 
         <motion.div 
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.01 }}
           className="content"
         >
           <div className="wh-page-head flex justify-between items-center">
@@ -758,12 +824,15 @@ function WarehouseDispatch() {
                   </AnimatePresence>
                 </div>
                 
-                <VehicleDetailsPanel 
-                  vehicle={selectedVehicle} 
-                  pendingLoad={orderWeight} 
-                  onConfirm={handleConfirm}
+                <VehicleDetailsPanel
+                  vehicle={selectedVehicle}
+                  pendingLoad={orderWeight}
                   isConfirming={isConfirming}
+                  otpMode={true}
+                  onReadyForDispatch={handleReadyForDispatch}
                 />
+
+
               </div>
             </div>
           )}

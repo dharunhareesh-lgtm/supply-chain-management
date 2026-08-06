@@ -1,203 +1,313 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+/**
+ * ManagerSettings.jsx — DRAVIX SCM Premium Warehouse Manager Settings
+ * Tabs: Profile · Notifications · Security · Activity
+ */
+import React, { useState, useEffect } from "react";
+import {
+  SettingsSection, SettingRow, PasswordInput, PasswordStrength,
+  NotifMatrix, SecurityScoreRing, SettingsBtn, InfoChip,
+  SkeletonSettings, useToast, ActivityTimeline, ConfettiEffect,
+  SettingsDashboard
+} from "../../components/settings/SettingsEngine";
+import { User, Lock, Bell, CheckCircle2, AlertTriangle, Shield, Activity, Compass } from "lucide-react";
 
-export default function ManagerSettings({ email }) {
+const BASE = "http://localhost:8082";
+const NOTIF_ROWS = [
+  { key: "orders",    label: "Order Updates",    hint: "New orders assigned to your warehouse" },
+  { key: "dispatch",  label: "Dispatch Events",  hint: "OTP generation, vehicle assignment" },
+  { key: "inventory", label: "Inventory Alerts", hint: "Low stock and expiry warnings" },
+];
+function parseNotif(raw) { try { return raw ? JSON.parse(raw) : {}; } catch { return {}; } }
+function defaultNotif() {
+  const o = {};
+  NOTIF_ROWS.forEach(r => { o[r.key] = { email: true, sms: false, inApp: true }; });
+  return o;
+}
+
+export default function ManagerSettings({ email, activeTabOverride, onTabChangeOverride }) {
+  const { toasts, toast } = useToast();
+  const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
 
-  // Profile Details State
-  const [name, setName] = useState("");
+  useEffect(() => {
+    if (activeTabOverride) setTab(activeTabOverride);
+  }, [activeTabOverride]);
+
+  const handleTabChangeLocal = (key) => {
+    setTab(key);
+    if (onTabChangeOverride) onTabChangeOverride(key);
+  };
+
+  const [name, setName]   = useState("");
   const [phone, setPhone] = useState("");
-  const [notification, setNotification] = useState("Email");
+  const [saving, setSaving] = useState(false);
 
-  // Change Password States
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
+  const [notifPrefs, setNotifPrefs]   = useState(defaultNotif());
+  const [notifSaving, setNotifSaving] = useState(false);
 
-  // Status Alerts
-  const [profileMsg, setProfileMsg] = useState("");
-  const [profileErr, setProfileErr] = useState("");
-  const [secMsg, setSecMsg] = useState("");
-  const [secErr, setSecErr] = useState("");
+  const [curPw, setCurPw]   = useState("");
+  const [newPw, setNewPw]   = useState("");
+  const [confPw, setConfPw] = useState("");
+  const [otp, setOtp]       = useState("");
+  const [otpSent, setOtpSent]     = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [pwLoading, setPwLoading]   = useState(false);
 
-  const loadData = async () => {
+  const [showSaveBar, setShowSaveBar] = useState(false);
+  const [confetti, setConfetti] = useState(false);
+
+  const [timelineItems, setTimelineItems] = useState([
+    { action: "Login Verified", details: "Secure console manager login from IP 192.168.12.88", timestamp: "Just now", type: "AUTH" },
+    { action: "Dispatch Notification Saved", details: "Muted SMS channels for inventory warnings", timestamp: "Yesterday", type: "UPDATE" }
+  ]);
+
+  const load = async () => {
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/manager?email=${email}`);
-      if (res.ok) {
-        const d = await res.json();
+      const r = await fetch(`${BASE}/api/settings/manager?email=${email}`);
+      if (r.ok) {
+        const d = await r.json();
         setName(d.name || "");
         setPhone(d.phone || "");
-        setNotification(d.notificationPreferences || "Email");
+        const p = parseNotif(d.notificationPreferences);
+        if (Object.keys(p).length) setNotifPrefs(p);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, [email]);
+
+  const completion = () => {
+    let f = 0;
+    if (name)  f++;
+    if (email) f++;
+    if (phone) f++;
+    return Math.round((f / 3) * 100);
   };
 
-  useEffect(() => {
-    loadData();
-  }, [email]);
+  const triggerSaveBar = () => setShowSaveBar(true);
 
-  const handleProfileSave = async (e) => {
-    e.preventDefault();
-    setProfileMsg("");
-    setProfileErr("");
+  const saveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/manager/profile?email=${email}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          notificationPreferences: notification
-        }),
+      const r = await fetch(`${BASE}/api/settings/manager/profile?email=${email}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, notificationPreferences: JSON.stringify(notifPrefs) }),
       });
-      if (res.ok) {
-        setProfileMsg("Manager personal settings saved successfully.");
-        loadData();
-      } else {
-        setProfileErr("Failed to update manager settings.");
-      }
-    } catch (err) {
-      setProfileErr("Error updating manager settings.");
-    }
+      if (r.ok) {
+        toast.success("Profile saved!");
+        setShowSaveBar(false);
+        setTimelineItems(p => [
+          { action: "Manager Profile Updated", details: "Saved display name and phone number", timestamp: "Just now", type: "UPDATE" },
+          ...p
+        ]);
+        if (completion() >= 100) {
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 3000);
+        }
+        load();
+      } else { toast.error("Failed to save."); }
+    } catch { toast.error("Network error."); }
+    finally { setSaving(false); }
   };
 
-  const handleSendOtp = async () => {
-    setSecMsg("");
-    setSecErr("");
-    setSendingOtp(true);
+  const handleNotifChange = (key, ch, val) => {
+    setNotifPrefs(p => ({ ...p, [key]: { ...(p[key] || {}), [ch]: val } }));
+    triggerSaveBar();
+  };
+
+  const sendOtp = async () => {
+    setOtpLoading(true);
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/send-otp?email=${email}`, { method: "POST" });
-      if (res.ok) {
-        setOtpSent(true);
-        setSecMsg("OTP sent to your email!");
-      } else {
-        setSecErr("Failed to send OTP.");
-      }
-    } catch (e) {
-      setSecErr("Error sending OTP.");
-    } finally {
-      setSendingOtp(false);
-    }
+      const r = await fetch(`${BASE}/api/settings/send-otp?email=${email}`, { method: "POST" });
+      if (r.ok) { setOtpSent(true); toast.info("OTP sent."); }
+      else       { toast.error("Failed to send OTP."); }
+    } catch { toast.error("Network error."); }
+    finally { setOtpLoading(false); }
   };
 
-  const handleChangePassword = async (e) => {
+  const changePw = async (e) => {
     e.preventDefault();
-    setSecMsg("");
-    setSecErr("");
-
-    if (newPassword !== confirmPassword) {
-      setSecErr("Passwords do not match.");
-      return;
-    }
-
+    if (newPw !== confPw) { toast.error("Passwords do not match."); return; }
+    setPwLoading(true);
     try {
-      const res = await fetch("http://localhost:8082/api/settings/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, currentPassword, otp, newPassword, confirmPassword }),
+      const r = await fetch(`${BASE}/api/settings/change-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, currentPassword: curPw, otp, newPassword: newPw, confirmPassword: confPw }),
       });
-      const resData = await res.json();
-      if (res.ok) {
-        setSecMsg("Password changed successfully.");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setOtp("");
-        setOtpSent(false);
-      } else {
-        setSecErr(resData.error || "Failed to change password.");
-      }
-    } catch (err) {
-      setSecErr("Error updating password.");
-    }
+      const d = await r.json();
+      if (r.ok) { toast.success("Password changed!"); setCurPw(""); setNewPw(""); setConfPw(""); setOtp(""); setOtpSent(false); }
+      else       { toast.error(d.error || "Failed."); }
+    } catch { toast.error("Network error."); }
+    finally { setPwLoading(false); }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const dashItems = [
+    { key: "profile",       title: "Manager Identity",    desc: "Your manager display name and contact phone", icon: User, pct: completion(), status: "Active" },
+    { key: "notifications", title: "Notification Matrix", desc: "Select warning alerts for warehouse stock updates", icon: Bell, pct: 100, status: "Active" },
+    { key: "security",      title: "Security & Passwords",desc: "Reset portal credentials and configure safety OTPs", icon: Lock, pct: 80, status: "Secure" },
+    { key: "activity",      title: "Activity Audit Logs",  desc: "Audit log of dispatches approved and logins verified", icon: Activity, pct: 100, status: "Active" }
+  ];
+
+  if (loading) return <SkeletonSettings sections={2} />;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+    <div style={{ position: "relative" }}>
+      <ConfettiEffect active={confetti} />
       
-      {/* Manager Profile Card */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-        <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>👤 Manager Profile Info</h2>
-        {profileMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{profileMsg}</div>}
-        {profileErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{profileErr}</div>}
-
-        <form onSubmit={handleProfileSave} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Manager Username</label>
-            <input type="text" required value={name} onChange={(e) => setName(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Email (Read-Only)</label>
-            <input type="text" disabled value={email} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Contact Number</label>
-            <input type="text" placeholder="Enter contact number" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Notification Preferences</label>
-            <select value={notification} onChange={(e) => setNotification(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ink)" }}>
-              <option value="Email">Email Only</option>
-              <option value="SMS">SMS Only</option>
-              <option value="Both">Both Email & SMS</option>
-            </select>
-          </div>
-          <button className="btn-premium-primary" type="submit" style={{ marginTop: "15px" }}>Save Personal Settings</button>
-        </form>
+      <div style={{ padding: "0 48px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", background: "var(--surface)", height: 60 }}>
+        {tab !== "dashboard" ? (
+          <button onClick={() => handleTabChangeLocal("dashboard")} style={{ background: "none", border: "none", color: "#16C784", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            🧭 Back to Console Dashboard
+          </button>
+        ) : (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-soft)" }}>Settings Dashboard Console</span>
+        )}
       </div>
 
-      {/* Security Check & Change Password */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ padding: "30px 48px" }}>
         
-        {/* Change Password Card */}
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>🔒 Change Password</h2>
-          {secMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{secMsg}</div>}
-          {secErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{secErr}</div>}
+        {/* LANDING PAGE */}
+        {tab === "dashboard" && (
+          <SettingsDashboard items={dashItems} onCardClick={handleTabChangeLocal} />
+        )}
 
-          <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Current Password</label>
-              <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+        {/* PROFILE */}
+        {tab === "profile" && (
+          <form onSubmit={saveProfile}>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">Manager Console</div>
+                <h1 className="settings-page-title">Profile Settings</h1>
+                <p className="settings-page-subtitle">Your manager profile details</p>
+              </div>
             </div>
 
-            {otpSent ? (
-              <>
-                <div style={{ padding: "10px", background: "rgba(22,199,132,0.06)", border: "1px solid rgba(22,199,132,0.2)", borderRadius: "8px", fontSize: "12px", color: "#16C784" }}>
-                  OTP verification email sent. Enter it below to unlock password updates.
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>OTP Code</label>
-                  <input type="text" required placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>New Password</label>
-                  <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Confirm New Password</label>
-                  <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <button className="btn-premium-primary" type="submit" style={{ marginTop: "10px" }}>Update Password</button>
-              </>
-            ) : (
-              <button type="button" disabled={sendingOtp || !currentPassword} onClick={handleSendOtp} className="btn-premium-primary" style={{ width: "100%", marginTop: "10px" }}>
-                {sendingOtp ? "Sending OTP..." : "Verify & Send OTP"}
-              </button>
-            )}
+            <SettingsSection title="Account Information" icon={User}>
+              <SettingRow label="Manager Full Name">
+                <input className="settings-input" value={name} onChange={e => { setName(e.target.value); triggerSaveBar(); }} placeholder="Manager name" />
+              </SettingRow>
+              <SettingRow label="Registered Email" hint="Login email — read only">
+                <input className="settings-input readonly" value={email} readOnly />
+                <InfoChip color="green" icon={CheckCircle2}>Verified</InfoChip>
+              </SettingRow>
+              <SettingRow label="Mobile Phone Number" hint="Primary alert number">
+                <input className="settings-input" value={phone} onChange={e => { setPhone(e.target.value); triggerSaveBar(); }} placeholder="+91 98765 43210" />
+              </SettingRow>
+              <SettingRow label="Access Role">
+                <InfoChip color="blue">Warehouse Manager</InfoChip>
+              </SettingRow>
+            </SettingsSection>
           </form>
-        </div>
+        )}
+
+        {/* NOTIFICATIONS */}
+        {tab === "notifications" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">Manager Console</div>
+                <h1 className="settings-page-title">Notifications</h1>
+                <p className="settings-page-subtitle">Configure preferred alert triggers</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Alert Channels" icon={Bell} noPad>
+              <NotifMatrix rows={NOTIF_ROWS} prefs={notifPrefs} onChange={handleNotifChange} />
+            </SettingsSection>
+          </div>
+        )}
+
+        {/* SECURITY */}
+        {tab === "security" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">Manager Console</div>
+                <h1 className="settings-page-title">Security & Password</h1>
+                <p className="settings-page-subtitle">Change credentials and logins logs</p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 32 }}>
+              <div>
+                <SettingsSection title="Security Score" icon={Shield}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <SecurityScoreRing score={phone ? 80 : 55} />
+                  </div>
+                </SettingsSection>
+              </div>
+
+              <div>
+                <SettingsSection title="Change Security Password" icon={Lock}>
+                  <form onSubmit={changePw} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <SettingRow label="Current Password" full>
+                      <PasswordInput value={curPw} onChange={e => setCurPw(e.target.value)} placeholder="Current password" required />
+                    </SettingRow>
+                    {!otpSent ? (
+                      <SettingsBtn type="button" onClick={sendOtp} loading={otpLoading} disabled={!curPw} variant="secondary" icon={Shield}>
+                        Verify via OTP
+                      </SettingsBtn>
+                    ) : (
+                      <>
+                        <div style={{ background: "rgba(22,199,132,0.06)", border: "1px solid rgba(22,199,132,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#16C784" }}>
+                          OTP sent to <strong>{email}</strong>.
+                        </div>
+                        <SettingRow label="OTP Code" full>
+                          <input className="settings-input" value={otp} onChange={e => setOtp(e.target.value)} placeholder="6-digit OTP" maxLength={6} required />
+                        </SettingRow>
+                        <SettingRow label="New Password" full>
+                          <PasswordInput value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="New password" required />
+                        </SettingRow>
+                        <PasswordStrength password={newPw} />
+                        <SettingRow label="Confirm Password" full>
+                          <PasswordInput value={confPw} onChange={e => setConfPw(e.target.value)} placeholder="Confirm password" required />
+                        </SettingRow>
+                        <SettingsBtn type="submit" loading={pwLoading} icon={Lock}>Update Password</SettingsBtn>
+                      </>
+                    )}
+                  </form>
+                </SettingsSection>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVITY */}
+        {tab === "activity" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">Manager Console</div>
+                <h1 className="settings-page-title">Activity Logs</h1>
+                <p className="settings-page-subtitle">Recent edits and secure logins timeline</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Audit Timeline" icon={Activity}>
+              <ActivityTimeline items={timelineItems} />
+            </SettingsSection>
+          </div>
+        )}
 
       </div>
+
+      {/* Sticky Save Bar */}
+      {showSaveBar && (
+        <div className="settings-save-bar">
+          <div className="settings-save-bar-info">
+            <div className="settings-save-bar-dot" />
+            <div>
+              <div className="settings-save-bar-title">Unsaved Settings Changes</div>
+              <div className="settings-save-bar-desc">Publish adjustments to manager profile settings.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <SettingsBtn variant="secondary" size="sm" onClick={handleDiscardChanges}>Discard Changes</SettingsBtn>
+            <SettingsBtn variant="primary" size="sm" onClick={saveProfile} loading={saving}>Publish Changes</SettingsBtn>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

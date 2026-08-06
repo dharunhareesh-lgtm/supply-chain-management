@@ -43,8 +43,14 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Minimal Right Actions - Emptied */}
+        {/* Right Actions */}
         <div className="flex items-center gap-4">
+          <Link
+            to="/become-partner"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-bold hover:from-emerald-700 hover:to-green-700 transition shadow-lg hover:shadow-emerald-500/25"
+          >
+            Become a Partner
+          </Link>
         </div>
       </div>
     </header>

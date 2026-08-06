@@ -33,7 +33,7 @@ export function AuthLogo() {
       <div className="auth-logo-icon">
         <Leaf />
       </div>
-      <span className="auth-logo-text">AgriChain</span>
+      <span className="auth-logo-text">Dravix SCM</span>
     </div>
   );
 }

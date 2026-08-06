@@ -270,21 +270,68 @@ export default function NotificationCenter() {
                       <p style={{ color: "#88968d", fontSize: "12px", margin: "4px 0 0 0", lineHeight: 1.4 }}>
                         {n.description}
                       </p>
-                      <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                        {!n.isRead && (
-                          <button
-                            onClick={() => handleMarkRead(n.id)}
-                            style={{ background: "none", border: "none", color: "#16C784", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", padding: 0 }}
-                          >
-                            <FaCheck size={9} /> Mark read
-                          </button>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+                        {n.type === "KYC_CONSENT_REQUEST" ? (
+                          <>
+                            <button
+                              onClick={async () => {
+                                const consentMatch = n.description?.match(/Consent ID: (\d+)/);
+                                if (consentMatch) {
+                                  const consentId = consentMatch[1];
+                                  try {
+                                    const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/approve?email=${encodeURIComponent(username)}`, { method: "POST" });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      alert("Access Granted: Admin has 15-minute one-time access to view your document.");
+                                      handleMarkRead(n.id);
+                                      window.location.reload();
+                                    } else alert(data.error || "Approval failed.");
+                                  } catch { alert("Connection error."); }
+                                }
+                              }}
+                              style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", color: "#10b981", fontSize: "11px", fontWeight: "700", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                              ✓ Approve Access (15 Min)
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const consentMatch = n.description?.match(/Consent ID: (\d+)/);
+                                if (consentMatch) {
+                                  const consentId = consentMatch[1];
+                                  try {
+                                    const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/reject?email=${encodeURIComponent(username)}`, { method: "POST" });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      alert("Access Declined.");
+                                      handleMarkRead(n.id);
+                                      window.location.reload();
+                                    } else alert(data.error || "Decline failed.");
+                                  } catch { alert("Connection error."); }
+                                }
+                              }}
+                              style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#f87171", fontSize: "11px", fontWeight: "700", borderRadius: "6px", padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                              ✕ Decline
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {!n.isRead && (
+                              <button
+                                onClick={() => handleMarkRead(n.id)}
+                                style={{ background: "none", border: "none", color: "#16C784", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", padding: 0 }}
+                              >
+                                <FaCheck size={9} /> Mark read
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleArchive(n.id)}
+                              style={{ background: "none", border: "none", color: "#6b7280", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", padding: 0 }}
+                            >
+                              <FaArchive size={9} /> Archive
+                            </button>
+                          </>
                         )}
-                        <button
-                          onClick={() => handleArchive(n.id)}
-                          style={{ background: "none", border: "none", color: "#6b7280", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", padding: 0 }}
-                        >
-                          <FaArchive size={9} /> Archive
-                        </button>
                       </div>
                     </div>
                   </div>

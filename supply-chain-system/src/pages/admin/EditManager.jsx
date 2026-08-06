@@ -1,7 +1,16 @@
+/**
+ * EditManager.jsx — Premium layout redesign for Admin module.
+ * All business logic PRESERVED.
+ */
 import Navbar from "../../components/Navbar";
 import AdminSidebar from "../../components/AdminSidebar";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { UserCheck, ArrowLeft } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBtn, FormGrid, DashInput, DashSelect
+} from "../../components/dashboard/DashboardEngine";
 
 function EditManager() {
   const navigate = useNavigate();
@@ -78,79 +87,103 @@ function EditManager() {
   return (
     <>
       <Navbar />
-
       <div className="layout">
         <AdminSidebar />
+        <PageShell>
+          <div style={{ marginBottom: "12px" }}>
+            <DashBtn variant="ghost" size="sm" icon={ArrowLeft} onClick={() => navigate("/admin/managers")}>
+              Back to Managers
+            </DashBtn>
+          </div>
 
-        <div className="content">
-          <h1>Edit Manager</h1>
+          <PageHeader
+            title="Edit Regional Manager"
+            subtitle="Modify details and location mappings for manager"
+            breadcrumb={["Admin", "Managers", "Edit"]}
+          />
 
-          <form className="product-form" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              placeholder="Manager Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+          <DashCard style={{ maxWidth: 640 }}>
+            <CardHeader
+              title="Manager Settings"
+              subtitle="Update assigned configuration rules"
+              icon={UserCheck}
             />
 
-            <input
-              type="email"
-              placeholder="Manager Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
+              <FormGrid cols={2}>
+                <DashInput
+                  label="Manager Username"
+                  placeholder="Enter username..."
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+                <DashInput
+                  label="Manager Email"
+                  type="email"
+                  placeholder="Enter email address..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </FormGrid>
 
-            <select
-              value={assignedWarehouse}
-              onChange={(e) => setAssignedWarehouse(e.target.value)}
-              required
-            >
-              <option value="">Assign Warehouse</option>
-              {warehouses.map(w => (
-                <option key={w.id} value={w.id}>
-                  {w.warehouseName} ({w.district})
-                </option>
-              ))}
-            </select>
+              <FormGrid cols={2}>
+                <DashSelect
+                  label="Assign Warehouse Hub"
+                  value={assignedWarehouse}
+                  onChange={(e) => setAssignedWarehouse(e.target.value)}
+                  required
+                >
+                  <option value="">Assign Warehouse</option>
+                  {warehouses.map(w => (
+                    <option key={w.id} value={w.id}>
+                      {w.warehouseName} ({w.district})
+                    </option>
+                  ))}
+                </DashSelect>
 
-            <select
-              value={assignedCategory}
-              onChange={(e) => setAssignedCategory(e.target.value)}
-              required
-            >
-              <option value="">Assign Category</option>
-              {categories.map(c => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+                <DashSelect
+                  label="Assign Category"
+                  value={assignedCategory}
+                  onChange={(e) => setAssignedCategory(e.target.value)}
+                  required
+                >
+                  <option value="">Assign Category</option>
+                  {categories.map(c => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </DashSelect>
+              </FormGrid>
 
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              required
-            >
-              <option value="PENDING">PENDING</option>
-              <option value="ACTIVE">ACTIVE</option>
-            </select>
-
-            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-              <button type="submit" style={{ flex: 1 }}>
-                Update Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/managers")}
-                style={{ flex: 1, background: "#1f2d22", color: "#9ca3af" }}
+              <DashSelect
+                label="Manager Account Status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                required
               >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+                <option value="PENDING">PENDING</option>
+                <option value="ACTIVE">ACTIVE</option>
+              </DashSelect>
+
+              <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+                <DashBtn type="submit" variant="primary" style={{ flex: 1 }}>
+                  Update Manager
+                </DashBtn>
+                <DashBtn
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate("/admin/managers")}
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </DashBtn>
+              </div>
+            </form>
+          </DashCard>
+        </PageShell>
       </div>
     </>
   );

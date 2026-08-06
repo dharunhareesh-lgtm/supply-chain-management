@@ -21,9 +21,30 @@ import {
 // whether <html> currently has the "light-mode" class, so the ambient canvas
 // layer matches the CSS-variable-driven aurora/grid/spotlight system in
 // index.css instead of staying hardcoded to dark-mode colors.
+const isPublicRoute = (pathname) => {
+  const path = pathname.toLowerCase().replace(/\/$/, "") || "/";
+  
+  if (
+    path === "/" ||
+    path === "/login" ||
+    path === "/forgot-password" ||
+    path === "/change-password" ||
+    path === "/become-partner"
+  ) {
+    return true;
+  }
+  
+  if (path.includes("/register") || path.endsWith("/login")) {
+    return true;
+  }
+  
+  return false;
+};
+
 export default function FuturisticDashboardWrapper({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isPublic = isPublicRoute(location.pathname);
 
   // States
   const [showPalette, setShowPalette] = useState(false);
@@ -45,6 +66,8 @@ export default function FuturisticDashboardWrapper({ children }) {
 
   // Track mouse coordinates for CSS radial-gradient light spotlight
   useEffect(() => {
+    if (isPublic) return;
+
     const handleMouseMove = (e) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
@@ -67,9 +90,11 @@ export default function FuturisticDashboardWrapper({ children }) {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
+  }, [mouseX, mouseY, isPublic]);
 
   useEffect(() => {
+    if (isPublic) return;
+
     const unsubscribeX = smoothX.on("change", (val) => {
       document.documentElement.style.setProperty("--smooth-mouse-x", `${val}px`);
     });
@@ -80,10 +105,15 @@ export default function FuturisticDashboardWrapper({ children }) {
       unsubscribeX();
       unsubscribeY();
     };
-  }, [smoothX, smoothY]);
+  }, [smoothX, smoothY, isPublic]);
 
   // Listen for Ctrl+K
   useEffect(() => {
+    if (isPublic) {
+      setShowPalette(false);
+      return;
+    }
+
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -94,19 +124,23 @@ export default function FuturisticDashboardWrapper({ children }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isPublic]);
 
   // Autofocus search on open
   useEffect(() => {
+    if (isPublic) return;
+
     if (showPalette && paletteInputRef.current) {
       setTimeout(() => {
         paletteInputRef.current.focus();
       }, 50);
     }
-  }, [showPalette]);
+  }, [showPalette, isPublic]);
 
   // Particle Canvas logic (enables beautiful floating background particles & stars)
   useEffect(() => {
+    if (isPublic) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -162,7 +196,7 @@ export default function FuturisticDashboardWrapper({ children }) {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationId);
     };
-  }, []);
+  }, [isPublic]);
 
   // Command palette navigation items
   const menuItems = [
@@ -216,6 +250,10 @@ export default function FuturisticDashboardWrapper({ children }) {
     setShowPalette(false);
     navigate("/login");
   };
+
+  if (isPublic) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="futuristic-root-container">

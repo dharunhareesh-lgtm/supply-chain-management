@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { User, Mail, Lock, KeyRound, ArrowRight } from "lucide-react";
 import {
-  AuthLayout, AuthCard, AuthTopBar, AuthHeader,
-  AuthInput, AuthPasswordInput, AuthPrimaryButton,
-  AuthError, AuthFooter
-} from "../../components/auth/AuthComponents";
+  OnboardingPage, OnboardingNav, GlassCard, PremiumInput, PremiumPasswordInput,
+  SubmitButton, ServerError, StaggerForms, cardVariants, TOKENS as T
+} from "../../components/site/OnboardingLayout";
 
 function ManagerRegister() {
-
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -37,7 +35,7 @@ function ManagerRegister() {
     setLoading(true);
 
     try {
-      // Look up the specific manager by email — secure, does not expose all managers
+      // Look up the specific manager by email
       const lookupResponse = await fetch(
         `http://localhost:8082/managers/by-email?email=${encodeURIComponent(email)}`
       );
@@ -97,7 +95,6 @@ function ManagerRegister() {
       } else {
         let errMsg = "Invalid or Expired OTP";
         try {
-          // Try parsing Spring Boot error JSON
           const errData = await response.clone().json();
           if (errData && errData.message) {
             errMsg = errData.message;
@@ -121,82 +118,102 @@ function ManagerRegister() {
   };
 
   return (
-    <AuthLayout>
-      <AuthCard wide>
-        <AuthTopBar backTo="/warehouse" backLabel="Back" />
+    <OnboardingPage>
+      <OnboardingNav backTo="/" backLabel="Back to Home" />
 
-        <AuthHeader
-          title="Manager Registration"
-          subtitle="Please enter the 6-digit OTP code sent to your email when the administrator registered you."
-        />
+      <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", padding: "104px 24px 80px" }}>
+        <div style={{ width: "100%", maxWidth: 540 }}>
+          <StaggerForms>
+            
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <h1 style={{ margin: "0 0 10px", fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)", fontWeight: 800, letterSpacing: "-0.03em", color: T.text }}>
+                Manager Registration
+              </h1>
+              <p style={{ margin: 0, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
+                Please enter the 6-digit OTP code sent to your email when the administrator registered you.
+              </p>
+            </div>
 
-        {error && <AuthError>{error}</AuthError>}
+            <GlassCard variants={cardVariants}>
+              <ServerError message={error} />
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <AuthInput
-            label="Username"
-            icon={User}
-            type="text"
-            placeholder="Enter your username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <PremiumInput
+                  label="Username"
+                  icon={User}
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
 
-          <AuthInput
-            label="Email Address"
-            icon={Mail}
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+                <PremiumInput
+                  label="Email Address"
+                  icon={Mail}
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
 
-          <AuthInput
-            label="OTP Verification Code"
-            icon={KeyRound}
-            type="text"
-            placeholder="Enter 6-digit OTP code"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            required
-          />
+                <PremiumInput
+                  label="OTP Verification Code"
+                  icon={KeyRound}
+                  type="text"
+                  placeholder="Enter 6-digit OTP code"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
 
-          <AuthPasswordInput
-            label="Password"
-            icon={Lock}
-            placeholder="Create a password (min 6 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            showPassword={showPassword}
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20 }}>
+                  <PremiumPasswordInput
+                    label="Password"
+                    icon={Lock}
+                    placeholder="Create password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    showPassword={showPassword}
+                    onTogglePassword={() => setShowPassword(!showPassword)}
+                  />
 
-          <AuthPasswordInput
-            label="Confirm Password"
-            icon={Lock}
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            showPassword={showPassword}
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
+                  <PremiumPasswordInput
+                    label="Confirm Password"
+                    icon={Lock}
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    showPassword={showPassword}
+                    onTogglePassword={() => setShowPassword(!showPassword)}
+                  />
+                </div>
 
-          <AuthPrimaryButton disabled={loading}>
-            {loading ? "Registering..." : "Register"} {!loading && <ArrowRight style={{ width: 18, height: 18 }} />}
-          </AuthPrimaryButton>
-        </form>
+                <SubmitButton loading={loading}>
+                  Register <ArrowRight size={18} />
+                </SubmitButton>
+              </form>
+            </GlassCard>
 
-        <AuthFooter
-          text="Already registered?"
-          linkText="Manager Login"
-          linkTo="/warehouse/manager-login"
-        />
-      </AuthCard>
-    </AuthLayout>
+            {/* Footer */}
+            <div style={{ textAlign: "center", marginTop: 24 }}>
+              <span style={{ fontSize: 14, color: T.muted }}>Already registered? </span>
+              <Link 
+                to="/warehouse/manager-login" 
+                style={{ fontSize: 14, fontWeight: 600, color: T.em, textDecoration: "none" }}
+              >
+                Manager Login
+              </Link>
+            </div>
+
+          </StaggerForms>
+        </div>
+      </div>
+    </OnboardingPage>
   );
 }
 

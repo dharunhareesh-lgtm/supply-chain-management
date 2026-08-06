@@ -8,7 +8,19 @@ function WarehouseClaims() {
   const [claims, setClaims] = useState([]);
 
   const fetchClaims = () => {
-    fetch("http://localhost:8082/insurance-claims")
+    const warehouseId = localStorage.getItem("warehouseId");
+    const managerEmail = localStorage.getItem("username") || "";
+    
+    let url = "http://localhost:8082/insurance-claims";
+    if (warehouseId) {
+      url += `?warehouseId=${warehouseId}`;
+    }
+
+    fetch(url, {
+      headers: {
+        "X-User-Email": managerEmail
+      }
+    })
       .then((res) => res.json())
       .then((data) => setClaims(data))
       .catch((err) => console.error(err));
@@ -30,13 +42,54 @@ function WarehouseClaims() {
       .catch((err) => console.error(err));
   };
 
+  const handleReject = (id) => {
+    fetch(`http://localhost:8082/insurance-claims/${id}/status?status=REJECTED`, {
+      method: "PUT"
+    })
+      .then((res) => {
+        if (res.ok) {
+          fetchClaims();
+        }
+      })
+      .catch((err) => console.error(err));
+  };
+
+  const handleDownloadPDF = (base64Data, filename) => {
+    try {
+      const base64Parts = base64Data.split(",");
+      const rawBase64 = base64Parts[1] || base64Parts[0];
+      const mimeString = base64Parts[0].includes("data:") 
+        ? base64Parts[0].split(":")[1]?.split(";")[0] 
+        : "application/pdf";
+      
+      const byteCharacters = atob(rawBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeString });
+      
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "document.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Failed to decode PDF base64: ", err);
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div className="layout">
         <WarehouseSidebar />
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           className="content"
         >
@@ -66,9 +119,17 @@ function WarehouseClaims() {
                     alignItems: "center"
                   }}
                 >
-                  <div>
-                    <h4 style={{ fontWeight: "700", color: "#34D399", fontSize: "16px", marginBottom: "4px" }}>{claim.claimType}</h4>
-                    <p style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
+                  <div style={{ flex: 1, marginRight: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <h4 style={{ fontWeight: "700", color: "#34D399", fontSize: "16px" }}>{claim.claimType}</h4>
+                      {claim.incidentDate && (
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: "4px" }}>
+                          Incident Date: {claim.incidentDate}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p style={{ fontSize: "13px", color: "var(--ink-soft)", marginTop: "4px" }}>
                       <strong>Supplier:</strong> {claim.supplierName} | <strong>Product:</strong> {claim.productName}
                     </p>
                     <p style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
@@ -77,6 +138,47 @@ function WarehouseClaims() {
                     <p style={{ fontSize: "13px", color: "white", marginTop: "4px" }}>
                       <strong>Remarks:</strong> {claim.description}
                     </p>
+
+                    {/* File attachments & loss percentage */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "12px", padding: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "8px" }}>
+                      <div style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
+                        <strong>Loss Valuation:</strong> <span style={{ color: "#34D399" }}>{claim.lossPercent || 35}%</span>
+                      </div>
+                      
+                      {claim.docName && (
+                        <div style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
+                          <strong>Attached Document:</strong>{" "}
+                          {claim.docPreview ? (
+                            <span 
+                              onClick={() => handleDownloadPDF(claim.docPreview, claim.docName)}
+                              style={{ color: "#60A5FA", textDecoration: "underline", cursor: "pointer" }}
+                            >
+                              {claim.docName} (Download)
+                            </span>
+                          ) : (
+                            <span style={{ color: "#60A5FA" }}>{claim.docName}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {claim.photoName && (
+                        <div style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
+                          <strong>Photo Upload:</strong> <span style={{ color: "#10B981" }}>{claim.photoName}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Image Preview Thumbnail */}
+                    {claim.photoPreview && (
+                      <div style={{ marginTop: "12px" }}>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "4px" }}>Evidence Photo Preview:</span>
+                        <img 
+                          src={claim.photoPreview} 
+                          alt="Incident Evidence" 
+                          style={{ maxWidth: "180px", maxHeight: "120px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)" }} 
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px" }}>
@@ -86,32 +188,61 @@ function WarehouseClaims() {
                         fontWeight: "700",
                         padding: "4px 8px",
                         borderRadius: "20px",
-                        background: claim.status === "SUBMITTED" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)",
-                        color: claim.status === "SUBMITTED" ? "#F59E0B" : "#10B981"
+                        background: claim.status === "SUBMITTED" 
+                          ? "rgba(245,158,11,0.15)" 
+                          : claim.status === "REJECTED" 
+                          ? "rgba(239,68,68,0.15)" 
+                          : "rgba(16,185,129,0.15)",
+                        color: claim.status === "SUBMITTED" 
+                          ? "#F59E0B" 
+                          : claim.status === "REJECTED" 
+                          ? "#EF4444" 
+                          : "#10B981"
                       }}
                     >
                       {claim.status}
                     </span>
 
                     {claim.status === "SUBMITTED" && (
-                      <button
-                        onClick={() => handleVerify(claim.id)}
-                        style={{
-                          height: "36px",
-                          padding: "0 14px",
-                          background: "linear-gradient(135deg, #16C784, #22C55E)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px"
-                        }}
-                      >
-                        <CheckSquare size={14} /> Verify Claims
-                      </button>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          onClick={() => handleVerify(claim.id)}
+                          style={{
+                            height: "36px",
+                            padding: "0 14px",
+                            background: "linear-gradient(135deg, #16C784, #22C55E)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          <CheckSquare size={14} /> Verify Claims
+                        </button>
+                        
+                        <button
+                          onClick={() => handleReject(claim.id)}
+                          style={{
+                            height: "36px",
+                            padding: "0 14px",
+                            background: "linear-gradient(135deg, #EF4444, #DC2626)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

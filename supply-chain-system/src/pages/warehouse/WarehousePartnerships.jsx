@@ -53,7 +53,7 @@ function WarehousePartnerships() {
       <div className="layout wh-shell">
         <WarehouseSidebar />
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           className="content"
           style={{ padding: "30px", maxWidth: "1000px", margin: "0 auto" }}

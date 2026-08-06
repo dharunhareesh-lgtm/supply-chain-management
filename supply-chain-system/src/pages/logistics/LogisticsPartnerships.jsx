@@ -1,7 +1,15 @@
+/**
+ * LogisticsPartnerships.jsx — Premium redesign for Warehouse invites.
+ * All business logic PRESERVED.
+ */
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import LogisticsSidebar from "../../components/LogisticsSidebar";
 import Navbar from "../../components/Navbar";
+import { Handshake, MapPin } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBtn, EmptyState
+} from "../../components/dashboard/DashboardEngine";
 
 function LogisticsPartnerships() {
   const [requests, setRequests] = useState([]);
@@ -52,48 +60,81 @@ function LogisticsPartnerships() {
       <Navbar />
       <div className="layout">
         <LogisticsSidebar />
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="content"
-          style={{ padding: "30px", maxWidth: "1000px", margin: "0 auto" }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-            <h1 style={{ margin: 0 }}>Partnership Requests</h1>
-            <span style={{ fontSize: "14px", color: "var(--ink-soft)" }}>Warehouse Invites</span>
-          </div>
+        <PageShell>
+          <PageHeader
+            title="Partnership Requests"
+            subtitle="Manage partnership invitations received from regional warehouses"
+            breadcrumb={["Logistics", "Partnerships"]}
+          />
 
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-            <h2 style={{ marginBottom: "20px" }}>Pending Partnership Requests</h2>
+          <DashCard>
+            <CardHeader
+              title="Pending Partnership Requests"
+              subtitle="Incoming invites awaiting response"
+              icon={Handshake}
+            />
+
             {loading ? (
-              <p>Loading...</p>
+              <p style={{ color: "rgba(255,255,255,0.4)" }}>Loading invites...</p>
             ) : requests.length === 0 ? (
-              <p>No pending partnership requests.</p>
+              <EmptyState
+                icon={Handshake}
+                title="No pending requests"
+                subtitle="All partnership invitations are processed."
+              />
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px", marginTop: "16px" }}>
                 {requests.map((r) => (
-                  <div key={r.requestId} style={{ padding: "15px", border: "1px solid var(--border)", borderRadius: "8px", background: "var(--bg)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <div
+                    key={r.requestId}
+                    style={{
+                      padding: "20px",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: "14px",
+                      background: "rgba(255,255,255,0.02)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      transition: "border-color 0.2s ease"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(16,185,129,0.2)"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"}
+                  >
                     <div>
-                      <h3 style={{ margin: "0 0 5px 0" }}>{r.warehouseName}</h3>
-                      <p style={{ margin: "2px 0", fontSize: "13px", color: "var(--ink-soft)" }}>{r.warehouseEmail}</p>
-                      <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>District:</strong> {r.district}</p>
-                      <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>Address:</strong> {r.address}</p>
+                      <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "#fff", fontWeight: "700" }}>{r.warehouseName}</h3>
+                      <p style={{ margin: "2px 0", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{r.warehouseEmail}</p>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", color: "rgba(255,255,255,0.6)", marginTop: "12px" }}>
+                        <MapPin size={13} style={{ color: "#10b981" }} />
+                        <span><strong>District:</strong> {r.district}</span>
+                      </div>
+                      <p style={{ margin: "6px 0 0 0", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
+                        <strong>Address:</strong> {r.address}
+                      </p>
                     </div>
 
-                    <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-                      <button className="btn-premium-primary" onClick={() => handleRespond(r.requestId, "ACCEPTED")} style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}>
+                    <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
+                      <DashBtn
+                        variant="primary"
+                        onClick={() => handleRespond(r.requestId, "ACCEPTED")}
+                        style={{ flex: 1 }}
+                      >
                         Accept
-                      </button>
-                      <button className="btn-premium-secondary" onClick={() => handleRespond(r.requestId, "REJECTED")} style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}>
+                      </DashBtn>
+                      <DashBtn
+                        variant="ghost"
+                        onClick={() => handleRespond(r.requestId, "REJECTED")}
+                        style={{ flex: 1 }}
+                      >
                         Reject
-                      </button>
+                      </DashBtn>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </motion.div>
+          </DashCard>
+        </PageShell>
       </div>
     </>
   );

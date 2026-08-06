@@ -1,10 +1,18 @@
+/**
+ * EditSupplier.jsx — Premium layout redesign for Admin module.
+ * All business logic PRESERVED.
+ */
 import Navbar from "../../components/Navbar";
 import AdminSidebar from "../../components/AdminSidebar";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { UserCheck, ArrowLeft } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBtn, FormGrid, DashInput, DashSelect
+} from "../../components/dashboard/DashboardEngine";
 
 function EditSupplier() {
-
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -14,22 +22,17 @@ function EditSupplier() {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-
     fetch(`http://localhost:8082/suppliers/${id}`)
       .then((response) => response.json())
       .then((data) => {
-
-        setSupplierName(data.supplierName);
-        setEmail(data.email);
-        setPhone(data.phone);
-        setStatus(data.status);
-
+        setSupplierName(data.supplierName || "");
+        setEmail(data.email || "");
+        setPhone(data.phone || "");
+        setStatus(data.status || "");
       });
-
   }, [id]);
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     const supplier = {
@@ -41,92 +44,104 @@ function EditSupplier() {
     };
 
     try {
-
-      const response = await fetch(
-        "http://localhost:8082/suppliers",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(supplier)
-        }
-      );
+      const response = await fetch("http://localhost:8082/suppliers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(supplier)
+      });
 
       if (response.ok) {
-
         alert("Supplier Updated Successfully");
-
         navigate("/admin/suppliers");
-
+      } else {
+        alert("Failed to Update Supplier");
       }
-
     } catch (error) {
-
       console.log(error);
-
+      alert("Error saving supplier details.");
     }
   };
 
   return (
     <>
       <Navbar />
-
       <div className="layout">
-
         <AdminSidebar />
+        <PageShell>
+          <div style={{ marginBottom: "12px" }}>
+            <DashBtn variant="ghost" size="sm" icon={ArrowLeft} onClick={() => navigate("/admin/suppliers")}>
+              Back to Suppliers
+            </DashBtn>
+          </div>
 
-        <div className="content">
+          <PageHeader
+            title="Edit Supplier"
+            subtitle="Modify details and attributes for supplier account"
+            breadcrumb={["Admin", "Suppliers", "Edit"]}
+          />
 
-          <h1>Edit Supplier</h1>
-
-          <form
-            className="product-form"
-            onSubmit={handleSubmit}
-          >
-
-            <input
-              type="text"
-              value={supplierName}
-              onChange={(e) =>
-                setSupplierName(e.target.value)
-              }
+          <DashCard style={{ maxWidth: 640 }}>
+            <CardHeader
+              title="Supplier Account Details"
+              subtitle="Modify credentials and status settings"
+              icon={UserCheck}
             />
 
-            <input
-              type="email"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-            />
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
+              <DashInput
+                label="Supplier Name"
+                placeholder="Enter supplier/business name..."
+                value={supplierName}
+                onChange={(e) => setSupplierName(e.target.value)}
+                required
+              />
 
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) =>
-                setPhone(e.target.value)
-              }
-            />
+              <FormGrid cols={2}>
+                <DashInput
+                  label="Email Address"
+                  type="email"
+                  placeholder="Enter email address..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <DashInput
+                  label="Phone Number"
+                  placeholder="Enter phone number..."
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </FormGrid>
 
-            <select
-              value={status}
-              onChange={(e) =>
-                setStatus(e.target.value)
-              }
-            >
-              <option>Active</option>
-              <option>Inactive</option>
-            </select>
+              <DashSelect
+                label="Account Status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                required
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </DashSelect>
 
-            <button type="submit">
-              Update Supplier
-            </button>
-
-          </form>
-
-        </div>
-
+              <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+                <DashBtn type="submit" variant="primary" style={{ flex: 1 }}>
+                  Update Supplier
+                </DashBtn>
+                <DashBtn
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate("/admin/suppliers")}
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </DashBtn>
+              </div>
+            </form>
+          </DashCard>
+        </PageShell>
       </div>
     </>
   );

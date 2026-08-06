@@ -1,7 +1,16 @@
+/**
+ * ManageManagers.jsx — Premium redesign.
+ * All business logic PRESERVED exactly. Only layout redesigned.
+ */
 import Navbar from "../../components/Navbar";
 import AdminSidebar from "../../components/AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { UserCog, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBadge, DashBtn, Toolbar, TableWrap, EmptyState, SkeletonRows
+} from "../../components/dashboard/DashboardEngine";
 
 function ManageManagers() {
   const navigate = useNavigate();
@@ -11,39 +20,29 @@ function ManageManagers() {
   const [deleteId, setDeleteId] = useState(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchData = () => {
     Promise.all([
-      fetch("http://localhost:8082/managers").then(res => res.json()),
-      fetch("http://localhost:8082/warehouse-locations?includeInactive=true").then(res => res.json())
+      fetch("http://localhost:8082/managers").then(r => r.json()),
+      fetch("http://localhost:8082/warehouse-locations?includeInactive=true").then(r => r.json())
     ])
-      .then(([mList, wList]) => {
-        setManagers(mList);
-        setWarehouses(wList);
-      })
-      .catch((error) => console.log(error));
+      .then(([mList, wList]) => { setManagers(mList); setWarehouses(wList); setLoading(false); })
+      .catch(e => { console.log(e); setLoading(false); });
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const triggerDelete = (id) => {
-    setDeleteId(id);
-    setShowConfirm(true);
-  };
+  const triggerDelete = (id) => { setDeleteId(id); setShowConfirm(true); };
 
   const confirmDelete = async () => {
-    setShowConfirm(false);
-    setErrorMsg("");
-    setSuccessMsg("");
+    setShowConfirm(false); setErrorMsg(""); setSuccessMsg("");
     try {
-      const response = await fetch(`http://localhost:8082/managers/${deleteId}`, {
-        method: "DELETE"
-      });
+      const response = await fetch(`http://localhost:8082/managers/${deleteId}`, { method: "DELETE" });
       if (response.ok) {
         setSuccessMsg("Manager removed successfully.");
-        setManagers(managers.filter((m) => m.managerId !== deleteId));
+        setManagers(managers.filter(m => m.managerId !== deleteId));
         setTimeout(() => setSuccessMsg(""), 3000);
       } else {
         const text = await response.text();
@@ -63,124 +62,102 @@ function ManageManagers() {
     return wh ? `${wh.warehouseName} (${wh.district})` : `Warehouse ID: ${warehouseId}`;
   };
 
+  const filtered = managers.filter(m =>
+    !search ||
+    m.username?.toLowerCase().includes(search.toLowerCase()) ||
+    m.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       <Navbar />
-
       <div className="layout">
         <AdminSidebar />
+        <PageShell>
+          <PageHeader
+            title="Manage Managers"
+            subtitle="Add, edit and remove warehouse manager accounts"
+            breadcrumb={["Admin", "Managers"]}
+            actions={
+              <DashBtn variant="primary" icon={Plus} onClick={() => navigate("/admin/add-manager")}>
+                Add Manager
+              </DashBtn>
+            }
+          />
 
-        <div className="content">
-          <h1>Manage Managers</h1>
+          {successMsg && (
+            <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#10b981", padding: "12px 18px", borderRadius: 12, fontSize: 13 }}>
+              ✓ {successMsg}
+            </div>
+          )}
+          {errorMsg && (
+            <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444", padding: "12px 18px", borderRadius: 12, fontSize: 13 }}>
+              ✕ {errorMsg}
+            </div>
+          )}
 
-          {successMsg && <div className="srf-success" style={{ background: "#14532d", border: "1px solid #16a34a", color: "#4ade80", padding: "10px 16px", borderRadius: "8px", marginBottom: "16px" }}>{successMsg}</div>}
-          {errorMsg && <div className="srf-error" style={{ background: "#450a0a", border: "1px solid #dc2626", color: "#f87171", padding: "10px 16px", borderRadius: "8px", marginBottom: "16px" }}>{errorMsg}</div>}
-
-          <button
-            className="add-btn"
-            onClick={() => navigate("/admin/add-manager")}
-          >
-            Add Manager
-          </button>
-
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Manager Name</th>
-                <th>Email</th>
-                <th>Assigned Warehouse</th>
-                <th>Assigned Category</th>
-                <th>Status</th>
-                <th>Created Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {managers.map((manager) => (
-                <tr key={manager.managerId}>
-                  <td>{manager.username}</td>
-                  <td>{manager.email}</td>
-                  <td>{getWarehouseName(manager.warehouseId)}</td>
-                  <td>{manager.category || "General"}</td>
-                  <td>
-                    <span style={{
-                      padding: "2px 8px",
-                      borderRadius: "10px",
-                      fontSize: "11px",
-                      fontWeight: "700",
-                      background: manager.status === "ACTIVE" ? "#14532d" : "#451a03",
-                      color: manager.status === "ACTIVE" ? "#4ade80" : "#fb923c"
-                    }}>
-                      {manager.status}
-                    </span>
-                  </td>
-                  <td>{manager.createdDate || "N/A"}</td>
-                  <td>
-                    <button
-                      className="edit-btn"
-                      onClick={() => navigate(`/admin/edit-manager/${manager.managerId}`)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="delete-btn"
-                      onClick={() => triggerDelete(manager.managerId)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {managers.length === 0 && (
+          <DashCard noPad>
+            <CardHeader
+              title="Warehouse Managers"
+              subtitle={`${managers.length} managers registered`}
+              icon={UserCog}
+            />
+            <div style={{ padding: "0 28px 16px" }}>
+              <Toolbar search={search} onSearch={setSearch} placeholder="Search managers…" onRefresh={fetchData} />
+            </div>
+            <TableWrap>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", color: "#6b7280", padding: "24px" }}>
-                    No managers registered.
-                  </td>
+                  <th>Manager Name</th>
+                  <th>Email</th>
+                  <th>Assigned Warehouse</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Created Date</th>
+                  <th>Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <SkeletonRows rows={5} cols={7} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={7}><EmptyState icon={UserCog} title="No managers found" /></td></tr>
+                ) : filtered.map(manager => (
+                  <tr key={manager.managerId}>
+                    <td><strong>{manager.username}</strong></td>
+                    <td>{manager.email}</td>
+                    <td style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{getWarehouseName(manager.warehouseId)}</td>
+                    <td>{manager.category || "General"}</td>
+                    <td><DashBadge status={manager.status?.toLowerCase() || "active"} /></td>
+                    <td style={{ fontSize: 12 }}>{manager.createdDate || "N/A"}</td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <DashBtn variant="ghost" size="sm" icon={Pencil} onClick={() => navigate(`/admin/edit-manager/${manager.managerId}`)}>Edit</DashBtn>
+                        <DashBtn variant="danger" size="sm" icon={Trash2} onClick={() => triggerDelete(manager.managerId)}>Delete</DashBtn>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          </DashCard>
+        </PageShell>
       </div>
 
-      {/* Styled Confirmation Dialog Modal */}
+      {/* Confirmation Modal — logic preserved */}
       {showConfirm && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(0,0,0,0.8)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: "#0b0f14",
-            border: "1px solid #1f2d22",
-            borderRadius: "14px",
-            padding: "24px",
-            maxWidth: "380px",
-            width: "100%",
-            textAlign: "center"
-          }}>
-            <h3 style={{ color: "white", marginBottom: "8px" }}>Delete Manager?</h3>
-            <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px" }}>This will permanently remove the manager.</p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={{ padding: "8px 20px", borderRadius: "8px", background: "#1f2d22", color: "#9ca3af", border: "none", cursor: "pointer" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{ padding: "8px 20px", borderRadius: "8px", background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}
-              >
-                Delete
-              </button>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "rgba(8,11,20,0.97)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 18, padding: 30, maxWidth: 400, width: "90%", textAlign: "center" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "grid", placeItems: "center", color: "#ef4444", margin: "0 auto 16px" }}>
+              <AlertTriangle size={24} />
+            </div>
+            <h3 style={{ color: "#fff", fontWeight: 700, marginBottom: 8 }}>Delete Manager?</h3>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginBottom: 24, lineHeight: 1.5 }}>
+              This will permanently remove the manager account. This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <DashBtn variant="ghost" onClick={() => setShowConfirm(false)}>Cancel</DashBtn>
+              <DashBtn variant="danger" onClick={confirmDelete}>Delete Permanently</DashBtn>
             </div>
           </div>
         </div>

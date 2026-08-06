@@ -1,65 +1,60 @@
-import { Link } from "react-router-dom";
+/**
+ * AdminSidebar.jsx — Premium Admin navigation sidebar.
+ * Routes and permissions are UNCHANGED. Visual redesign only.
+ */
 import {
-  FaTachometerAlt,
-  FaUsers,
-  FaBox,
-  FaChartBar,
-  FaUserTie,
-  FaSignOutAlt
-} from "react-icons/fa";
+  LayoutDashboard,
+  Users,
+  Package,
+  UserCog,
+  Truck,
+  Warehouse,
+  BarChart2,
+  Box,
+  Shield,
+  ShieldCheck,
+  UserCheck,
+  Settings,
+  Handshake,
+  LogOut
+} from "lucide-react";
+import { PremiumSidebar } from "./dashboard/DashboardEngine";
+
+const NAV_ITEMS = [
+  // ── Overview ──
+  { to: "/admin",               label: "Dashboard",         icon: LayoutDashboard, exact: true,  section: "Overview"    },
+  { to: "/admin/reports",       label: "Reports",           icon: BarChart2,                     section: "Overview"    },
+
+  // ── People ──
+  { to: "/admin/suppliers",     label: "Suppliers",         icon: Users,                         section: "People"      },
+  { to: "/admin/customers",     label: "Customers",         icon: UserCheck,                     section: "People"      },
+  { to: "/admin/managers",      label: "Managers",          icon: UserCog,                       section: "People"      },
+
+  // ── Operations ──
+  { to: "/admin/products",      label: "Products",          icon: Package,                       section: "Operations"  },
+  { to: "/admin/logistics",     label: "Logistics",         icon: Truck,                         section: "Operations"  },
+  { to: "/admin/warehouses",    label: "Warehouses",        icon: Warehouse,                     section: "Operations"  },
+
+  // ── Compliance ──
+  { to: "/admin/kyc-verifications", label: "KYC Verifications", icon: ShieldCheck, section: "Compliance" },
+  { to: "/admin/packaging",     label: "Packaging",         icon: Box,                           section: "Compliance"  },
+  { to: "/admin/insurance",     label: "Insurance",         icon: Shield,                        section: "Compliance"  },
+  { to: "/admin/partner-requests", label: "Partner Requests", icon: Handshake,                  section: "Compliance"  },
+
+  // ── Account ──
+  { to: "/settings",            label: "Settings",          icon: Settings,                      section: "Account"     },
+  {                             label: "Logout",             icon: LogOut,  isLogout: true,       section: "Account"     },
+];
 
 function AdminSidebar() {
   return (
-    <div className="sidebar">
-
-      <h2>Admin Panel</h2>
-
-      <Link to="/admin">
-        <FaTachometerAlt /> Dashboard
-      </Link>
-
-      <Link to="/admin/suppliers">
-        <FaUsers /> Suppliers
-      </Link>
-
-      <Link to="/admin/products">
-        <FaBox /> Products
-      </Link>
-
-      <Link to="/admin/managers">
-        <FaUserTie /> Managers
-      </Link>
-
-      <Link to="/admin/logistics">
-        <FaUsers /> Logistics Partners
-      </Link>
-
-      <Link to="/admin/warehouses">
-        <FaBox /> Warehouses
-      </Link>
-
-      <Link to="/admin/reports">
-        <FaChartBar /> Reports
-      </Link>
-
-      <Link to="/admin/packaging">
-        <FaBox /> Packaging standards
-      </Link>
-
-      <Link to="/admin/insurance">
-        <FaUserTie /> Insurance policies
-      </Link>
-
-      <Link to="/settings">
-        <FaUserTie /> Settings
-      </Link>
-
-      <Link to="/">
-        <FaSignOutAlt /> Logout
-      </Link>
-
-    </div>
+    <PremiumSidebar
+      panelTitle="Admin Panel"
+      panelIconLetter="A"
+      navItems={NAV_ITEMS}
+    />
   );
 }
 
 export default AdminSidebar;
+

@@ -23,6 +23,11 @@ import {
 import Navbar from "../../components/Navbar";
 import AdminSidebar from "../../components/AdminSidebar";
 import SupplierSidebar from "../../components/SupplierSidebar";
+import FuturisticDashboardWrapper from "../../components/FuturisticDashboardWrapper";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBadge, DashBtn, TableWrap, EmptyState, FormGrid, DashInput, DashSelect, InfoRow
+} from "../../components/dashboard/DashboardEngine";
 
 const API_BASE_URL = "http://localhost:8082";
 
@@ -368,672 +373,686 @@ function EditProduct() {
 
   if (loading) {
     return (
-      <>
+      <FuturisticDashboardWrapper>
         <Navbar />
         <div className="layout">
           {role === "ADMIN" ? <AdminSidebar /> : <SupplierSidebar />}
           <div className="content flex items-center justify-center min-h-[500px]">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
+              <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
               <span className="text-slate-400 font-bold text-sm">Retrieving product record...</span>
             </div>
           </div>
         </div>
-      </>
+      </FuturisticDashboardWrapper>
     );
   }
 
   return (
-    <>
+    <FuturisticDashboardWrapper>
       <Navbar />
       <div className="layout">
         {role === "ADMIN" ? <AdminSidebar /> : <SupplierSidebar />}
 
         <div className="content">
-          {/* Header */}
-          <div className="mb-8">
-            <span className="text-[12px] font-black text-green-400 uppercase tracking-widest">
-              Supplier Inventory Controls
-            </span>
-            <h1 className="text-3xl font-black text-white mt-1">Edit Product</h1>
-            <p className="text-slate-400 mt-1">
-              Configure package quantities, profit models, and warehouses. Live AI market price forecast metrics embedded.
-            </p>
-          </div>
+          <PageShell>
+            <PageHeader
+              title="Edit Product Registry"
+              subtitle="Configure harvest packages, pricing formulas, and storage targets. Real-time AI forecasting metrics embedded."
+              breadcrumb={[role === "ADMIN" ? "Admin" : "Supplier", "Edit Product"]}
+            />
 
-          {/* Empty Package Standards Warning */}
-          {noPackageStandards && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-5 rounded-xl border border-amber-500/30 bg-amber-950/15 text-amber-300 text-sm flex items-start gap-3"
-            >
-              <ShieldAlert className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
-              <div>
-                <strong className="block text-amber-400 text-sm mb-1">Package standards have not been configured by the Administrator.</strong>
-                <span className="text-amber-300/80 text-xs">
-                  Product editing is disabled until the admin configures packaging sizes in the system settings.
-                </span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Error & Success Messages */}
-          <AnimatePresence>
-            {error && (
+            {/* Empty Package Standards Warning */}
+            {noPackageStandards && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mb-6 p-4 rounded-xl border border-red-500/25 bg-red-950/10 text-red-400 text-sm flex items-start gap-3"
+                style={{
+                  marginBottom: "20px",
+                  padding: "16px 20px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(245,158,11,0.3)",
+                  background: "rgba(245,158,11,0.06)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px"
+                }}
               >
-                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
-                <span>{error}</span>
+                <ShieldAlert style={{ color: "#F59E0B", width: 20, height: 20, flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong style={{ display: "block", color: "#FBBF24", fontSize: "14px", marginBottom: 4 }}>
+                    Package standards have not been configured by the Administrator.
+                  </strong>
+                  <span style={{ color: "rgba(245,158,11,0.8)", fontSize: "12px" }}>
+                    Product editing is disabled until the admin configures packaging sizes in the system settings.
+                  </span>
+                </div>
               </motion.div>
             )}
-            {success && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mb-6 p-4 rounded-xl border border-green-500/25 bg-green-950/10 text-green-400 text-sm flex items-start gap-3"
-              >
-                <CheckCircle className="w-5 h-5 shrink-0 text-green-500" />
-                <span>{success}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
-          {/* Form and Summary Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-6 items-start">
-            
-            {/* Left Side: Detail Cards Form */}
-            <form onSubmit={handleUpdate} className="flex flex-col gap-6">
+            {/* Error & Success Messages */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{
+                    marginBottom: "20px",
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    color: "#FCA5A5",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px"
+                  }}
+                >
+                  <AlertTriangle style={{ color: "#EF4444", width: 20, height: 20, flexShrink: 0 }} />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{
+                    marginBottom: "20px",
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    background: "rgba(16,185,129,0.1)",
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    color: "#6EE7B7",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px"
+                  }}
+                >
+                  <CheckCircle style={{ color: "#10B981", width: 20, height: 20, flexShrink: 0 }} />
+                  <span>{success}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Form and Summary Grid Layout */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 0.7fr", gap: "24px", alignItems: "start" }}>
               
-              {/* SECTION 1: PRODUCT INFORMATION */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <Package className="text-green-400 w-5 h-5" />
-                  Product Registry Information
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Product Name */}
-                  <div>
-                    <label style={labelStyle}>Product Name</label>
-                    <input
-                      type="text"
-                      style={inputStyle}
-                      placeholder="e.g. Toor Dal, Basmati Rice"
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      required
-                    />
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Name of the agricultural item as registered on marketplace.
-                    </span>
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <label style={labelStyle}>Category</label>
-                    <select
-                      style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      required
-                      className="bg-slate-950"
-                    >
-                      <option value="">Select a category...</option>
-                      {allowedCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Restricted to long shelf-life items for safety.
-                    </span>
-                  </div>
-
-                  {/* Warehouse Selection */}
-                  <div>
-                    <label style={labelStyle}>Storage Warehouse</label>
-                    <select
-                      style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}
-                      value={selectedWarehouseId}
-                      onChange={(e) => setSelectedWarehouseId(e.target.value)}
-                      required
-                      className="bg-slate-950"
-                      disabled={role === "SUPPLIER" && status === "APPROVED"}
-                    >
-                      <option value="">Select a warehouse...</option>
-                      {warehouses.map(wh => (
-                        <option key={wh.id} value={wh.id.toString()}>
-                          {wh.warehouseName} ({wh.district})
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Target fulfillment warehouse for physical stocks.
-                    </span>
-                  </div>
-
-                  {/* Read Only Supplier */}
-                  <div>
-                    <label style={labelStyle}>Supplier Name (Read Only)</label>
-                    <div style={{ ...inputStyle, display: "flex", alignItems: "center" }} className="bg-slate-950/20 text-slate-400 cursor-not-allowed">
-                      {username}
+              {/* Left Side: Detail Cards Form */}
+              <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                
+                {/* SECTION 1: PRODUCT INFORMATION */}
+                <DashCard>
+                  <CardHeader
+                    title="Product Registry Information"
+                    subtitle="Register core catalog information and select fulfillment warehouse"
+                    icon={Package}
+                  />
+                  <FormGrid cols={2} style={{ marginTop: "20px" }}>
+                    {/* Product Name */}
+                    <div>
+                      <label className="dash-label">Product Name</label>
+                      <DashInput
+                        type="text"
+                        placeholder="e.g. Toor Dal, Basmati Rice"
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                        required
+                      />
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Name of the agricultural item as registered on marketplace.
+                      </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Owner account linked to this product record.
-                    </span>
-                  </div>
 
-                  {/* Status fields */}
-                  <div>
-                    <label style={labelStyle}>Product Status (Read Only)</label>
-                    <div style={{ ...inputStyle, display: "flex", alignItems: "center" }} className="bg-slate-950/20 text-slate-400 cursor-not-allowed uppercase font-bold text-xs gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${status === "APPROVED" ? "bg-green-500" : "bg-yellow-500"}`} />
-                      {status}
+                    {/* Category */}
+                    <div>
+                      <label className="dash-label">Category</label>
+                      <DashSelect
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        required
+                      >
+                        <option value="">Select a category...</option>
+                        {allowedCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </DashSelect>
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Restricted to long shelf-life items for safety.
+                      </span>
                     </div>
-                  </div>
 
-                  {/* Shelf Life Option */}
-                  <div>
-                    <label style={labelStyle}>Expected Shelf Life</label>
-                    <select
-                      style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}
-                      value={shelfLife}
-                      onChange={(e) => setShelfLife(e.target.value)}
-                      className="bg-slate-950"
-                    >
-                      <option value="6 Months">6 Months</option>
-                      <option value="12 Months">12 Months</option>
-                      <option value="18 Months">18 Months</option>
-                      <option value="24 Months">24 Months</option>
-                    </select>
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Expected decay threshold for warehouse auditing.
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    {/* Warehouse Selection */}
+                    <div>
+                      <label className="dash-label">Storage Warehouse</label>
+                      <DashSelect
+                        value={selectedWarehouseId}
+                        onChange={(e) => setSelectedWarehouseId(e.target.value)}
+                        required
+                        disabled={role === "SUPPLIER" && status === "APPROVED"}
+                      >
+                        <option value="">Select a warehouse...</option>
+                        {warehouses.map(wh => (
+                          <option key={wh.id} value={wh.id.toString()}>
+                            {wh.warehouseName} ({wh.district})
+                          </option>
+                        ))}
+                      </DashSelect>
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Target fulfillment warehouse for physical stocks.
+                      </span>
+                    </div>
 
-              {/* SECTION 2: PRICING */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <DollarSign className="text-green-400 w-5 h-5" />
-                  Farming Pricing Model
-                </h3>
+                    {/* Read Only Supplier */}
+                    <div>
+                      <label className="dash-label">Supplier Name (Read Only)</label>
+                      <DashInput
+                        value={username}
+                        disabled
+                        className="cursor-not-allowed text-slate-400"
+                      />
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Owner account linked to this product record.
+                      </span>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Purchase Price */}
-                  <div>
-                    <label style={labelStyle}>Purchase Price (₹/kg)</label>
-                    <input
-                      type="number"
-                      style={inputStyle}
-                      min="0"
-                      step="0.01"
-                      placeholder="e.g. 90.00"
-                      value={purchasePrice}
-                      onChange={(e) => setPurchasePrice(Math.max(0, Number(e.target.value)))}
-                      required
+                    {/* Status fields */}
+                    <div>
+                      <label className="dash-label">Product Status (Read Only)</label>
+                      <div className="dash-input text-slate-400 cursor-not-allowed uppercase font-bold text-xs flex items-center gap-2" style={{ background: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(51, 65, 85, 0.5)", borderRadius: "16px", height: "52px", padding: "0 16px" }}>
+                        <span className={`w-2.5 h-2.5 rounded-full ${status === "APPROVED" ? "bg-green-500 animate-pulse" : "bg-yellow-500"}`} />
+                        {status}
+                      </div>
+                    </div>
+
+                    {/* Expected Shelf Life Option */}
+                    <div>
+                      <label className="dash-label">Expected Shelf Life</label>
+                      <DashSelect
+                        value={shelfLife}
+                        onChange={(e) => setShelfLife(e.target.value)}
+                      >
+                        <option value="6 Months">6 Months</option>
+                        <option value="12 Months">12 Months</option>
+                        <option value="18 Months">18 Months</option>
+                        <option value="24 Months">24 Months</option>
+                      </DashSelect>
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Expected decay threshold for warehouse auditing.
+                      </span>
+                    </div>
+                  </FormGrid>
+                </DashCard>
+
+                {/* SECTION 2: PRICING */}
+                <DashCard>
+                  <CardHeader
+                    title="Farming Pricing Model"
+                    subtitle="Acquisition costs and warehouse rental configurations"
+                    icon={DollarSign}
+                  />
+                  <FormGrid cols={2} style={{ marginTop: "20px" }}>
+                    {/* Purchase Price */}
+                    <div>
+                      <label className="dash-label">Purchase Price (₹/kg)</label>
+                      <DashInput
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="e.g. 90.00"
+                        value={purchasePrice}
+                        onChange={(e) => setPurchasePrice(Math.max(0, Number(e.target.value)))}
+                        required
+                      />
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Cost of harvest acquisition per kilogram.
+                      </span>
+                    </div>
+
+                    {/* Storage Charge Strategy choice */}
+                    <div>
+                      <label className="dash-label">Warehouse Charge Strategy</label>
+                      <DashSelect
+                        value={pricingStrategy}
+                        onChange={(e) => setPricingStrategy(e.target.value)}
+                      >
+                        <option value="PROFIT_PER_KG">Charge Per KG</option>
+                        <option value="PROFIT_PERCENTAGE">Sales Percentage</option>
+                      </DashSelect>
+                    </div>
+
+                    {/* Margin Input */}
+                    <div>
+                      <label className="dash-label">
+                        {pricingStrategy === "PROFIT_PERCENTAGE" ? "Warehouse Rental Charge (%)" : "Warehouse Rental Charge (₹/kg)"}
+                      </label>
+                      <DashInput
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="e.g. 2"
+                        value={marginValue}
+                        onChange={(e) => setMarginValue(Math.max(0, Number(e.target.value)))}
+                        required
+                      />
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Storage charge plan rate.
+                      </span>
+                    </div>
+
+                    {/* Calculated Selling Price live display */}
+                    <div className="flex flex-col justify-center bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-2xl">
+                      <span className="text-[11px] text-emerald-400 font-extrabold uppercase tracking-widest">
+                        Computed Selling Price
+                      </span>
+                      <strong className="text-2xl text-emerald-400 mt-1">
+                        ₹{calculatedSellingPrice.toFixed(2)} / kg
+                      </strong>
+                      <span className="text-[11px] text-emerald-500/60 mt-0.5">
+                        Automatically calculated from pricing parameters.
+                      </span>
+                    </div>
+                  </FormGrid>
+                </DashCard>
+
+                {/* SECTION 3: PACKAGE INVENTORY (Dynamic from Admin Standards) */}
+                <DashCard>
+                  <CardHeader
+                    title="Packaging & Current Inventory"
+                    subtitle="Current stock levels managed in sack units"
+                    icon={Archive}
+                  />
+                  <p className="text-sm text-slate-400 mb-6 mt-2">
+                    Suppliers manage stock count exclusively via pre-set sack units configured by the Administrator. Directly editing kilograms is disabled.
+                  </p>
+
+                  {noPackageStandards ? (
+                    <div className="text-amber-400/80 text-sm p-4 rounded-xl border border-amber-500/20 bg-amber-950/10 flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      No packaging standards configured. Contact the Administrator.
+                    </div>
+                  ) : (
+                    <>
+                      <FormGrid cols={2}>
+                        {packagingStandards.map(size => (
+                          <div key={size}>
+                            <label className="dash-label">{size} KG Sack Count</label>
+                            <DashInput
+                              type="number"
+                              min="0"
+                              value={bagCounts[size] || 0}
+                              onChange={(e) => handleBagCountChange(size, e.target.value)}
+                              placeholder={`Enter number of ${size}kg bags available`}
+                            />
+                            <span className="text-[11px] text-slate-500 mt-1 block">
+                              Number of {size}kg sacks in current stock.
+                            </span>
+                          </div>
+                        ))}
+                      </FormGrid>
+
+                      <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl flex items-center justify-between mt-6">
+                        <div className="flex items-center gap-2.5">
+                          <Info className="w-4 h-4 text-emerald-400" />
+                          <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider">
+                            Current Calculated Weight
+                          </span>
+                        </div>
+                        <strong className="text-lg text-emerald-400">
+                          {currentTotalWeight.toLocaleString()} KG
+                        </strong>
+                      </div>
+                    </>
+                  )}
+                </DashCard>
+
+                {/* SECTION 4: ADD NEW STOCK */}
+                {!noPackageStandards && (
+                  <DashCard>
+                    <CardHeader
+                      title="Safely Append New Stock"
+                      subtitle="Add incoming sacks to prevent overwrite errors"
+                      icon={Sparkles}
                     />
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Cost of harvest acquisition per kilogram.
-                    </span>
-                  </div>
+                    <p className="text-sm text-slate-400 mb-6 mt-2">
+                      Add incoming bag counts here. These will append directly to the existing inventory upon updates, avoiding accidental overwrites.
+                    </p>
 
-                   {/* Storage Charge Strategy choice */}
-                  <div>
-                    <label style={labelStyle}>Warehouse Charge Strategy</label>
-                    <select
-                      style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}
-                      value={pricingStrategy}
-                      onChange={(e) => setPricingStrategy(e.target.value)}
-                      className="bg-slate-950"
-                    >
-                      <option value="PROFIT_PER_KG">Charge Per KG</option>
-                      <option value="PROFIT_PERCENTAGE">Sales Percentage</option>
-                    </select>
-                  </div>
-
-                  {/* Margin Input */}
-                  <div>
-                    <label style={labelStyle}>
-                      {pricingStrategy === "PROFIT_PERCENTAGE" ? "Warehouse Rental Charge (%)" : "Warehouse Rental Charge (₹/kg)"}
-                    </label>
-                    <input
-                      type="number"
-                      style={inputStyle}
-                      min="0"
-                      step="0.01"
-                      placeholder="e.g. 2"
-                      value={marginValue}
-                      onChange={(e) => setMarginValue(Math.max(0, Number(e.target.value)))}
-                      required
-                    />
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Storage charge plan rate.
-                    </span>
-                  </div>
-
-                  {/* Calculated Selling Price live display */}
-                  <div className="flex flex-col justify-center bg-slate-900/30 border border-slate-900/60 p-4 rounded-xl">
-                    <span className="text-[12px] text-slate-400 font-extrabold uppercase tracking-wide">
-                      Computed Selling Price
-                    </span>
-                    <strong className="text-2xl text-green-400 mt-1">
-                      ₹{calculatedSellingPrice.toFixed(2)} / kg
-                    </strong>
-                    <span className="text-[11px] text-slate-500 mt-0.5">
-                      Automatically calculated from pricing parameters.
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: PACKAGE INVENTORY (Dynamic from Admin Standards) */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <Archive className="text-green-400 w-5 h-5" />
-                  Packaging & Current Inventory
-                </h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Suppliers manage stock count exclusively via pre-set sack units configured by the Administrator. Directly editing kilograms is disabled.
-                </p>
-
-                {noPackageStandards ? (
-                  <div className="text-amber-400/80 text-sm p-4 rounded-xl border border-amber-500/20 bg-amber-950/10 flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 shrink-0" />
-                    No packaging standards configured. Contact the Administrator.
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                    <FormGrid cols={2}>
                       {packagingStandards.map(size => (
                         <div key={size}>
-                          <label style={labelStyle}>{size} KG Sack Count</label>
-                          <input
+                          <label className="dash-label">Add {size} KG Sacks</label>
+                          <DashInput
                             type="number"
-                            style={inputStyle}
                             min="0"
-                            value={bagCounts[size] || 0}
-                            onChange={(e) => handleBagCountChange(size, e.target.value)}
-                            placeholder={`Enter number of ${size}kg bags available`}
+                            value={addBagCounts[size] || 0}
+                            onChange={(e) => handleAddBagCountChange(size, e.target.value)}
+                            placeholder={`Incoming count of ${size}kg sacks`}
                           />
                           <span className="text-[11px] text-slate-500 mt-1 block">
-                            Number of {size}kg sacks in current stock.
+                            Adds directly to the existing {bagCounts[size] || 0} sacks.
                           </span>
                         </div>
                       ))}
-                    </div>
+                    </FormGrid>
 
-                    <div className="bg-slate-900/30 border border-slate-900/60 p-4 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <Info className="w-4 h-4 text-green-400" />
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                          Current Calculated Weight
-                        </span>
-                      </div>
-                      <strong className="text-lg text-green-400">
-                        {currentTotalWeight.toLocaleString()} KG
+                    <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl flex items-center justify-between mt-6">
+                      <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider">
+                        New Combined Total Weight
+                      </span>
+                      <strong className="text-xl text-emerald-400">
+                        {newTotalWeight.toLocaleString()} KG
                       </strong>
                     </div>
-                  </>
+                  </DashCard>
                 )}
-              </div>
 
-              {/* SECTION 4: ADD NEW STOCK */}
-              {!noPackageStandards && (
-                <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                  <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                    <Sparkles className="text-green-400 w-5 h-5" />
-                    Safely Append New Stock (Incoming Batch)
-                  </h3>
-                  <p className="text-sm text-slate-400 mb-6">
-                    Add incoming bag counts here. These will append directly to the existing inventory upon updates, avoiding accidental overwrites.
-                  </p>
+                {/* SECTION 5: WAREHOUSE INFORMATION */}
+                <DashCard>
+                  <CardHeader
+                    title="Warehouse Capacity & Utilization"
+                    subtitle="Live space metrics for target storage facility"
+                    icon={WarehouseIcon}
+                  />
+                  <div style={{ marginTop: "20px" }}>
+                    {selectedWarehouse ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Name</span>
+                          <strong className="text-sm text-white mt-1 block truncate">{selectedWarehouse.warehouseName}</strong>
+                        </div>
+                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">District</span>
+                          <strong className="text-sm text-white mt-1 block">{selectedWarehouse.district}</strong>
+                        </div>
+                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">State</span>
+                          <strong className="text-sm text-white mt-1 block">{selectedWarehouse.state}</strong>
+                        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                    {packagingStandards.map(size => (
-                      <div key={size}>
-                        <label style={labelStyle}>Add {size} KG Sacks</label>
-                        <input
-                          type="number"
-                          style={inputStyle}
-                          min="0"
-                          value={addBagCounts[size] || 0}
-                          onChange={(e) => handleAddBagCountChange(size, e.target.value)}
-                          placeholder={`Incoming count of ${size}kg sacks`}
-                        />
-                        <span className="text-[11px] text-slate-500 mt-1 block">
-                          Adds directly to the existing {bagCounts[size] || 0} sacks.
-                        </span>
+                        {capacityLoadingEP && (
+                          <div className="col-span-3 text-slate-400 text-sm text-center py-2">Fetching live capacity…</div>
+                        )}
+
+                        {warehouseCapacityEP && !capacityLoadingEP && (
+                          <>
+                            <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                              <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Total Capacity</span>
+                              <strong className="text-sm text-white mt-1 block">
+                                {warehouseCapacityEP.totalCapacityKg > 0
+                                  ? `${Number(warehouseCapacityEP.totalCapacityKg).toLocaleString("en-IN")} KG`
+                                  : "Not configured"}
+                              </strong>
+                            </div>
+                            <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                              <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Used Capacity</span>
+                              <strong className="text-sm text-amber-400 mt-1 block">
+                                {Number(warehouseCapacityEP.usedCapacityKg).toLocaleString("en-IN")} KG
+                              </strong>
+                            </div>
+                            <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
+                              <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Available Space</span>
+                              <strong className={`text-sm mt-1 block ${warehouseCapacityEP.availableCapacityKg > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {Number(warehouseCapacityEP.availableCapacityKg).toLocaleString("en-IN")} KG
+                              </strong>
+                            </div>
+                            {warehouseCapacityEP.totalCapacityKg > 0 && (
+                              <div className="col-span-3 bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
+                                <div className="flex justify-between mb-2">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Capacity Utilization</span>
+                                  <span className={`text-sm font-black ${
+                                    warehouseCapacityEP.capacityUtilization >= 90 ? "text-red-400" :
+                                    warehouseCapacityEP.capacityUtilization >= 70 ? "text-amber-400" : "text-emerald-400"
+                                  }`}>{warehouseCapacityEP.capacityUtilization}%</span>
+                                </div>
+                                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all duration-700 ${
+                                    warehouseCapacityEP.capacityUtilization >= 90 ? "bg-gradient-to-r from-red-700 to-red-500" :
+                                    warehouseCapacityEP.capacityUtilization >= 70 ? "bg-gradient-to-r from-amber-700 to-amber-400" :
+                                    "bg-gradient-to-r from-emerald-700 to-emerald-400"
+                                  }`} style={{ width: `${Math.min(100, warehouseCapacityEP.capacityUtilization)}%` }} />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {!warehouseCapacityEP && !capacityLoadingEP && (
+                          <div className="col-span-3 text-slate-400 text-sm text-center py-2">
+                            Capacity data not yet configured for this warehouse.
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="text-slate-400 text-sm">Please select a storage warehouse above.</div>
+                    )}
                   </div>
+                </DashCard>
 
-                  <div className="bg-green-500/5 border border-green-500/20 p-4 rounded-xl flex items-center justify-between">
-                    <span className="text-xs text-green-300 font-bold uppercase tracking-wider">
-                      New Combined Total Weight
-                    </span>
-                    <strong className="text-xl text-green-400">
-                      {newTotalWeight.toLocaleString()} KG
-                    </strong>
+                {/* SECTION 5B: WAREHOUSE AUDIT */}
+                <DashCard>
+                  <CardHeader
+                    title="Target Warehouse Audit"
+                    subtitle="Audit checks logged for warehouse safety compliance"
+                    icon={ShieldAlert}
+                  />
+                  <div className="text-slate-400 text-sm p-4 rounded-xl border border-slate-900/40 bg-slate-905/10 flex items-center gap-2.5 mt-2">
+                    <Info className="w-4 h-4 text-slate-500 shrink-0" />
+                    No warehouse audit records available.
                   </div>
-                </div>
-              )}
+                </DashCard>
 
-              {/* SECTION 5: WAREHOUSE INFORMATION */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <WarehouseIcon className="text-green-400 w-5 h-5" />
-                  Warehouse Information (Read Only)
-                </h3>
-
-                {selectedWarehouse ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                      <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Name</span>
-                      <strong className="text-sm text-white mt-1 block truncate">{selectedWarehouse.warehouseName}</strong>
-                    </div>
-                    <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                      <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">District</span>
-                      <strong className="text-sm text-white mt-1 block">{selectedWarehouse.district}</strong>
-                    </div>
-                    <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                      <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">State</span>
-                      <strong className="text-sm text-white mt-1 block">{selectedWarehouse.state}</strong>
-                    </div>
-
-                    {capacityLoadingEP && (
-                      <div className="col-span-3 text-slate-400 text-sm text-center py-2">Fetching live capacity…</div>
+                {/* SECTION 6: PRODUCT IMAGE */}
+                <DashCard>
+                  <CardHeader
+                    title="Product Visual Settings"
+                    subtitle="Preview and update product registry thumbnail"
+                    icon={ImageIcon}
+                  />
+                  <div className="flex flex-col md:flex-row items-center gap-6 mt-4">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt="Product Preview"
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=300";
+                        }}
+                        className="w-32 h-32 object-cover rounded-2xl border border-slate-800 bg-slate-900"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-2xl border border-dashed border-slate-850 flex items-center justify-center bg-slate-950 text-slate-600">
+                        No Image
+                      </div>
                     )}
 
-                    {warehouseCapacityEP && !capacityLoadingEP && (
+                    <div className="flex-grow w-full">
+                      <label className="dash-label">Product Image URL</label>
+                      <div className="flex gap-3">
+                        <DashInput
+                          type="text"
+                          placeholder="https://images.unsplash.com/... or similar"
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                        />
+                        <DashBtn
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            if (!imageUrl.trim().startsWith("http")) {
+                              alert("Please enter a valid HTTP/HTTPS URL");
+                            } else {
+                              alert("Preview updated!");
+                            }
+                          }}
+                        >
+                          Replace Image
+                        </DashBtn>
+                      </div>
+                      <span className="text-[11px] text-slate-500 mt-1.5 block">
+                        Image links must be public, secure web links.
+                      </span>
+                    </div>
+                  </div>
+                </DashCard>
+
+                {/* SECTION 7: AI MARKET INFO */}
+                <DashCard>
+                  <CardHeader
+                    title="AI Market Price Forecast (eNAM & AGMARKNET Feed)"
+                    subtitle="Real-time agricultural pricing indices integration"
+                    icon={TrendingUp}
+                  />
+                  <div style={{ marginTop: "20px" }}>
+                    {forecast ? (
                       <>
-                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Total Capacity</span>
-                          <strong className="text-sm text-white mt-1 block">
-                            {warehouseCapacityEP.totalCapacityKg > 0
-                              ? `${Number(warehouseCapacityEP.totalCapacityKg).toLocaleString("en-IN")} KG`
-                              : "Not configured"}
-                          </strong>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Govt. MSP Price</span>
+                            <strong className="text-lg text-white mt-1 block">₹{forecast.currentPrice.toFixed(2)}/kg</strong>
+                          </div>
+                          <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">AI Predicted 30D</span>
+                            <strong className="text-lg text-emerald-400 mt-1 block">₹{forecast.predicted30Days.toFixed(2)}/kg</strong>
+                          </div>
+                          <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Confidence Score</span>
+                            <strong className="text-lg text-white mt-1 block">{(forecast.confidenceScore || 85)}%</strong>
+                          </div>
+                          <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Market Trend</span>
+                            <strong className={`text-sm mt-1 block uppercase font-black ${forecast.trend === "INCREASING" ? "text-emerald-400" : "text-yellow-400"}`}>
+                              {forecast.trend}
+                            </strong>
+                          </div>
                         </div>
-                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Used Capacity</span>
-                          <strong className="text-sm text-amber-400 mt-1 block">
-                            {Number(warehouseCapacityEP.usedCapacityKg).toLocaleString("en-IN")} KG
-                          </strong>
-                        </div>
-                        <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl text-left">
-                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Available Space</span>
-                          <strong className={`text-sm mt-1 block ${warehouseCapacityEP.availableCapacityKg > 0 ? "text-green-400" : "text-red-400"}`}>
-                            {Number(warehouseCapacityEP.availableCapacityKg).toLocaleString("en-IN")} KG
-                          </strong>
-                        </div>
-                        {warehouseCapacityEP.totalCapacityKg > 0 && (
-                          <div className="col-span-3 bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
-                            <div className="flex justify-between mb-2">
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Capacity Utilization</span>
-                              <span className={`text-sm font-black ${
-                                warehouseCapacityEP.capacityUtilization >= 90 ? "text-red-400" :
-                                warehouseCapacityEP.capacityUtilization >= 70 ? "text-amber-400" : "text-green-400"
-                              }`}>{warehouseCapacityEP.capacityUtilization}%</span>
-                            </div>
-                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full transition-all duration-700 ${
-                                warehouseCapacityEP.capacityUtilization >= 90 ? "bg-gradient-to-r from-red-700 to-red-500" :
-                                warehouseCapacityEP.capacityUtilization >= 70 ? "bg-gradient-to-r from-amber-700 to-amber-400" :
-                                "bg-gradient-to-r from-green-700 to-green-400"
-                              }`} style={{ width: `${Math.min(100, warehouseCapacityEP.capacityUtilization)}%` }} />
-                            </div>
+                        {forecast.reason && (
+                          <div className="mt-4 p-3 rounded-xl bg-slate-900/20 border border-slate-900/40">
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider mb-1">AI Explanation</span>
+                            <p className="text-xs text-slate-300 leading-relaxed">{forecast.reason}</p>
                           </div>
                         )}
                       </>
-                    )}
-
-                    {!warehouseCapacityEP && !capacityLoadingEP && (
-                      <div className="col-span-3 text-slate-400 text-sm text-center py-2">
-                        Capacity data not yet configured for this warehouse.
+                    ) : (
+                      <div className="flex items-center gap-3 text-slate-400 text-sm">
+                        <div className="w-5 h-5 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin shrink-0" />
+                        <span>Synchronizing dynamic agricultural forecasts...</span>
                       </div>
                     )}
+                    <span className="text-[10px] text-slate-600 mt-4 block">
+                      Last updated: {new Date().toLocaleDateString()} via SCM AI Forecasting Services.
+                    </span>
                   </div>
-                ) : (
-                  <div className="text-slate-400 text-sm">Please select a storage warehouse above.</div>
-                )}
-              </div>
+                </DashCard>
 
-              {/* SECTION 5B: WAREHOUSE AUDIT */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-4 flex items-center gap-2.5">
-                  <ShieldAlert className="text-green-400 w-5 h-5" />
-                  Target Warehouse Audit
-                </h3>
-                <div className="text-slate-400 text-sm p-4 rounded-xl border border-slate-900/40 bg-slate-900/20 flex items-center gap-2.5">
-                  <Info className="w-4 h-4 text-slate-500 shrink-0" />
-                  No warehouse audit records available.
+                {/* SECTION 8: ACTION BUTTONS */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <DashBtn
+                      type="submit"
+                      variant="primary"
+                      disabled={submitting || noPackageStandards}
+                      style={{ height: "52px", padding: "0 32px" }}
+                    >
+                      {submitting ? (
+                        <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Update Product
+                    </DashBtn>
+
+                    <Link
+                      to={role === "ADMIN" ? "/admin/products" : "/supplier/products"}
+                      className="dash-btn dash-btn--ghost flex items-center justify-center"
+                      style={{ height: "52px", padding: "0 32px", textDecoration: "none" }}
+                    >
+                      Cancel
+                    </Link>
+                  </div>
+
+                  <DashBtn
+                    type="button"
+                    variant="danger"
+                    onClick={handleDelete}
+                    disabled={noPackageStandards}
+                    style={{ height: "52px", padding: "0 32px" }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Product
+                  </DashBtn>
                 </div>
-              </div>
 
-              {/* SECTION 6: PRODUCT IMAGE */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <ImageIcon className="text-green-400 w-5 h-5" />
-                  Product Visual Settings
-                </h3>
+              </form>
 
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  {imageUrl ? (
+              {/* Right Side: Sticky Summary Card */}
+              <div style={{ position: "sticky", top: "112px" }}>
+                <DashCard>
+                  <CardHeader
+                    title="Product Summary Card"
+                    subtitle="Live calculation ledger of total harvest volume"
+                  />
+                  
+                  {imageUrl && (
                     <img
                       src={imageUrl}
-                      alt="Product Preview"
+                      alt="Summary Preview"
                       onError={(e) => {
                         e.target.src = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=300";
                       }}
-                      className="w-32 h-32 object-cover rounded-2xl border border-slate-800 bg-slate-900"
+                      style={{ width: "100%", height: "144px", objectFit: "cover", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", marginTop: "12px" }}
                     />
-                  ) : (
-                    <div className="w-32 h-32 rounded-2xl border border-dashed border-slate-800 flex items-center justify-center bg-slate-900 text-slate-600">
-                      No Image
-                    </div>
                   )}
 
-                  <div className="flex-grow w-full">
-                    <label style={labelStyle}>Product Image URL</label>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        style={inputStyle}
-                        placeholder="https://images.unsplash.com/... or similar"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
+                  <div className="flex flex-col gap-3.5 border-t border-slate-900/60 pt-4 text-sm" style={{ marginTop: "12px" }}>
+                    <InfoRow label="Product Name" value={productName || "Unnamed Pulse"} />
+                    <InfoRow label="Category" value={category || "Unassigned"} />
+                    <InfoRow label="Warehouse" value={selectedWarehouse?.warehouseName || "None selected"} />
+
+                    {packagingStandards.map(size => {
+                      const total = (bagCounts[size] || 0) + (addBagCounts[size] || 0);
+                      const added = addBagCounts[size] || 0;
+                      return (
+                        <div key={size} className="flex justify-between items-center">
+                          <span className="text-slate-400">{size}kg Sacks</span>
+                          <span className="text-white font-bold">
+                            {total} Sacks
+                            {added > 0 && <span className="text-emerald-400 ml-1.5 text-xs font-bold">+{added}</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    <div className="flex justify-between items-center border-t border-slate-900/60 pt-3">
+                      <span className="text-slate-400">Total Weight</span>
+                      <span className="text-emerald-400 font-extrabold">{newTotalWeight.toLocaleString()} KG</span>
+                    </div>
+                    <InfoRow label="Selling Price" value={`₹${calculatedSellingPrice.toFixed(2)}/kg`} />
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Inventory Value</span>
+                      <strong className="text-emerald-400 text-base font-black">
+                        ₹{finalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Approval Status</span>
+                      <DashBadge
+                        status={status === "APPROVED" ? "approved" : "pending"}
+                        label={status}
                       />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!imageUrl.trim().startsWith("http")) {
-                            alert("Please enter a valid HTTP/HTTPS URL");
-                          } else {
-                            alert("Preview updated!");
-                          }
-                        }}
-                        className="px-5 border border-slate-800 bg-slate-950/30 rounded-xl text-xs font-bold text-white hover:border-green-500/20 hover:bg-green-500/5 cursor-pointer shrink-0"
-                      >
-                        Replace Image
-                      </button>
                     </div>
-                    <span className="text-[11px] text-slate-500 mt-1.5 block">
-                      Image links must be public, secure web links.
-                    </span>
                   </div>
-                </div>
+                </DashCard>
               </div>
 
-              {/* SECTION 7: AI MARKET INFO */}
-              <div className="bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md">
-                <h3 className="text-lg font-extrabold text-white mb-6 flex items-center gap-2.5">
-                  <TrendingUp className="text-green-400 w-5 h-5" />
-                  AI Market Price Forecast (eNAM & AGMARKNET Feed)
-                </h3>
-
-                {forecast ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Govt. MSP Price</span>
-                        <strong className="text-lg text-white mt-1 block">₹{forecast.currentPrice.toFixed(2)}/kg</strong>
-                      </div>
-                      <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">AI Predicted 30D</span>
-                        <strong className="text-lg text-green-400 mt-1 block">₹{forecast.predicted30Days.toFixed(2)}/kg</strong>
-                      </div>
-                      <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Confidence Score</span>
-                        <strong className="text-lg text-white mt-1 block">{(forecast.confidenceScore || 85)}%</strong>
-                      </div>
-                      <div className="bg-slate-900/35 border border-slate-900/60 p-4 rounded-xl">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Market Trend</span>
-                        <strong className={`text-sm mt-1 block uppercase font-black ${forecast.trend === "INCREASING" ? "text-green-400" : "text-yellow-400"}`}>
-                          {forecast.trend}
-                        </strong>
-                      </div>
-                    </div>
-                    {forecast.reason && (
-                      <div className="mt-4 p-3 rounded-xl bg-slate-900/20 border border-slate-900/40">
-                        <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider mb-1">AI Explanation</span>
-                        <p className="text-xs text-slate-300 leading-relaxed">{forecast.reason}</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center gap-3 text-slate-400 text-sm">
-                    <div className="w-5 h-5 border-2 border-green-500/20 border-t-green-500 rounded-full animate-spin shrink-0" />
-                    <span>Synchronizing dynamic agricultural forecasts...</span>
-                  </div>
-                )}
-                <span className="text-[10px] text-slate-600 mt-4 block">
-                  Last updated: {new Date().toLocaleDateString()} via SCM AI Forecasting Services.
-                </span>
-              </div>
-
-              {/* SECTION 8: ACTION BUTTONS */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-2">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                  <button
-                    type="submit"
-                    disabled={submitting || noPackageStandards}
-                    className="h-[52px] px-8 rounded-xl font-bold text-sm bg-green-500 hover:bg-green-400 text-[#030814] flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {submitting ? (
-                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Update Product
-                  </button>
-
-                  <Link
-                    to={role === "ADMIN" ? "/admin/products" : "/supplier/products"}
-                    className="h-[52px] px-8 rounded-xl font-bold text-sm border border-slate-800 bg-slate-950/40 text-slate-330 hover:text-white flex items-center justify-center cursor-pointer transition-all duration-300"
-                  >
-                    Cancel
-                  </Link>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={noPackageStandards}
-                  className="h-[52px] px-8 rounded-xl font-bold text-sm bg-red-950/15 border border-red-500/20 text-red-400 hover:bg-red-950/30 hover:border-red-500/40 flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Product
-                </button>
-              </div>
-
-            </form>
-
-            {/* Right Side: Sticky Summary Card */}
-            <div className="sticky top-28 bg-slate-950/40 border border-slate-900/60 rounded-2xl p-6 backdrop-blur-md flex flex-col gap-5 text-left">
-              <div>
-                <span className="text-[10px] text-green-400 uppercase font-black tracking-widest block">Live Preview</span>
-                <h3 className="text-lg font-extrabold text-white">Product Summary Card</h3>
-              </div>
-
-              {/* Thumbnail */}
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt="Summary Preview"
-                  onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=300";
-                  }}
-                  className="w-full h-36 object-cover rounded-xl border border-slate-800"
-                />
-              )}
-
-              {/* Data list */}
-              <div className="flex flex-col gap-3.5 border-t border-slate-900/60 pt-4 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Product Name</span>
-                  <span className="text-white font-bold">{productName || "Unnamed Pulse"}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Category</span>
-                  <span className="text-white font-bold">{category || "Unassigned"}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Warehouse</span>
-                  <span className="text-white font-bold truncate max-w-[150px]" title={selectedWarehouse?.warehouseName}>
-                    {selectedWarehouse?.warehouseName || "None selected"}
-                  </span>
-                </div>
-
-                {/* Dynamic sack counts in summary */}
-                {packagingStandards.map(size => {
-                  const total = (bagCounts[size] || 0) + (addBagCounts[size] || 0);
-                  const added = addBagCounts[size] || 0;
-                  return (
-                    <div key={size} className="flex justify-between items-center">
-                      <span className="text-slate-400">{size}kg Sacks</span>
-                      <span className="text-white font-bold">
-                        {total} Sacks
-                        {added > 0 && <span className="text-green-400 ml-1.5 text-xs font-bold">+{added}</span>}
-                      </span>
-                    </div>
-                  );
-                })}
-
-                <div className="flex justify-between items-center border-t border-slate-900/60 pt-3">
-                  <span className="text-slate-400">Total Weight</span>
-                  <span className="text-green-400 font-extrabold">{newTotalWeight.toLocaleString()} KG</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Selling Price</span>
-                  <span className="text-white font-bold">₹{calculatedSellingPrice.toFixed(2)}/kg</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Inventory Value</span>
-                  <strong className="text-green-400 text-base font-black">
-                    ₹{finalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </strong>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Approval Status</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${status === "APPROVED" ? "bg-green-500/10 text-green-400 border border-green-500/25" : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25"}`}>
-                    {status}
-                  </span>
-                </div>
-              </div>
             </div>
 
-          </div>
-
+          </PageShell>
         </div>
       </div>
-    </>
+    </FuturisticDashboardWrapper>
   );
 }
 

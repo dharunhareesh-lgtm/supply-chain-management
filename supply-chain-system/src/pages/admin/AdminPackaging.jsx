@@ -1,8 +1,15 @@
+/**
+ * AdminPackaging.jsx — Premium redesign for Configure Packaging Standards.
+ * All business logic PRESERVED.
+ */
 import AdminSidebar from "../../components/AdminSidebar";
 import Navbar from "../../components/Navbar";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Plus, Trash2, CheckCircle, AlertCircle, RefreshCw, Layers } from "lucide-react";
+import {
+  PageShell, PageHeader, DashCard, CardHeader,
+  DashBtn, EmptyState, DashInput
+} from "../../components/dashboard/DashboardEngine";
 
 function AdminPackaging() {
   const [standards, setStandards] = useState([]);
@@ -59,6 +66,7 @@ function AdminPackaging() {
   };
 
   const handleDelete = (id) => {
+    if (!window.confirm("Are you sure you want to delete this packaging standard?")) return;
     fetch(`http://localhost:8082/packaging-standards/${id}`, {
       method: "DELETE"
     })
@@ -76,93 +84,64 @@ function AdminPackaging() {
       <Navbar />
       <div className="layout">
         <AdminSidebar />
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="content"
-        >
-          <div style={{ marginBottom: "24px" }}>
-            <span style={{ color: "#16C784", fontWeight: "600", fontSize: "12px", textTransform: "uppercase" }}>
-              SYSTEM CONFIGURATION
-            </span>
-            <h1 style={{ fontSize: "32px", fontWeight: "800", marginTop: "4px" }}>Configure Packaging Standards</h1>
-            <p style={{ color: "var(--ink-soft)" }}>
-              Define standard bag/sack sizes in KG available for suppliers and customers.
-            </p>
-          </div>
+        <PageShell>
+          <PageHeader
+            title="Configure Packaging Standards"
+            subtitle="Define standard bag/sack weight capacities in KG available on Dravix"
+            breadcrumb={["Admin", "Packaging Config"]}
+          />
 
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "24px", alignItems: "start" }}>
-            {/* Create Policy Card */}
-            <div className="card" style={{ padding: "28px" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "20px" }}>Add New Packaging Standard</h3>
-              <form onSubmit={handleAdd} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "6px", fontWeight: "600" }}>
-                    PACKAGE SIZE (KG)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 50"
-                    value={newSize}
-                    onChange={(e) => setNewSize(e.target.value)}
-                    required
-                    style={{
-                      width: "100%",
-                      height: "48px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "10px",
-                      padding: "0 14px",
-                      color: "var(--ink)",
-                      outline: "none"
-                    }}
-                  />
-                </div>
+            {/* Create Standard Card */}
+            <DashCard>
+              <CardHeader
+                title="Add New Packaging Standard"
+                subtitle="Create a new sack size constraint entry"
+                icon={Layers}
+              />
+              <form onSubmit={handleAdd} style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "16px" }}>
+                <DashInput
+                  label="PACKAGE SIZE (KG)"
+                  type="number"
+                  placeholder="e.g. 50"
+                  value={newSize}
+                  onChange={(e) => setNewSize(e.target.value)}
+                  required
+                />
 
-                <AnimatePresence>
-                  {error && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#EF4444", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <AlertCircle size={16} /> {error}
-                    </motion.div>
-                  )}
-                  {success && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: "#10B981", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <CheckCircle size={16} /> {success}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {error && (
+                  <div style={{ color: "#ef4444", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <AlertCircle size={14} /> {error}
+                  </div>
+                )}
+                {success && (
+                  <div style={{ color: "#10b981", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <CheckCircle size={14} /> {success}
+                  </div>
+                )}
 
-                <button
-                  type="submit"
-                  style={{
-                    height: "46px",
-                    background: "linear-gradient(135deg, #16C784, #22C55E)",
-                    border: "none",
-                    borderRadius: "10px",
-                    color: "white",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px"
-                  }}
-                >
-                  <Plus size={18} /> Configure Standard
-                </button>
+                <DashBtn type="submit" variant="primary" icon={Plus}>
+                  Configure Standard
+                </DashBtn>
               </form>
-            </div>
+            </DashCard>
 
             {/* List standards */}
-            <div className="card" style={{ padding: "28px" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "20px" }}>Configured Packaging Standards</h3>
-              {loading ? (
-                <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
-                  <RefreshCw size={24} style={{ animation: "spin 1.5s linear infinite" }} />
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {standards.map((s) => (
+            <DashCard>
+              <CardHeader
+                title="Configured Standards"
+                subtitle={`${standards.length} sack sizes registered`}
+                icon={Layers}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "16px" }}>
+                {loading ? (
+                  <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
+                    <RefreshCw size={24} style={{ animation: "spin 1.5s linear infinite" }} />
+                  </div>
+                ) : standards.length === 0 ? (
+                  <EmptyState icon={Layers} title="No packaging standards configured yet." />
+                ) : (
+                  standards.map((s) => (
                     <div
                       key={s.id}
                       style={{
@@ -171,27 +150,29 @@ function AdminPackaging() {
                         alignItems: "center",
                         padding: "12px 18px",
                         background: "rgba(255,255,255,0.02)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "10px"
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: "10px",
+                        transition: "border-color 0.2s ease"
                       }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(16,185,129,0.15)"}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"}
                     >
-                      <span style={{ fontWeight: "700", fontSize: "16px" }}>{s.size} KG Sacks</span>
+                      <span style={{ fontWeight: "700", fontSize: "14px", color: "#fff" }}>{s.size} KG Sacks</span>
                       <button
                         onClick={() => handleDelete(s.id)}
-                        style={{ background: "none", border: "none", color: "#EF4444", cursor: "pointer" }}
+                        style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", opacity: 0.7 }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                        onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
                       >
                         <Trash2 size={16} />
                       </button>
                     </div>
-                  ))}
-                  {standards.length === 0 && (
-                    <p style={{ color: "var(--ink-soft)", fontSize: "14px" }}>No packaging standards configured yet.</p>
-                  )}
-                </div>
-              )}
-            </div>
+                  ))
+                )}
+              </div>
+            </DashCard>
           </div>
-        </motion.div>
+        </PageShell>
       </div>
     </>
   );

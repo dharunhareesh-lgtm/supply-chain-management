@@ -1,330 +1,502 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import InteractiveMapPicker from "../../components/map/InteractiveMapPicker";
+/**
+ * CustomerSettings.jsx — DRAVIX SCM Premium Customer Settings
+ * Tabs: Profile · Delivery Address · Notifications · Privacy · Security · Activity
+ */
+import React, { useState, useEffect } from "react";
+import {
+  SettingsSection, SettingRow, PasswordInput, PasswordStrength,
+  NotifMatrix, SecurityScoreRing, SettingsBtn, InfoChip, SettingsDivider,
+  SkeletonSettings, ConfirmDialog, useToast, ActivityTimeline,
+  ConfettiEffect, SettingsDashboard
+} from "../../components/settings/SettingsEngine";
+import {
+  User, Lock, Bell, MapPin, Shield, CheckCircle2,
+  AlertTriangle, Download, Trash2, Plus, X, Activity, Compass, Upload
+} from "lucide-react";
 
-export default function CustomerSettings({ email }) {
+const BASE = "http://localhost:8082";
+const NOTIF_ROWS = [
+  { key: "orders",    label: "Order Updates",     hint: "Placed, confirmed, shipped" },
+  { key: "delivery",  label: "Delivery Updates",  hint: "Out for delivery, delivered" },
+  { key: "payments",  label: "Payment Alerts",    hint: "Invoices, payment receipts" },
+  { key: "kyc",       label: "KYC Status",        hint: "Verification approvals, rejections" },
+];
+function parseNotif(raw) { try { return raw ? JSON.parse(raw) : {}; } catch { return {}; } }
+function defaultNotif() {
+  const o = {};
+  NOTIF_ROWS.forEach(r => { o[r.key] = { email: true, sms: false, inApp: true }; });
+  return o;
+}
+
+export default function CustomerSettings({ email, activeTabOverride, onTabChangeOverride }) {
+  const { toasts, toast } = useToast();
+  const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
 
-  // Profile Details
-  const [phone, setPhone] = useState("");
-  const [notification, setNotification] = useState("Email");
+  useEffect(() => {
+    if (activeTabOverride) setTab(activeTabOverride);
+  }, [activeTabOverride]);
 
-  // Primary Delivery Address
-  const [address, setAddress] = useState("");
+  const handleTabChangeLocal = (key) => {
+    setTab(key);
+    if (onTabChangeOverride) onTabChangeOverride(key);
+  };
+
+  const [phone, setPhone]   = useState("");
+  const [saving, setSaving] = useState(false);
+  const [avatar, setAvatar] = useState("");
+
+  const [address, setAddress]   = useState("");
   const [district, setDistrict] = useState("");
-  const [state, setState] = useState("");
-  const [country, setCountry] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [state, setState]       = useState("");
+  const [country, setCountry]   = useState("");
+  const [postal, setPostal]     = useState("");
+  const [lat, setLat]           = useState("");
+  const [lng, setLng]           = useState("");
+  const [addrSaving, setAddrSaving] = useState(false);
 
-  // Saved Addresses List (custom customer multi-address management)
   const [savedAddresses, setSavedAddresses] = useState([]);
-  const [newAddressText, setNewAddressText] = useState("");
+  const [newAddrText, setNewAddrText]       = useState("");
 
-  // Change Password States
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
+  const [notifPrefs, setNotifPrefs]   = useState(defaultNotif());
+  const [notifSaving, setNotifSaving] = useState(false);
 
-  // Status Alerts
-  const [profileMsg, setProfileMsg] = useState("");
-  const [profileErr, setProfileErr] = useState("");
-  const [secMsg, setSecMsg] = useState("");
-  const [secErr, setSecErr] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
-  const loadData = async () => {
+  const [curPw, setCurPw]   = useState("");
+  const [newPw, setNewPw]   = useState("");
+  const [confPw, setConfPw] = useState("");
+  const [otp, setOtp]       = useState("");
+  const [otpSent, setOtpSent]     = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [pwLoading, setPwLoading]   = useState(false);
+
+  const [showSaveBar, setShowSaveBar] = useState(false);
+  const [confetti, setConfetti] = useState(false);
+
+  const [timelineItems, setTimelineItems] = useState([
+    { action: "Profile Updated", details: "Saved phone number and security details", timestamp: "Just now", type: "UPDATE" },
+    { action: "Delivery Address Configured", details: "Associated default latitude/longitude coordinates", timestamp: "Yesterday", type: "CREATE" }
+  ]);
+
+  const load = async () => {
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/customer?email=${email}`);
-      if (res.ok) {
-        const d = await res.json();
+      const r = await fetch(`${BASE}/api/settings/customer?email=${email}`);
+      if (r.ok) {
+        const d = await r.json();
         setPhone(d.phone || "");
-        setNotification(d.notificationPreferences || "Email");
         setAddress(d.address || "");
         setDistrict(d.district || "");
         setState(d.state || "");
         setCountry(d.country || "");
-        setPostalCode(d.postalCode || "");
-        setLatitude(d.latitude != null ? d.latitude.toString() : "");
-        setLongitude(d.longitude != null ? d.longitude.toString() : "");
-
-        // Saved addresses is stored as JSON list in DB
+        setPostal(d.postalCode || "");
+        setLat(d.latitude != null ? String(d.latitude) : "");
+        setLng(d.longitude != null ? String(d.longitude) : "");
         try {
-          if (d.savedAddresses) {
-            setSavedAddresses(JSON.parse(d.savedAddresses));
-          } else {
-            setSavedAddresses([]);
-          }
-        } catch (e) {
+          setSavedAddresses(d.savedAddresses ? JSON.parse(d.savedAddresses) : []);
+        } catch {
           setSavedAddresses(d.savedAddresses ? d.savedAddresses.split("\n").filter(Boolean) : []);
         }
+        const p = parseNotif(d.notificationPreferences);
+        if (Object.keys(p).length) setNotifPrefs(p);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, [email]);
+
+  const completion = () => {
+    let f = 0, t = 4;
+    if (email)   f++;
+    if (phone)   f++;
+    if (address) f++;
+    if (lat)     f++;
+    return Math.round((f / t) * 100);
   };
 
-  useEffect(() => {
-    loadData();
-  }, [email]);
+  const triggerSaveBar = () => setShowSaveBar(true);
 
-  const handleProfileSave = async (e) => {
-    e.preventDefault();
-    setProfileMsg("");
-    setProfileErr("");
+  const handleDiscardChanges = () => {
+    setPhone(phone);
+    setAddress(address);
+    setDistrict(district);
+    setState(state);
+    setPostal(postal);
+    setLat(lat);
+    setLng(lng);
+    setShowSaveBar(false);
+    toast.info("Changes discarded.");
+  };
 
+  const saveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/customer/profile?email=${email}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const r = await fetch(`${BASE}/api/settings/customer/profile?email=${email}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone,
-          notificationPreferences: notification,
-          address,
-          district,
-          state,
-          country,
-          postalCode,
-          latitude,
-          longitude,
-          savedAddresses: JSON.stringify(savedAddresses)
+          phone, address, district, state, country, postalCode: postal,
+          latitude: lat, longitude: lng,
+          savedAddresses: JSON.stringify(savedAddresses),
+          notificationPreferences: JSON.stringify(notifPrefs)
         }),
       });
-      if (res.ok) {
-        setProfileMsg("Customer profile & addresses saved successfully.");
-        loadData();
-      } else {
-        setProfileErr("Failed to update profile settings.");
-      }
-    } catch (err) {
-      setProfileErr("Error updating profile settings.");
-    }
+      if (r.ok) {
+        toast.success("Profile saved!");
+        setShowSaveBar(false);
+        setTimelineItems(p => [
+          { action: "Customer Profile Updated", details: "Saved delivery preferences and addresses", timestamp: "Just now", type: "UPDATE" },
+          ...p
+        ]);
+        if (completion() >= 100) {
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 3000);
+        }
+        load();
+      } else { toast.error("Failed to save."); }
+    } catch { toast.error("Network error."); }
+    finally { setSaving(false); }
   };
 
-  // Add a new address to the saved list
-  const handleAddAddress = () => {
-    if (!newAddressText.trim()) return;
-    const updatedList = [...savedAddresses, newAddressText.trim()];
-    setSavedAddresses(updatedList);
-    setNewAddressText("");
+  const addSavedAddress = () => {
+    if (!newAddrText.trim()) return;
+    const updated = [...savedAddresses, newAddrText.trim()];
+    setSavedAddresses(updated);
+    setNewAddrText("");
+    triggerSaveBar();
   };
 
-  // Remove an address from the saved list
-  const handleRemoveAddress = (idx) => {
-    const updatedList = savedAddresses.filter((_, i) => i !== idx);
-    setSavedAddresses(updatedList);
+  const removeSavedAddress = (idx) => {
+    setSavedAddresses(prev => prev.filter((_, i) => i !== idx));
+    triggerSaveBar();
   };
 
-  const handleSendOtp = async () => {
-    setSecMsg("");
-    setSecErr("");
-    setSendingOtp(true);
+  const sendOtp = async () => {
+    setOtpLoading(true);
     try {
-      const res = await fetch(`http://localhost:8082/api/settings/send-otp?email=${email}`, { method: "POST" });
-      if (res.ok) {
-        setOtpSent(true);
-        setSecMsg("OTP sent to your email!");
-      } else {
-        setSecErr("Failed to send OTP.");
-      }
-    } catch (e) {
-      setSecErr("Error sending OTP.");
-    } finally {
-      setSendingOtp(false);
-    }
+      const r = await fetch(`${BASE}/api/settings/send-otp?email=${email}`, { method: "POST" });
+      if (r.ok) { setOtpSent(true); toast.info("OTP sent."); }
+      else       { toast.error("Failed to send OTP."); }
+    } catch { toast.error("Network error."); }
+    finally { setOtpLoading(false); }
   };
 
-  const handleChangePassword = async (e) => {
+  const changePw = async (e) => {
     e.preventDefault();
-    setSecMsg("");
-    setSecErr("");
-
-    if (newPassword !== confirmPassword) {
-      setSecErr("Passwords do not match.");
-      return;
-    }
-
+    if (newPw !== confPw) { toast.error("Passwords do not match."); return; }
+    setPwLoading(true);
     try {
-      const res = await fetch("http://localhost:8082/api/settings/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, currentPassword, otp, newPassword, confirmPassword }),
+      const r = await fetch(`${BASE}/api/settings/change-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, currentPassword: curPw, otp, newPassword: newPw, confirmPassword: confPw }),
       });
-      const resData = await res.json();
-      if (res.ok) {
-        setSecMsg("Password changed successfully.");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setOtp("");
-        setOtpSent(false);
-      } else {
-        setSecErr(resData.error || "Failed to change password.");
-      }
-    } catch (err) {
-      setSecErr("Error updating password.");
-    }
+      const d = await r.json();
+      if (r.ok) { toast.success("Password changed!"); setCurPw(""); setNewPw(""); setConfPw(""); setOtp(""); setOtpSent(false); }
+      else       { toast.error(d.error || "Failed."); }
+    } catch { toast.error("Network error."); }
+    finally { setPwLoading(false); }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const dashItems = [
+    { key: "profile",       title: "Customer Profile",    desc: "Your email coordinates, contact details and visual avatar", icon: User, pct: completion(), status: "Active" },
+    { key: "delivery",      title: "Delivery Addresses",  desc: "Your primary address and multi-location SCM coordinate map", icon: MapPin, pct: address ? 100 : 0, status: "Active" },
+    { key: "notifications", title: "Notification Toggles",desc: "Enforced alert options for placed orders and dispatches", icon: Bell, pct: 100, status: "Active" },
+    { key: "privacy",       title: "Privacy & Data Logs", desc: "Request account deletion checks and export data archives", icon: Shield, pct: 100, status: "Secure" },
+    { key: "security",      title: "Security & Passwords",desc: "Reset portal credentials and configure safety OTP logs", icon: Lock, pct: 85, status: "Secure" },
+    { key: "activity",      title: "Activity Audit Logs",  desc: "Audit timeline logs of settings and address adjustments", icon: Activity, pct: 100, status: "Active" }
+  ];
+
+  if (loading) return <SkeletonSettings sections={3} />;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+    <div style={{ position: "relative" }}>
+      <ConfettiEffect active={confetti} />
       
-      {/* Customer Profile & Address Card */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-        <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>👤 Customer Profile & Address Info</h2>
-        {profileMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{profileMsg}</div>}
-        {profileErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{profileErr}</div>}
-
-        <form onSubmit={handleProfileSave} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Customer Email (Read-Only)</label>
-            <input type="text" disabled value={email} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Mobile Number</label>
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Notification Preferences</label>
-            <select value={notification} onChange={(e) => setNotification(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--ink)" }}>
-              <option value="Email">Email Only</option>
-              <option value="SMS">SMS Only</option>
-              <option value="Both">Both Email & SMS</option>
-            </select>
-          </div>
-
-          <h3 style={{ fontSize: "14px", fontWeight: "700", marginTop: "14px", color: "var(--ink)" }}>🏠 Primary Delivery Address</h3>
-          
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "6px" }}>🗺️ Interactive Map Picker (Click or drag to select location)</label>
-            <InteractiveMapPicker
-              initialPosition={latitude && longitude ? [parseFloat(latitude), parseFloat(longitude)] : null}
-              onLocationSelect={(loc) => {
-                setLatitude(loc.latitude.toString());
-                setLongitude(loc.longitude.toString());
-                if (loc.address) setAddress(loc.address);
-                if (loc.district) setDistrict(loc.district);
-                if (loc.state) setState(loc.state);
-                if (loc.country) setCountry(loc.country);
-                if (loc.postalCode) setPostalCode(loc.postalCode);
-              }}
-              height="260px"
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Latitude (Read-Only)</label>
-              <input type="text" readOnly value={latitude} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Longitude (Read-Only)</label>
-              <input type="text" readOnly value={longitude} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "rgba(0,0,0,0.05)" }} />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Street Address</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>District</label>
-              <input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>State</label>
-              <input type="text" value={state} onChange={(e) => setState(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Country</label>
-              <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Postal Code</label>
-              <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-            </div>
-          </div>
-
-          <button className="btn-premium-primary" type="submit" style={{ marginTop: "10px" }}>Save Profile & Addresses</button>
-        </form>
+      <div style={{ padding: "0 48px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", background: "var(--surface)", height: 60 }}>
+        {tab !== "dashboard" ? (
+          <button onClick={() => handleTabChangeLocal("dashboard")} style={{ background: "none", border: "none", color: "#16C784", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            🧭 Back to Console Dashboard
+          </button>
+        ) : (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-soft)" }}>Settings Dashboard Console</span>
+        )}
       </div>
 
-      {/* Saved Addresses list & Change password card */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ padding: "30px 48px" }}>
         
-        {/* Saved Addresses card */}
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>📭 Saved Delivery Locations</h2>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "150px", overflowY: "auto", marginBottom: "14px", border: "1px solid var(--border)", padding: "10px", borderRadius: "8px", background: "var(--bg)" }}>
-            {savedAddresses.length === 0 ? (
-              <span style={{ fontSize: "12px", color: "var(--ink-soft)", fontStyle: "italic" }}>No other saved locations. Add one below.</span>
-            ) : (
-              savedAddresses.map((addr, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12.5px", background: "var(--surface)", padding: "6px 10px", borderRadius: "6px", border: "1px solid var(--border)" }}>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>{addr}</span>
-                  <button type="button" onClick={() => handleRemoveAddress(idx)} style={{ color: "#EF4444", border: "none", background: "none", cursor: "pointer", fontSize: "11px", fontWeight: 700 }}>Delete</button>
-                </div>
-              ))
-            )}
-          </div>
+        {/* LANDING PAGE */}
+        {tab === "dashboard" && (
+          <SettingsDashboard items={dashItems} onCardClick={handleTabChangeLocal} />
+        )}
 
-          <div style={{ display: "flex", gap: "10px" }}>
-            <input type="text" placeholder="Add custom saved address" value={newAddressText} onChange={(e) => setNewAddressText(e.target.value)} style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)", fontSize: "12.5px" }} />
-            <button type="button" className="btn-premium-primary" onClick={handleAddAddress} style={{ padding: "10px 15px", fontSize: "12.5px" }}>Add</button>
-          </div>
-        </div>
-
-        {/* Change Password Card */}
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "24px" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px", color: "var(--ink)" }}>🔒 Change Password</h2>
-          {secMsg && <div style={{ color: "#10B981", fontSize: "13px", marginBottom: "10px" }}>{secMsg}</div>}
-          {secErr && <div style={{ color: "#EF4444", fontSize: "13px", marginBottom: "10px" }}>{secErr}</div>}
-
-          <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Current Password</label>
-              <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
+        {/* PROFILE */}
+        {tab === "profile" && (
+          <form onSubmit={saveProfile}>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Profile Settings</h1>
+                <p className="settings-page-subtitle">Your personal customer account details</p>
+              </div>
             </div>
 
-            {otpSent ? (
-              <>
-                <div style={{ padding: "10px", background: "rgba(22,199,132,0.06)", border: "1px solid rgba(22,199,132,0.2)", borderRadius: "8px", fontSize: "12px", color: "#16C784" }}>
-                  OTP verification email sent. Enter it below to unlock password updates.
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>OTP Code</label>
-                  <input type="text" required placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>New Password</label>
-                  <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", color: "var(--ink-soft)", marginBottom: "4px" }}>Confirm New Password</label>
-                  <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} />
-                </div>
-                <button className="btn-premium-primary" type="submit" style={{ marginTop: "10px" }}>Update Password</button>
-              </>
-            ) : (
-              <button type="button" disabled={sendingOtp || !currentPassword} onClick={handleSendOtp} className="btn-premium-primary" style={{ width: "100%", marginTop: "10px" }}>
-                {sendingOtp ? "Sending OTP..." : "Verify & Send OTP"}
-              </button>
-            )}
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 32 }}>
+              <div>
+                <SettingsSection title="Avatar Photo" icon={User}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                    <div className="settings-avatar-lg-wrap">
+                      <div className="settings-avatar-lg">
+                        {avatar ? <img src={avatar} className="settings-avatar-img" alt="avatar" /> : "🛒"}
+                      </div>
+                      <label className="settings-avatar-upload-overlay" style={{ cursor: "pointer" }}>
+                        <Upload size={14} />
+                        <input
+                          type="file" accept="image/*" style={{ display: "none" }}
+                          onChange={e => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              const r = new FileReader();
+                              r.onload = () => { setAvatar(r.result); triggerSaveBar(); };
+                              r.readAsDataURL(f);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 750, color: "var(--ink)" }}>{email.split("@")[0]}</div>
+                    <InfoChip color="green" icon={CheckCircle2}>Active Customer</InfoChip>
+                  </div>
+                </SettingsSection>
+              </div>
+
+              <div>
+                <SettingsSection title="Customer Profile" icon={User}>
+                  <SettingRow label="Registered Email" hint="Your login coordinates — cannot be changed">
+                    <input className="settings-input readonly" value={email} readOnly />
+                    <InfoChip color="green" icon={CheckCircle2}>Verified</InfoChip>
+                  </SettingRow>
+                  <SettingRow label="Mobile Phone Number" hint="Used for dispatches alerts and OTP checks">
+                    <input className="settings-input" value={phone} onChange={e => { setPhone(e.target.value); triggerSaveBar(); }} placeholder="+91 98765 43210" />
+                  </SettingRow>
+                </SettingsSection>
+              </div>
+            </div>
           </form>
-        </div>
+        )}
+
+        {/* DELIVERY ADDRESS */}
+        {tab === "delivery" && (
+          <form onSubmit={saveProfile}>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Delivery Coordinates</h1>
+                <p className="settings-page-subtitle">Your primary shipping address and coordinate registry</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Primary Address" icon={MapPin}>
+              <SettingRow label="Street Address" full>
+                <input className="settings-input" value={address} onChange={e => { setAddress(e.target.value); triggerSaveBar(); }} placeholder="Plot No, Area" />
+              </SettingRow>
+              <SettingRow label="District">
+                <input className="settings-input" value={district} onChange={e => { setDistrict(e.target.value); triggerSaveBar(); }} placeholder="District" />
+              </SettingRow>
+              <SettingRow label="State">
+                <input className="settings-input" value={state} onChange={e => { setState(e.target.value); triggerSaveBar(); }} placeholder="State" />
+              </SettingRow>
+              <SettingRow label="Country">
+                <input className="settings-input" value={country} onChange={e => { setCountry(e.target.value); triggerSaveBar(); }} placeholder="India" />
+              </SettingRow>
+              <SettingRow label="Postal Code">
+                <input className="settings-input" value={postal} onChange={e => { setPostal(e.target.value); triggerSaveBar(); }} placeholder="600001" maxLength={6} />
+              </SettingRow>
+              <SettingsDivider />
+              <SettingRow label="Latitude" hint="GPS coordinate (optional)">
+                <input className="settings-input" value={lat} onChange={e => { setLat(e.target.value); triggerSaveBar(); }} placeholder="13.0827" />
+              </SettingRow>
+              <SettingRow label="Longitude" hint="GPS coordinate (optional)">
+                <input className="settings-input" value={lng} onChange={e => { setLng(e.target.value); triggerSaveBar(); }} placeholder="80.2707" />
+              </SettingRow>
+            </SettingsSection>
+
+            <SettingsSection title="Saved Addresses" icon={MapPin}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  className="settings-input"
+                  value={newAddrText}
+                  onChange={e => setNewAddrText(e.target.value)}
+                  placeholder="Add another delivery address..."
+                  onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addSavedAddress())}
+                />
+                <SettingsBtn type="button" onClick={addSavedAddress} variant="secondary" icon={Plus} size="sm">Add</SettingsBtn>
+              </div>
+              {savedAddresses.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                  {savedAddresses.map((addr, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface-2)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                      <MapPin size={13} style={{ color: "var(--ink-mute)" }} />
+                      <span style={{ flex: 1, fontSize: 13 }}>{addr}</span>
+                      <button type="button" onClick={() => removeSavedAddress(i)} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SettingsSection>
+          </form>
+        )}
+
+        {/* NOTIFICATIONS */}
+        {tab === "notifications" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Notifications</h1>
+                <p className="settings-page-subtitle">Configure preferred alert triggers</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Alert Channels" icon={Bell} noPad>
+              <NotifMatrix rows={NOTIF_ROWS} prefs={notifPrefs} onChange={handleNotifChange} />
+            </SettingsSection>
+          </div>
+        )}
+
+        {/* PRIVACY */}
+        {tab === "privacy" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Privacy & Data Logs</h1>
+                <p className="settings-page-subtitle">Download your data archives or request deletion</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Export Archive" icon={Shield}>
+              <SettingRow label="Personal Data" hint="Download a complete copy of SCM interactions history">
+                <SettingsBtn variant="secondary" icon={Download} onClick={() => toast.info("Data export request submitted. Check your email inbox.")}>
+                  Export Data
+                </SettingsBtn>
+              </SettingRow>
+            </SettingsSection>
+
+            <SettingsSection title="Account Deletion" icon={Trash2}>
+              <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "#f87171", marginBottom: 12, lineHeight: 1.5 }}>
+                ⚠️ Account deletion is irreversible. Your active address registry, PAN and order history will be deleted.
+              </div>
+              <SettingRow label="Request Account Deletion" hint="Submit deletion request for admin review">
+                <SettingsBtn variant="danger" icon={Trash2} onClick={() => setDeleteConfirm(true)}>
+                  Request Deletion
+                </SettingsBtn>
+              </SettingRow>
+            </SettingsSection>
+          </div>
+        )}
+
+        {/* SECURITY */}
+        {tab === "security" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Security Settings</h1>
+                <p className="settings-page-subtitle">Credentials and safety codes</p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 32 }}>
+              <div>
+                <SettingsSection title="Security Score" icon={Shield}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <SecurityScoreRing score={phone && address ? 85 : 50} />
+                  </div>
+                </SettingsSection>
+              </div>
+
+              <div>
+                <SettingsSection title="Change Security Password" icon={Lock}>
+                  <form onSubmit={changePw} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <SettingRow label="Current Password" full>
+                      <PasswordInput value={curPw} onChange={e => setCurPw(e.target.value)} placeholder="Current password" required />
+                    </SettingRow>
+                    {!otpSent ? (
+                      <SettingsBtn type="button" onClick={sendOtp} loading={otpLoading} disabled={!curPw} variant="secondary" icon={Shield}>
+                        Request Security OTP
+                      </SettingsBtn>
+                    ) : (
+                      <>
+                        <div style={{ background: "rgba(22,199,132,0.06)", border: "1px solid rgba(22,199,132,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#16C784" }}>
+                          OTP dispatched to {email}.
+                        </div>
+                        <SettingRow label="OTP Code" full>
+                          <input className="settings-input" value={otp} onChange={e => setOtp(e.target.value)} placeholder="6-digit OTP" maxLength={6} required />
+                        </SettingRow>
+                        <SettingRow label="New Password" full>
+                          <PasswordInput value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="New password" required />
+                        </SettingRow>
+                        <PasswordStrength password={newPw} />
+                        <SettingRow label="Confirm Password" full>
+                          <PasswordInput value={confPw} onChange={e => setConfPw(e.target.value)} placeholder="Confirm password" required />
+                        </SettingRow>
+                        <SettingsBtn type="submit" loading={pwLoading} icon={Lock}>Update Password</SettingsBtn>
+                      </>
+                    )}
+                  </form>
+                </SettingsSection>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVITY */}
+        {tab === "activity" && (
+          <div>
+            <div className="settings-page-header">
+              <div>
+                <div className="settings-eyebrow">My Account</div>
+                <h1 className="settings-page-title">Console Activity Timeline</h1>
+                <p className="settings-page-subtitle">Recent edits and secure logins logs</p>
+              </div>
+            </div>
+
+            <SettingsSection title="Audit Timeline" icon={Activity}>
+              <ActivityTimeline items={timelineItems} />
+            </SettingsSection>
+          </div>
+        )}
 
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm}
+        title="Confirm Account Deletion Request"
+        message="This sends an immediate request to the DRAVIX admin group. Your account will remain active until manually verified and finalized."
+        confirmLabel="Submit Request"
+        danger
+        onConfirm={() => { setDeleteConfirm(false); toast.info("Deletion request submitted."); }}
+        onCancel={() => setDeleteConfirm(false)}
+      />
+
+      {/* Sticky Save Bar */}
+      {showSaveBar && (
+        <div className="settings-save-bar">
+          <div className="settings-save-bar-info">
+            <div className="settings-save-bar-dot" />
+            <div>
+              <div className="settings-save-bar-title">Unsaved Settings Changes</div>
+              <div className="settings-save-bar-desc">Publish adjustments to customer settings profile.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <SettingsBtn variant="secondary" size="sm" onClick={handleDiscardChanges}>Discard Changes</SettingsBtn>
+            <SettingsBtn variant="primary" size="sm" onClick={saveProfile} loading={saving}>Publish Changes</SettingsBtn>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

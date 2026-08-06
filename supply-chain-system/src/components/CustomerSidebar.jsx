@@ -1,62 +1,51 @@
-import { Link, NavLink } from "react-router-dom";
+/**
+ * CustomerSidebar.jsx — Premium Customer navigation sidebar.
+ * All routes, cart counts, and wishlist counts are UNCHANGED.
+ * Visual redesign only using PremiumSidebar from DashboardEngine.
+ */
 import {
-  FaTachometerAlt,
-  FaShoppingBag,
-  FaClipboardList,
-  FaShoppingCart,
-  FaHeart,
-  FaSignOutAlt
-} from "react-icons/fa";
+  LayoutDashboard,
+  ShoppingBag,
+  ClipboardList,
+  ShoppingCart,
+  Heart,
+  ShieldCheck,
+  Settings,
+  LogOut
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { PremiumSidebar } from "./dashboard/DashboardEngine";
+
+const BASE_NAV_ITEMS = [
+  // ── Main ──
+  { to: "/customer",              label: "Dashboard",          icon: LayoutDashboard, exact: true, section: "Main"    },
+  { to: "/customer/products",     label: "Products",           icon: ShoppingBag,                  section: "Main"    },
+  { to: "/customer/orders",       label: "Orders",             icon: ClipboardList,                section: "Main"    },
+  { to: "/customer/cart",         label: "Cart",               icon: ShoppingCart,                 section: "Main"    },
+  { to: "/customer/wishlist",     label: "Wishlist",           icon: Heart,                        section: "Main"    },
+
+  // ── Account ──
+  { to: "/customer/verification", label: "Trust & Verification", icon: ShieldCheck,                section: "Account" },
+  { to: "/settings",              label: "Settings",           icon: Settings,                     section: "Account" },
+  {                               label: "Logout",              icon: LogOut, isLogout: true,       section: "Account" },
+];
 
 function CustomerSidebar() {
   const { cartCount, wishlistCount } = useCart();
 
-  const linkClass = ({ isActive }) =>
-    isActive ? "active" : undefined;
-
-  const handleLogout = () => {
-    localStorage.clear();
+  // Dynamic badge counts keyed by route
+  const badges = {
+    "/customer/cart":     cartCount,
+    "/customer/wishlist": wishlistCount,
   };
 
   return (
-    <div className="sidebar">
-      <h2>Customer Panel</h2>
-
-      <NavLink to="/customer" end className={linkClass}>
-        <FaTachometerAlt /> Dashboard
-      </NavLink>
-
-      <NavLink to="/customer/products" className={linkClass}>
-        <FaShoppingBag /> Products
-      </NavLink>
-
-      <NavLink to="/customer/orders" className={linkClass}>
-        <FaClipboardList /> Orders
-      </NavLink>
-
-      <NavLink to="/customer/cart" className={linkClass}>
-        <FaShoppingCart /> Cart
-        {cartCount > 0 && (
-          <span className="sidebar-badge">{cartCount}</span>
-        )}
-      </NavLink>
-
-      <NavLink to="/customer/wishlist" className={linkClass}>
-        <FaHeart /> Wishlist
-        {wishlistCount > 0 && (
-          <span className="sidebar-badge">{wishlistCount}</span>
-        )}
-      </NavLink>
-
-      <NavLink to="/settings" className={linkClass}>
-        <FaHeart /> Settings
-      </NavLink>
-
-      <Link to="/" onClick={handleLogout} className="sidebar-logout-link">
-        <FaSignOutAlt /> Logout
-      </Link>
-    </div>
+    <PremiumSidebar
+      panelTitle="Customer Panel"
+      panelIconLetter="C"
+      navItems={BASE_NAV_ITEMS}
+      badges={badges}
+    />
   );
 }
 
