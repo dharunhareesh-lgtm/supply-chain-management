@@ -108,6 +108,12 @@ public class User {
         this.token = token;
     }
 
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
+
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+
     @Column(columnDefinition = "LONGTEXT")
     private String savedAddresses;
     private String notificationPreferences = "Email";
@@ -119,4 +125,24 @@ public class User {
     public void setNotificationPreferences(String notificationPreferences) { this.notificationPreferences = notificationPreferences; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    private String drivingLicense;
+    private String vehicleAssignment;
+    private String routePreferences;
+    private Boolean availability = true;
+    private String currentStatus = "Active";
+    private Boolean gpsPermissions = true;
+
+    public String getDrivingLicense() { return drivingLicense; }
+    public void setDrivingLicense(String drivingLicense) { this.drivingLicense = drivingLicense; }
+    public String getVehicleAssignment() { return vehicleAssignment; }
+    public void setVehicleAssignment(String vehicleAssignment) { this.vehicleAssignment = vehicleAssignment; }
+    public String getRoutePreferences() { return routePreferences; }
+    public void setRoutePreferences(String routePreferences) { this.routePreferences = routePreferences; }
+    public Boolean getAvailability() { return availability; }
+    public void setAvailability(Boolean availability) { this.availability = availability; }
+    public String getCurrentStatus() { return currentStatus; }
+    public void setCurrentStatus(String currentStatus) { this.currentStatus = currentStatus; }
+    public Boolean getGpsPermissions() { return gpsPermissions; }
+    public void setGpsPermissions(Boolean gpsPermissions) { this.gpsPermissions = gpsPermissions; }
 }

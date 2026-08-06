@@ -14,6 +14,8 @@ public interface OrderRepository
 
     List<Order> findByCustomerName(String customerName);
     
+    List<Order> findByCustomerId(Integer customerId);
+    
     List<Order> findByStatus(String status);
 
     List<Order> findBySupplierId(Integer supplierId);

@@ -90,4 +90,210 @@ public class EmailNotificationService {
             System.err.println("  [EMAIL ERROR] Failed to send dispatch invoice email: " + e.getMessage());
         }
     }
+
+    /**
+     * Send Partner Approval Email with temporary login credentials.
+     */
+    public void sendPartnerApprovalEmail(String recipientEmail, String contactPerson,
+                                          String loginUsername, String tempPassword, String role) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject("Welcome to Dravix SCM — Your Account is Ready");
+
+            String htmlContent = "<html>" +
+                "<body style='font-family: Arial, sans-serif; background-color: #0a0f1e; padding: 20px; color: #e0e0e0;'>" +
+                "  <div style='max-width: 600px; margin: 0 auto; background: #111827; border-radius: 12px; border: 1px solid #1f2937; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.4);'>" +
+                "    <div style='background: linear-gradient(135deg, #059669, #10b981); padding: 28px; text-align: center;'>" +
+                "      <h2 style='margin: 0; font-size: 26px; color: white; letter-spacing: 1.5px; font-weight: 800;'>DRAVIX SCM</h2>" +
+                "      <p style='margin: 6px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.85); letter-spacing: 1px;'>PARTNER REGISTRATION APPROVED</p>" +
+                "    </div>" +
+                "    <div style='padding: 30px;'>" +
+                "      <p style='font-size: 15px;'>Dear <strong style='color: #10b981;'>" + contactPerson + "</strong>,</p>" +
+                "      <p style='font-size: 14px; line-height: 1.7; color: #9ca3af;'>Your registration request has been <strong style='color: #10b981;'>approved</strong>. Below are your login credentials:</p>" +
+                "      <div style='background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 20px; margin: 20px 0;'>" +
+                "        <table style='width: 100%; font-size: 14px;'>" +
+                "          <tr><td style='padding: 8px 0; color: #6b7280;'>Role</td><td style='text-align: right; font-weight: bold; color: #10b981;'>" + role + "</td></tr>" +
+                "          <tr><td style='padding: 8px 0; color: #6b7280;'>Username</td><td style='text-align: right; font-weight: bold; color: #f9fafb;'>" + loginUsername + "</td></tr>" +
+                "          <tr><td style='padding: 8px 0; color: #6b7280;'>Temporary Password</td><td style='text-align: right; font-weight: bold; color: #fbbf24; font-family: monospace; font-size: 15px; letter-spacing: 1px;'>" + tempPassword + "</td></tr>" +
+                "        </table>" +
+                "      </div>" +
+                "      <div style='background: #7c2d12; border: 1px solid #9a3412; border-radius: 8px; padding: 14px; margin: 16px 0;'>" +
+                "        <p style='margin: 0; font-size: 12px; color: #fed7aa;'>" +
+                "          ⚠ This temporary password <strong>expires in 5 hours</strong>. You <strong>MUST change it immediately</strong> after your first login." +
+                "        </p>" +
+                "      </div>" +
+                "      <div style='text-align: center; margin: 24px 0;'>" +
+                "        <a href='http://localhost:5173/login' style='display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold; font-size: 14px; letter-spacing: 0.5px;'>Login to Dravix SCM →</a>" +
+                "      </div>" +
+                "      <p style='font-size: 11px; color: #6b7280; text-align: center;'>If you did not request this account, please ignore this email.</p>" +
+                "    </div>" +
+                "    <div style='background: #0d1117; padding: 16px; text-align: center; border-top: 1px solid #1f2937;'>" +
+                "      <p style='margin: 0; font-size: 10px; color: #4b5563;'>© Dravix SCM Platform · Agricultural Supply Chain Management</p>" +
+                "    </div>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            System.out.println("  [EMAIL LOG] Partner approval email sent to: " + recipientEmail);
+        } catch (Exception e) {
+            System.err.println("  [EMAIL ERROR] Failed to send partner approval email: " + e.getMessage());
+            throw new RuntimeException("Email sending failed", e);
+        }
+    }
+
+    /**
+     * Send Partner Rejection Email.
+     */
+    public void sendPartnerRejectionEmail(String recipientEmail, String contactPerson, String reason) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject("Dravix SCM — Registration Update");
+
+            String safeReason = (reason != null && !reason.isBlank()) ? reason : "Your application did not meet the current requirements.";
+
+            String htmlContent = "<html>" +
+                "<body style='font-family: Arial, sans-serif; background-color: #0a0f1e; padding: 20px; color: #e0e0e0;'>" +
+                "  <div style='max-width: 600px; margin: 0 auto; background: #111827; border-radius: 12px; border: 1px solid #1f2937; overflow: hidden;'>" +
+                "    <div style='background: linear-gradient(135deg, #dc2626, #ef4444); padding: 28px; text-align: center;'>" +
+                "      <h2 style='margin: 0; font-size: 26px; color: white; letter-spacing: 1.5px; font-weight: 800;'>DRAVIX SCM</h2>" +
+                "      <p style='margin: 6px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.85);'>REGISTRATION UPDATE</p>" +
+                "    </div>" +
+                "    <div style='padding: 30px;'>" +
+                "      <p style='font-size: 15px;'>Dear <strong>" + contactPerson + "</strong>,</p>" +
+                "      <p style='font-size: 14px; line-height: 1.7; color: #9ca3af;'>We have reviewed your registration request and unfortunately, it has not been approved at this time.</p>" +
+                "      <div style='background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 16px; margin: 20px 0;'>" +
+                "        <p style='margin: 0; font-size: 13px; color: #f87171;'><strong>Reason:</strong></p>" +
+                "        <p style='margin: 8px 0 0 0; font-size: 13px; color: #d1d5db;'>" + safeReason + "</p>" +
+                "      </div>" +
+                "      <p style='font-size: 13px; color: #9ca3af;'>If you believe this is an error or would like to reapply, please contact our support team.</p>" +
+                "    </div>" +
+                "    <div style='background: #0d1117; padding: 16px; text-align: center; border-top: 1px solid #1f2937;'>" +
+                "      <p style='margin: 0; font-size: 10px; color: #4b5563;'>© Dravix SCM Platform · Agricultural Supply Chain Management</p>" +
+                "    </div>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            System.out.println("  [EMAIL LOG] Partner rejection email sent to: " + recipientEmail);
+        } catch (Exception e) {
+            System.err.println("  [EMAIL ERROR] Failed to send partner rejection email: " + e.getMessage());
+        }
+    }
+    /**
+     * Send Dispatch OTP email to customer.
+     * Called when warehouse manager clicks "Ready For Dispatch".
+     */
+    public void sendDispatchOtpEmail(
+            String recipientEmail,
+            String customerName,
+            int orderId,
+            String otpCode,
+            String expiryMinutes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject("DRAVIX SCM - Dispatch Verification OTP for Order #" + orderId);
+
+            String htmlContent = "<html>" +
+                "<body style='font-family: Arial, sans-serif; background-color: #0a0f1e; padding: 30px; color: #e0e0e0;'>" +
+                "  <div style='max-width: 580px; margin: 0 auto; background: #111827; border-radius: 14px; border: 1px solid #1f2937; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.5);'>" +
+                "    <div style='background: linear-gradient(135deg, #b45309, #d97706); padding: 28px; text-align: center;'>" +
+                "      <h2 style='margin: 0; font-size: 26px; color: white; letter-spacing: 1.5px; font-weight: 800;'>DRAVIX SCM</h2>" +
+                "      <p style='margin: 6px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.9); letter-spacing: 1px;'>DISPATCH VERIFICATION</p>" +
+                "    </div>" +
+                "    <div style='padding: 32px;'>" +
+                "      <p style='font-size: 16px; color: #f9fafb;'>Dear <strong style='color: #fbbf24;'>" + customerName + "</strong>,</p>" +
+                "      <p style='font-size: 14px; line-height: 1.8; color: #9ca3af;'>" +
+                "        Your order <strong style='color: #f9fafb;'>#" + orderId + "</strong> is packed and ready for dispatch from our warehouse." +
+                "        Please provide the following OTP to the <strong style='color: #fbbf24;'>warehouse manager</strong> when your shipment is about to leave." +
+                "      </p>" +
+                "      <div style='background: #1f2937; border: 2px dashed #d97706; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0;'>" +
+                "        <p style='margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; color: #b45309; font-weight: 700; letter-spacing: 1.5px;'>Dispatch OTP</p>" +
+                "        <h1 style='margin: 0; color: #fbbf24; font-size: 44px; letter-spacing: 10px; font-weight: 900; font-family: monospace;'>" + otpCode + "</h1>" +
+                "        <p style='margin: 10px 0 0 0; font-size: 12px; color: #d97706;'>⏱ Expires in <strong>" + expiryMinutes + " minutes</strong></p>" +
+                "      </div>" +
+                "      <div style='background: #7c2d12; border: 1px solid #9a3412; border-radius: 8px; padding: 14px; margin: 16px 0;'>" +
+                "        <p style='margin: 0; font-size: 12px; color: #fed7aa;'>⚠ Do <strong>NOT</strong> share this OTP with anyone other than the authorized DRAVIX warehouse manager.</p>" +
+                "      </div>" +
+                "    </div>" +
+                "    <div style='background: #0d1117; padding: 16px; text-align: center; border-top: 1px solid #1f2937;'>" +
+                "      <p style='margin: 0; font-size: 10px; color: #4b5563;'>© DRAVIX SCM Platform · Agricultural Supply Chain Management</p>" +
+                "    </div>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            System.out.println("  [EMAIL LOG] Dispatch OTP email sent to: " + recipientEmail + " for Order #" + orderId);
+        } catch (Exception e) {
+            System.err.println("  [EMAIL ERROR] Failed to send dispatch OTP email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Send Delivery OTP email to customer.
+     * Called when logistics driver clicks "Request Delivery OTP".
+     */
+    public void sendDeliveryOtpEmail(
+            String recipientEmail,
+            String customerName,
+            int orderId,
+            String otpCode,
+            String expiryMinutes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject("DRAVIX SCM - Delivery Verification OTP for Order #" + orderId);
+
+            String htmlContent = "<html>" +
+                "<body style='font-family: Arial, sans-serif; background-color: #0a0f1e; padding: 30px; color: #e0e0e0;'>" +
+                "  <div style='max-width: 580px; margin: 0 auto; background: #111827; border-radius: 14px; border: 1px solid #1f2937; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.5);'>" +
+                "    <div style='background: linear-gradient(135deg, #059669, #10b981); padding: 28px; text-align: center;'>" +
+                "      <h2 style='margin: 0; font-size: 26px; color: white; letter-spacing: 1.5px; font-weight: 800;'>DRAVIX SCM</h2>" +
+                "      <p style='margin: 6px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.9); letter-spacing: 1px;'>DELIVERY VERIFICATION</p>" +
+                "    </div>" +
+                "    <div style='padding: 32px;'>" +
+                "      <p style='font-size: 16px; color: #f9fafb;'>Dear <strong style='color: #34d399;'>" + customerName + "</strong>,</p>" +
+                "      <p style='font-size: 14px; line-height: 1.8; color: #9ca3af;'>" +
+                "        🚚 Your order <strong style='color: #f9fafb;'>#" + orderId + "</strong> has <strong style='color: #34d399;'>arrived at your location</strong>!" +
+                "        Please provide the following OTP to the <strong style='color: #34d399;'>DRAVIX delivery person</strong> to complete your delivery." +
+                "      </p>" +
+                "      <div style='background: #1f2937; border: 2px dashed #10b981; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0;'>" +
+                "        <p style='margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; color: #059669; font-weight: 700; letter-spacing: 1.5px;'>Delivery OTP</p>" +
+                "        <h1 style='margin: 0; color: #34d399; font-size: 44px; letter-spacing: 10px; font-weight: 900; font-family: monospace;'>" + otpCode + "</h1>" +
+                "        <p style='margin: 10px 0 0 0; font-size: 12px; color: #10b981;'>⏱ Expires in <strong>" + expiryMinutes + " minutes</strong></p>" +
+                "      </div>" +
+                "      <div style='background: #14532d; border: 1px solid #166534; border-radius: 8px; padding: 14px; margin: 16px 0;'>" +
+                "        <p style='margin: 0; font-size: 12px; color: #bbf7d0;'>✅ Once you share this OTP, your delivery will be marked as <strong>Completed</strong> and your order will be fulfilled.</p>" +
+                "      </div>" +
+                "    </div>" +
+                "    <div style='background: #0d1117; padding: 16px; text-align: center; border-top: 1px solid #1f2937;'>" +
+                "      <p style='margin: 0; font-size: 10px; color: #4b5563;'>© DRAVIX SCM Platform · Agricultural Supply Chain Management</p>" +
+                "    </div>" +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            System.out.println("  [EMAIL LOG] Delivery OTP email sent to: " + recipientEmail + " for Order #" + orderId);
+        } catch (Exception e) {
+            System.err.println("  [EMAIL ERROR] Failed to send delivery OTP email: " + e.getMessage());
+        }
+    }
 }

@@ -85,3 +85,14 @@ delete_dummies.js
 walkthrough.md
 task.md
 implementation_plan.md
+
+# Ignored SQL database dumps
+*.sql
+
+# Ignored local storage uploads and OCR tessdata
+uploads/
+tessdata/
+
+# Ignored generated reports
+technology_stack_report.md
+deployment_readiness_report.md

@@ -17,6 +17,15 @@ public class OrderController {
     private OrderService orderService;
 
     @Autowired
+    private com.scms.service.DeliveryOtpService deliveryOtpService;
+
+    @Autowired
+    private com.scms.service.NotificationService notificationService;
+
+    @Autowired
+    private com.scms.service.EmailNotificationService emailNotificationService;
+
+    @Autowired
     private com.scms.repository.UserRepository userRepository;
 
     @Autowired
@@ -171,5 +180,134 @@ public class OrderController {
 
         checkWarehouseAccess(userEmail, warehouseId);
         return orderService.getOrdersByStatus(status, warehouseId);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  NEW OTP WORKFLOW ENDPOINTS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Warehouse: Generate a 6-digit Dispatch OTP and email it to the customer.
+     * Called when the warehouse manager clicks "Ready For Dispatch".
+     */
+    @PostMapping("/{id}/generate-dispatch-otp")
+    public org.springframework.http.ResponseEntity<?> generateDispatchOtp(
+            @PathVariable int id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+        java.util.Map<String, Object> result = deliveryOtpService.generateDispatchOtp(id);
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return org.springframework.http.ResponseEntity.ok(result);
+        }
+        return org.springframework.http.ResponseEntity.badRequest().body(result);
+    }
+
+    /**
+     * Warehouse: Verify the Dispatch OTP entered by the manager.
+     * Body: { "otp": "123456", "verifiedBy": "manager@email.com" }
+     */
+    @PostMapping("/{id}/verify-dispatch-otp")
+    public org.springframework.http.ResponseEntity<?> verifyDispatchOtp(
+            @PathVariable int id,
+            @RequestBody java.util.Map<String, String> body,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+        String otp = body.getOrDefault("otp", "");
+        String verifiedBy = body.getOrDefault("verifiedBy", userEmail != null ? userEmail : "unknown");
+        java.util.Map<String, Object> result = deliveryOtpService.verifyDispatchOtp(id, otp, verifiedBy);
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return org.springframework.http.ResponseEntity.ok(result);
+        }
+        return org.springframework.http.ResponseEntity.badRequest().body(result);
+    }
+
+    /**
+     * Warehouse: Confirm vehicle assignment AFTER dispatch OTP is verified.
+     * This is the gate-kept vehicle assignment endpoint.
+     * Body: { "vehicleId": 5 }
+     */
+    @PostMapping("/{id}/confirm-vehicle")
+    public org.springframework.http.ResponseEntity<?> confirmVehicle(
+            @PathVariable int id,
+            @RequestBody java.util.Map<String, Object> body,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+
+        // Security gate: dispatch OTP must be verified
+        if (!deliveryOtpService.isDispatchOtpVerified(id)) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                .body(java.util.Map.of("success", false, "message", "Dispatch OTP not verified. Please verify customer OTP before assigning vehicle."));
+        }
+
+        Integer vehicleId = body.get("vehicleId") instanceof Number
+            ? ((Number) body.get("vehicleId")).intValue()
+            : null;
+        if (vehicleId == null) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                .body(java.util.Map.of("success", false, "message", "vehicleId is required."));
+        }
+
+        Order existingOrder = orderService.getOrderById(id);
+        if (existingOrder == null) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                .body(java.util.Map.of("success", false, "message", "Order not found."));
+        }
+
+        checkWarehouseAccess(userEmail, existingOrder.getWarehouseId());
+
+        Order updatedOrder = existingOrder;
+        updatedOrder.setVehicleId(vehicleId);
+        updatedOrder.setStatus("Processing");
+
+        try {
+            Order saved = orderService.updateOrder(updatedOrder);
+            // Notification for vehicle assignment
+            try {
+                notificationService.sendNotification(
+                    "Vehicle Assigned via OTP Workflow",
+                    "Vehicle #" + vehicleId + " assigned to Order #" + id + " after OTP verification.",
+                    "ORDER", "SUCCESS", id, null, "WAREHOUSE"
+                );
+            } catch (Exception ne) {
+                System.err.println("Notification error in confirm-vehicle: " + ne.getMessage());
+            }
+            return org.springframework.http.ResponseEntity.ok(
+                java.util.Map.of("success", true, "message", "Vehicle assigned successfully. AI dispatch executing.", "order", saved)
+            );
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                .body(java.util.Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Logistics: Generate a Delivery OTP and email it to the customer.
+     * Called when the driver reaches the destination.
+     */
+    @PostMapping("/{id}/generate-delivery-otp")
+    public org.springframework.http.ResponseEntity<?> generateDeliveryOtp(
+            @PathVariable int id,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+        java.util.Map<String, Object> result = deliveryOtpService.generateDeliveryOtp(id);
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return org.springframework.http.ResponseEntity.ok(result);
+        }
+        return org.springframework.http.ResponseEntity.badRequest().body(result);
+    }
+
+    /**
+     * Logistics: Verify Delivery OTP entered by driver.
+     * On success: order → Delivered, vehicle released, settlement triggered.
+     * Body: { "otp": "123456", "verifiedBy": "driver@logistics.com" }
+     */
+    @PostMapping("/{id}/verify-delivery-otp")
+    public org.springframework.http.ResponseEntity<?> verifyDeliveryOtp(
+            @PathVariable int id,
+            @RequestBody java.util.Map<String, String> body,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+        String otp = body.getOrDefault("otp", "");
+        String verifiedBy = body.getOrDefault("verifiedBy", userEmail != null ? userEmail : "unknown");
+        java.util.Map<String, Object> result = deliveryOtpService.verifyDeliveryOtp(id, otp, verifiedBy);
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return org.springframework.http.ResponseEntity.ok(result);
+        }
+        return org.springframework.http.ResponseEntity.badRequest().body(result);
     }
 }

@@ -1,4 +1,5 @@
 package com.scms.controller;
+import com.scms.dto.ChangePasswordRequest;
 import com.scms.dto.RegisterCustomerRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -6,7 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import com.scms.dto.LoginRequest;
 import com.scms.dto.RegisterSupplierRequest;
 import com.scms.entity.User;
+import com.scms.entity.TemporaryPassword;
 import com.scms.service.UserService;
+import com.scms.service.PartnerOnboardingService;
+import com.scms.repository.TemporaryPasswordRepository;
 import com.scms.util.JwtUtil;
 
 @RestController
@@ -33,6 +37,12 @@ public class UserController {
 
     @Autowired
     private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PartnerOnboardingService partnerOnboardingService;
+
+    @Autowired
+    private TemporaryPasswordRepository temporaryPasswordRepository;
 
     @PostMapping("/login")
     public org.springframework.http.ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -78,10 +88,31 @@ public class UserController {
             }
         }
 
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        // Check if temp password has expired
+        if (user.isMustChangePassword()) {
+            java.util.Optional<TemporaryPassword> tempPwdOpt = temporaryPasswordRepository.findByUserIdAndActiveTrue(user.getUserId());
+            if (tempPwdOpt.isPresent()) {
+                TemporaryPassword tempPwd = tempPwdOpt.get();
+                if (tempPwd.getExpiresAt() != null && tempPwd.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+                    return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                            .body(java.util.Map.of("error", "Temporary password has expired. Please contact Admin to request a new one.", "passwordExpired", true));
+                }
+            }
+        }
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole(), user.isMustChangePassword());
         user.setToken(token);
 
-        return org.springframework.http.ResponseEntity.ok(user);
+        // Build response with mustChangePassword flag
+        java.util.Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("userId", user.getUserId());
+        response.put("username", user.getUsername());
+        response.put("role", user.getRole());
+        response.put("token", token);
+        response.put("mustChangePassword", user.isMustChangePassword());
+        response.put("supplierId", user.getSupplierId());
+
+        return org.springframework.http.ResponseEntity.ok(response);
     }
 
     @PostMapping("/register-supplier")
@@ -181,5 +212,40 @@ public class UserController {
         
         userRepository.save(user);
         return org.springframework.http.ResponseEntity.ok(user);
+    }
+
+    // ─── FORCED PASSWORD CHANGE ───────────────────────────────────
+
+    @PostMapping("/api/auth/change-password")
+    public org.springframework.http.ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request,
+                                                                      @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        // Extract username from JWT or request
+        String username = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                username = jwtUtil.extractUsername(token);
+            } catch (Exception e) {
+                return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(java.util.Map.of("success", false, "message", "Invalid or expired token."));
+            }
+        }
+
+        if (username == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("success", false, "message", "Authentication required."));
+        }
+
+        if (request.getNewPassword() == null || !request.getNewPassword().equals(request.getConfirmPassword())) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(java.util.Map.of("success", false, "message", "Passwords do not match."));
+        }
+
+        java.util.Map<String, Object> result = partnerOnboardingService.changePassword(
+                username, request.getCurrentPassword(), request.getNewPassword());
+
+        boolean success = (boolean) result.get("success");
+        return success ? org.springframework.http.ResponseEntity.ok(result)
+                       : org.springframework.http.ResponseEntity.badRequest().body(result);
     }
 }

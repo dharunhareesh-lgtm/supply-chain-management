@@ -29,4 +29,18 @@ public class WarehouseInsuranceClaim {
     private String status = "SUBMITTED"; // SUBMITTED, VERIFIED, APPROVED, SETTLED
     private String description;
     private String submissionDate = java.time.LocalDate.now().toString();
+
+    // File attachments & incident metadata
+    private String photoName;
+    
+    @Column(columnDefinition = "LONGTEXT")
+    private String photoPreview;
+    
+    private String docName;
+    
+    @Column(columnDefinition = "LONGTEXT")
+    private String docPreview;
+    
+    private String incidentDate;
+    private Integer lossPercent = 35;
 }

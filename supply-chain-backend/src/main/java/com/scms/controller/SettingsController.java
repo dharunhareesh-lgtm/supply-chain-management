@@ -404,6 +404,65 @@ public class SettingsController {
     }
 
     // ============================================
+    // 7. DRIVER SETTINGS
+    // ============================================
+
+    @GetMapping("/driver")
+    public ResponseEntity<?> getDriverSettings(@RequestParam String email) {
+        String auth = checkRole(email, "DRIVER");
+        if ("FORBIDDEN".equals(auth)) return forbidden();
+        if ("NOT_FOUND".equals(auth)) return notFound();
+
+        User user = userRepository.findByUsername(email);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("name", email.split("@")[0]);
+        result.put("email", email);
+        result.put("phone", user.getPhone() != null ? user.getPhone() : "");
+        result.put("role", "DRIVER");
+        result.put("drivingLicense", user.getDrivingLicense() != null ? user.getDrivingLicense() : "");
+        result.put("vehicleAssignment", user.getVehicleAssignment() != null ? user.getVehicleAssignment() : "");
+        result.put("routePreferences", user.getRoutePreferences() != null ? user.getRoutePreferences() : "");
+        result.put("availability", user.getAvailability() != null ? user.getAvailability() : true);
+        result.put("currentStatus", user.getCurrentStatus() != null ? user.getCurrentStatus() : "Active");
+        result.put("gpsPermissions", user.getGpsPermissions() != null ? user.getGpsPermissions() : true);
+        result.put("notificationPreferences", user.getNotificationPreferences() != null ? user.getNotificationPreferences() : "Email");
+        
+        result.put("address", user.getAddress() != null ? user.getAddress() : "");
+        result.put("district", user.getDistrict() != null ? user.getDistrict() : "");
+        result.put("state", user.getState() != null ? user.getState() : "");
+        result.put("country", user.getCountry() != null ? user.getCountry() : "");
+        result.put("postalCode", user.getPostalCode() != null ? user.getPostalCode() : "");
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/driver/profile")
+    public ResponseEntity<?> updateDriverSettings(@RequestParam String email, @RequestBody Map<String, Object> payload) {
+        String auth = checkRole(email, "DRIVER");
+        if ("FORBIDDEN".equals(auth)) return forbidden();
+        if ("NOT_FOUND".equals(auth)) return notFound();
+
+        User user = userRepository.findByUsername(email);
+        if (payload.containsKey("phone")) user.setPhone((String) payload.get("phone"));
+        if (payload.containsKey("drivingLicense")) user.setDrivingLicense((String) payload.get("drivingLicense"));
+        if (payload.containsKey("vehicleAssignment")) user.setVehicleAssignment((String) payload.get("vehicleAssignment"));
+        if (payload.containsKey("routePreferences")) user.setRoutePreferences((String) payload.get("routePreferences"));
+        if (payload.containsKey("availability")) user.setAvailability((Boolean) payload.get("availability"));
+        if (payload.containsKey("currentStatus")) user.setCurrentStatus((String) payload.get("currentStatus"));
+        if (payload.containsKey("gpsPermissions")) user.setGpsPermissions((Boolean) payload.get("gpsPermissions"));
+        if (payload.containsKey("notificationPreferences")) user.setNotificationPreferences((String) payload.get("notificationPreferences"));
+        
+        if (payload.containsKey("address")) user.setAddress((String) payload.get("address"));
+        if (payload.containsKey("district")) user.setDistrict((String) payload.get("district"));
+        if (payload.containsKey("state")) user.setState((String) payload.get("state"));
+        if (payload.containsKey("country")) user.setCountry((String) payload.get("country"));
+        if (payload.containsKey("postalCode")) user.setPostalCode((String) payload.get("postalCode"));
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Driver settings updated successfully"));
+    }
+
+    // ============================================
     // COMMON SETTINGS ENDPOINTS
     // ============================================
 
