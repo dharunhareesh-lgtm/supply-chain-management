@@ -19,7 +19,7 @@ function LogisticsPartnerships() {
   const fetchRequests = async () => {
     if (!companyEmail) return;
     try {
-      const res = await fetch(`http://localhost:8082/warehouse-partnerships/requests-received?logisticsEmail=${companyEmail}`);
+      const res = await fetch(`/warehouse-partnerships/requests-received?logisticsEmail=${companyEmail}`);
       const data = await res.json();
       setRequests(data);
     } catch (e) {
@@ -35,7 +35,7 @@ function LogisticsPartnerships() {
 
   const handleRespond = async (requestId, status) => {
     try {
-      const res = await fetch("http://localhost:8082/warehouse-partnerships/respond", {
+      const res = await fetch("/warehouse-partnerships/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

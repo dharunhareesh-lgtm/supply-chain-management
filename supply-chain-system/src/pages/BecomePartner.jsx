@@ -19,7 +19,7 @@ import {
 } from "../components/site/OnboardingLayout";
 
 /* ─── Constants (unchanged) ─────────────────────────────────────────────── */
-const API = "http://localhost:8082";
+const API = "";
 
 const ROLE_OPTIONS = [
   { id: "Supplier",          title: "Supplier",           desc: "Supply agricultural products to warehouses and buyers.", Icon: Package,   rgb: "16,185,129" },

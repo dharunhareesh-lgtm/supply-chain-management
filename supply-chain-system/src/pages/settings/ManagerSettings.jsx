@@ -11,7 +11,7 @@ import {
 } from "../../components/settings/SettingsEngine";
 import { User, Lock, Bell, CheckCircle2, AlertTriangle, Shield, Activity, Compass } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "orders",    label: "Order Updates",    hint: "New orders assigned to your warehouse" },
   { key: "dispatch",  label: "Dispatch Events",  hint: "OTP generation, vehicle assignment" },

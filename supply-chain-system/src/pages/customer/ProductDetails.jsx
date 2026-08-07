@@ -51,7 +51,7 @@ function ProductDetails() {
   const fetchData = async () => {
     try {
       // 1. Fetch main product
-      const productRes = await fetch(`http://localhost:8082/products/${id}`);
+      const productRes = await fetch(`/products/${id}`);
       const mainProduct = await productRes.json();
       setProduct(mainProduct);
 
@@ -65,16 +65,16 @@ function ProductDetails() {
       setSelectedBags(initial);
 
       // 2. Fetch all products with same name (marketplace listings)
-      const listingsRes = await fetch(`http://localhost:8082/products/listings?productName=${encodeURIComponent(mainProduct.productName)}`);
+      const listingsRes = await fetch(`/products/listings?productName=${encodeURIComponent(mainProduct.productName)}`);
       const listingsData = await listingsRes.json();
 
       // 3. Fetch warehouses
-      const warehouseRes = await fetch("http://localhost:8082/warehouse-locations");
+      const warehouseRes = await fetch("/warehouse-locations");
       const warehouseData = await warehouseRes.json();
       setWarehouses(warehouseData);
 
       // 4. Fetch suppliers
-      const suppliersRes = await fetch("http://localhost:8082/suppliers");
+      const suppliersRes = await fetch("/suppliers");
       const suppliersData = await suppliersRes.json();
       setSuppliers(suppliersData);
 
@@ -84,7 +84,7 @@ function ProductDetails() {
       const uname = localStorage.getItem("username");
       if (uname) {
         try {
-          const userRes = await fetch(`http://localhost:8082/users/username/${uname}`);
+          const userRes = await fetch(`/users/username/${uname}`);
           if (userRes.ok) {
             const userData = await userRes.json();
             if (userData.latitude && userData.longitude) {

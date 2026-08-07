@@ -26,13 +26,13 @@ function AddProduct() {
 
   useEffect(() => {
     // Load categories
-    fetch("http://localhost:8082/products/allowed-categories")
+    fetch("/products/allowed-categories")
       .then((res) => res.json())
       .then((data) => setAllowedCategories(data || []))
       .catch((err) => console.error("Failed to load categories:", err));
 
     // Load suppliers
-    fetch("http://localhost:8082/suppliers")
+    fetch("/suppliers")
       .then((res) => res.json())
       .then((data) => setSuppliers(data || []))
       .catch((err) => console.error("Failed to load suppliers:", err));
@@ -51,7 +51,7 @@ function AddProduct() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/products", {
+      const response = await fetch("/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

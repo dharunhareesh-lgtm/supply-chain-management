@@ -112,7 +112,7 @@ function SupplierInsurance() {
 
   // Fetch claims list
   const fetchClaims = () => {
-    fetch(`http://localhost:8082/insurance-claims/supplier/${supplierId}`)
+    fetch(`/insurance-claims/supplier/${supplierId}`)
       .then((res) => res.json())
       .then((data) => {
         setClaims(data);
@@ -124,13 +124,13 @@ function SupplierInsurance() {
     fetchClaims();
 
     // Fetch supplier's products
-    fetch(`http://localhost:8082/products/supplier/${supplierId}`)
+    fetch(`/products/supplier/${supplierId}`)
       .then((res) => res.json())
       .then((data) => setProducts(data))
       .catch((err) => console.error(err));
 
     // Fetch all inventories to extract supplier's active hubs
-    fetch(`http://localhost:8082/inventory`)
+    fetch(`/inventory`)
       .then((res) => res.json())
       .then((data) => {
         setInventories(data || []);
@@ -138,13 +138,13 @@ function SupplierInsurance() {
       .catch((err) => console.error(err));
 
     // Fetch all warehouse locations as fallback option list
-    fetch(`http://localhost:8082/warehouse-locations`)
+    fetch(`/warehouse-locations`)
       .then((res) => res.json())
       .then((data) => setWarehouseLocations(data || []))
       .catch((err) => console.error(err));
 
     // Fetch active insurance policies
-    fetch(`http://localhost:8082/insurance-policies`)
+    fetch(`/insurance-policies`)
       .then((res) => res.json())
       .then((data) => setPolicies(data || []))
       .catch((err) => console.error(err));
@@ -178,7 +178,7 @@ function SupplierInsurance() {
       lossPercent: Number(lossPercent)
     };
 
-    fetch("http://localhost:8082/insurance-claims", {
+    fetch("/insurance-claims", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)

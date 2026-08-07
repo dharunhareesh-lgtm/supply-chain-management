@@ -50,7 +50,7 @@ export const LocalVillageProvider = {
   async search(query, signal) {
     if (!this.enabled) return [];
     
-    const apiUrl = getEnvVar("REACT_APP_VILLAGE_API_URL") || getEnvVar("VITE_VILLAGE_API_URL") || getEnvVar("VITE_API_URL") || "http://localhost:8082";
+    const apiUrl = getEnvVar("REACT_APP_VILLAGE_API_URL") || getEnvVar("VITE_VILLAGE_API_URL") || getEnvVar("VITE_API_URL") || "";
     try {
       const res = await fetch(`${apiUrl}/api/location/search?q=${encodeURIComponent(query)}`, { signal });
       if (!res.ok) return [];

@@ -14,7 +14,7 @@ import {
   DashBadge, DashBtn, TableWrap, EmptyState, Toolbar, StatCard, StatGrid
 } from "../../components/dashboard/DashboardEngine";
 
-const API = "http://localhost:8082";
+const API = "";
 
 function AdminPartnerRequests() {
   const navigate = useNavigate();

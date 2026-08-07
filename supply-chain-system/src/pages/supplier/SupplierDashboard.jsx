@@ -20,12 +20,12 @@ function SupplierDashboard() {
 
   useEffect(() => {
     const supplierId = localStorage.getItem("supplierId");
-    fetch(`http://localhost:8082/products/supplier/${supplierId}`)
+    fetch(`/products/supplier/${supplierId}`)
       .then(r => r.json())
       .then(myProducts => {
         setProductCount(myProducts.length);
         const myProductNames = myProducts.map(p => p.productName);
-        fetch("http://localhost:8082/orders")
+        fetch("/orders")
           .then(r => r.json())
           .then(data => {
             const myOrders = data.filter(order => myProductNames.includes(order.productName));

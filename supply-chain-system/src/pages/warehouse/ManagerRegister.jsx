@@ -37,7 +37,7 @@ function ManagerRegister() {
     try {
       // Look up the specific manager by email
       const lookupResponse = await fetch(
-        `http://localhost:8082/managers/by-email?email=${encodeURIComponent(email)}`
+        `/managers/by-email?email=${encodeURIComponent(email)}`
       );
 
       if (!lookupResponse.ok) {
@@ -76,7 +76,7 @@ function ManagerRegister() {
         isWarehouseAccount: false
       };
 
-      const response = await fetch("http://localhost:8082/managers", {
+      const response = await fetch("/managers", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

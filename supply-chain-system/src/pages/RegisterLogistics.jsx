@@ -30,7 +30,7 @@ function RegisterLogistics() {
 
     try {
       // 1. Verify that email exists in logistics_companies
-      const checkRes = await fetch(`http://localhost:8082/logistics-companies/check-email?email=${email}`);
+      const checkRes = await fetch(`/logistics-companies/check-email?email=${email}`);
       if (!checkRes.ok) {
         setError("Your email is not registered as a logistics partner by Admin. Please contact Admin.");
         setSendingOtp(false);
@@ -38,7 +38,7 @@ function RegisterLogistics() {
       }
 
       // 2. Send OTP
-      const res = await fetch("http://localhost:8082/send-otp", {
+      const res = await fetch("/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -69,7 +69,7 @@ function RegisterLogistics() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8082/register-logistics", {
+      const response = await fetch("/register-logistics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, otp })

@@ -20,7 +20,7 @@ function Orders() {
 
   useEffect(() => {
     const customerName = localStorage.getItem("username");
-    fetch(`http://localhost:8082/orders/customer/${customerName}`)
+    fetch(`/orders/customer/${customerName}`)
       .then(r => r.json())
       .then(data => setOrders(data))
       .catch(e => console.error(e))

@@ -25,8 +25,8 @@ function ManageManagers() {
 
   const fetchData = () => {
     Promise.all([
-      fetch("http://localhost:8082/managers").then(r => r.json()),
-      fetch("http://localhost:8082/warehouse-locations?includeInactive=true").then(r => r.json())
+      fetch("/managers").then(r => r.json()),
+      fetch("/warehouse-locations?includeInactive=true").then(r => r.json())
     ])
       .then(([mList, wList]) => { setManagers(mList); setWarehouses(wList); setLoading(false); })
       .catch(e => { console.log(e); setLoading(false); });
@@ -39,7 +39,7 @@ function ManageManagers() {
   const confirmDelete = async () => {
     setShowConfirm(false); setErrorMsg(""); setSuccessMsg("");
     try {
-      const response = await fetch(`http://localhost:8082/managers/${deleteId}`, { method: "DELETE" });
+      const response = await fetch(`/managers/${deleteId}`, { method: "DELETE" });
       if (response.ok) {
         setSuccessMsg("Manager removed successfully.");
         setManagers(managers.filter(m => m.managerId !== deleteId));

@@ -22,7 +22,7 @@ function ManageOrders() {
     const cachedWhId = localStorage.getItem("warehouseId");
 
     const fetchPendingOrders = (whId) => {
-      fetch(`http://localhost:8082/orders/status/Pending?warehouseId=${whId}`, {
+      fetch(`/orders/status/Pending?warehouseId=${whId}`, {
         headers: { "X-User-Email": managerEmail || "" }
       })
         .then(r => r.json())
@@ -37,7 +37,7 @@ function ManageOrders() {
       return;
     }
     if (managerEmail) {
-      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
+      fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
         .then(res => res.ok ? res.json() : null)
         .then(wl => { if (wl) { setWarehouseId(wl.id); fetchPendingOrders(wl.id); } else setLoading(false); })
         .catch(err => { console.error(err); setLoading(false); });
@@ -49,7 +49,7 @@ function ManageOrders() {
   const approveOrder = async (order) => {
     const updatedOrder = { ...order, status: "Processing" };
     try {
-      const response = await fetch("http://localhost:8082/orders", {
+      const response = await fetch("/orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-User-Email": localStorage.getItem("username") || "" },
         body: JSON.stringify(updatedOrder)

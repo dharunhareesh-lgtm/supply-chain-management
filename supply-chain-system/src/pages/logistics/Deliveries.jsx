@@ -26,7 +26,7 @@ function DeliveryOtpModal({ order, onClose, onDelivered }) {
     setStep("requesting");
     setMessage("");
     try {
-      const res = await fetch(`http://localhost:8082/orders/${order.orderId}/generate-delivery-otp`, {
+      const res = await fetch(`/orders/${order.orderId}/generate-delivery-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-User-Email": userEmail }
       });
@@ -50,7 +50,7 @@ function DeliveryOtpModal({ order, onClose, onDelivered }) {
     setStep("verifying");
     setMessage("");
     try {
-      const res = await fetch(`http://localhost:8082/orders/${order.orderId}/verify-delivery-otp`, {
+      const res = await fetch(`/orders/${order.orderId}/verify-delivery-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-User-Email": userEmail },
         body: JSON.stringify({ otp: otpInput.trim(), verifiedBy: userEmail })
@@ -254,7 +254,7 @@ function Deliveries() {
   const [deliveryModal, setDeliveryModal] = useState(null); // order object being delivered
 
   useEffect(() => {
-    fetch("http://localhost:8082/orders", {
+    fetch("/orders", {
       headers: { "X-User-Email": localStorage.getItem("username") || "" }
     })
       .then(r => r.json())
@@ -270,7 +270,7 @@ function Deliveries() {
   const dispatchOrder = async (order) => {
     const updatedOrder = { ...order, status: "Dispatched" };
     try {
-      const response = await fetch("http://localhost:8082/orders", {
+      const response = await fetch("/orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedOrder)

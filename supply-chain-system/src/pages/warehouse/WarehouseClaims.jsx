@@ -11,7 +11,7 @@ function WarehouseClaims() {
     const warehouseId = localStorage.getItem("warehouseId");
     const managerEmail = localStorage.getItem("username") || "";
     
-    let url = "http://localhost:8082/insurance-claims";
+    let url = "/insurance-claims";
     if (warehouseId) {
       url += `?warehouseId=${warehouseId}`;
     }
@@ -31,7 +31,7 @@ function WarehouseClaims() {
   }, []);
 
   const handleVerify = (id) => {
-    fetch(`http://localhost:8082/insurance-claims/${id}/status?status=VERIFIED`, {
+    fetch(`/insurance-claims/${id}/status?status=VERIFIED`, {
       method: "PUT"
     })
       .then((res) => {
@@ -43,7 +43,7 @@ function WarehouseClaims() {
   };
 
   const handleReject = (id) => {
-    fetch(`http://localhost:8082/insurance-claims/${id}/status?status=REJECTED`, {
+    fetch(`/insurance-claims/${id}/status?status=REJECTED`, {
       method: "PUT"
     })
       .then((res) => {

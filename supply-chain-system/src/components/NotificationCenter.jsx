@@ -22,7 +22,7 @@ export default function NotificationCenter() {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await fetch(`http://localhost:8082/api/notifications/unread-count?role=${role || ""}&userId=${username || ""}`);
+      const res = await fetch(`/api/notifications/unread-count?role=${role || ""}&userId=${username || ""}`);
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.unreadCount || 0);
@@ -36,7 +36,7 @@ export default function NotificationCenter() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8082/api/notifications?role=${role || ""}&userId=${username || ""}&page=0&size=5`
+        `/api/notifications?role=${role || ""}&userId=${username || ""}&page=0&size=5`
       );
       if (res.ok) {
         const data = await res.json();
@@ -54,7 +54,7 @@ export default function NotificationCenter() {
     try {
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
       const res = await fetch(
-        `http://localhost:8082/api/notifications?role=${role || ""}&userId=${username || ""}&page=${page}&size=10${searchParam}`
+        `/api/notifications?role=${role || ""}&userId=${username || ""}&page=${page}&size=10${searchParam}`
       );
       if (res.ok) {
         const data = await res.json();
@@ -98,7 +98,7 @@ export default function NotificationCenter() {
 
   const handleMarkRead = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/notifications/${id}/read`, { method: "POST" });
+      const res = await fetch(`/api/notifications/${id}/read`, { method: "POST" });
       if (res.ok) {
         fetchUnreadCount();
         if (isHistoryOpen) fetchHistory();
@@ -111,7 +111,7 @@ export default function NotificationCenter() {
 
   const handleMarkAllRead = async () => {
     try {
-      const res = await fetch(`http://localhost:8082/api/notifications/read-all?role=${role || ""}&userId=${username || ""}`, {
+      const res = await fetch(`/api/notifications/read-all?role=${role || ""}&userId=${username || ""}`, {
         method: "POST",
       });
       if (res.ok) {
@@ -126,7 +126,7 @@ export default function NotificationCenter() {
 
   const handleArchive = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/notifications/${id}/archive`, { method: "POST" });
+      const res = await fetch(`/api/notifications/${id}/archive`, { method: "POST" });
       if (res.ok) {
         fetchUnreadCount();
         if (isHistoryOpen) fetchHistory();
@@ -139,7 +139,7 @@ export default function NotificationCenter() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/notifications/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchUnreadCount();
         if (isHistoryOpen) fetchHistory();
@@ -279,7 +279,7 @@ export default function NotificationCenter() {
                                 if (consentMatch) {
                                   const consentId = consentMatch[1];
                                   try {
-                                    const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/approve?email=${encodeURIComponent(username)}`, { method: "POST" });
+                                    const res = await fetch(`/api/customer/verification/consent/${consentId}/approve?email=${encodeURIComponent(username)}`, { method: "POST" });
                                     const data = await res.json();
                                     if (data.success) {
                                       alert("Access Granted: Admin has 15-minute one-time access to view your document.");
@@ -299,7 +299,7 @@ export default function NotificationCenter() {
                                 if (consentMatch) {
                                   const consentId = consentMatch[1];
                                   try {
-                                    const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/reject?email=${encodeURIComponent(username)}`, { method: "POST" });
+                                    const res = await fetch(`/api/customer/verification/consent/${consentId}/reject?email=${encodeURIComponent(username)}`, { method: "POST" });
                                     const data = await res.json();
                                     if (data.success) {
                                       alert("Access Declined.");

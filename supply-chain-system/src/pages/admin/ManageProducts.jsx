@@ -19,7 +19,7 @@ function ManageProducts() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8082/products")
+    fetch("/products")
       .then(r => r.json())
       .then(data => { setProducts(data); setLoading(false); })
       .catch(e => { console.log(e); setLoading(false); });
@@ -28,7 +28,7 @@ function ManageProducts() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await fetch(`http://localhost:8082/products/${id}`, { method: "DELETE" });
+      await fetch(`/products/${id}`, { method: "DELETE" });
       setProducts(products.filter(p => p.productId !== id));
     } catch (error) { console.log(error); }
   };

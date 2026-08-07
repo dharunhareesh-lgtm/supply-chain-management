@@ -15,7 +15,7 @@ import {
   AlertTriangle, Shield, FileText, Activity, Compass, Upload
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "orders",    label: "Order Updates",     hint: "New orders, confirmations" },
   { key: "payments",  label: "Payment & Settlements", hint: "Invoices, payment receipts" },

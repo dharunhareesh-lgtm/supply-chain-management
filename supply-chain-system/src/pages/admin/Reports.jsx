@@ -45,7 +45,7 @@ function Reports() {
   const fetchDistributions = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8082/supplier-finance/settlements");
+      const res = await fetch("/supplier-finance/settlements");
       if (res.ok) {
         const data = await res.json();
         setDistributions(data);
@@ -63,7 +63,7 @@ function Reports() {
 
   const handleDistribute = async (orderId) => {
     try {
-      const res = await fetch(`http://localhost:8082/supplier-finance/settlement/${orderId}`, {
+      const res = await fetch(`/supplier-finance/settlement/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "DISTRIBUTE" })

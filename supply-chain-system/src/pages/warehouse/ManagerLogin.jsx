@@ -20,7 +20,7 @@ function ManagerLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8082/managers/login", {
+      const response = await fetch("/managers/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

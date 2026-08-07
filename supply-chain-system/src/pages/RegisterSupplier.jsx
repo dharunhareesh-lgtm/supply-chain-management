@@ -42,7 +42,7 @@ function RegisterSupplier() {
     setPostalCode(loc.postalCode);
 
     try {
-      const res = await fetch(`http://localhost:8082/warehouse-locations/nearest?latitude=${loc.latitude}&longitude=${loc.longitude}`);
+      const res = await fetch(`/warehouse-locations/nearest?latitude=${loc.latitude}&longitude=${loc.longitude}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
@@ -80,7 +80,7 @@ function RegisterSupplier() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8082/register-supplier", {
+      const response = await fetch("/register-supplier", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

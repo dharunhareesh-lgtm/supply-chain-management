@@ -35,7 +35,7 @@ function LogisticsVehicles() {
   const fetchVehicles = (cName) => {
     const targetName = cName || companyName;
     if (!targetName) return;
-    fetch("http://localhost:8082/logistics-vehicles")
+    fetch("/logistics-vehicles")
       .then((res) => res.json())
       .then((data) => {
         setVehicles(data.filter((v) => v.companyName.toLowerCase() === targetName.toLowerCase()));
@@ -45,7 +45,7 @@ function LogisticsVehicles() {
 
   useEffect(() => {
     if (companyEmail) {
-      fetch(`http://localhost:8082/logistics-companies/check-email?email=${companyEmail}`)
+      fetch(`/logistics-companies/check-email?email=${companyEmail}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.companyName) {
@@ -83,7 +83,7 @@ function LogisticsVehicles() {
       vehiclePhoto: vehiclePhoto || ""
     };
 
-    fetch("http://localhost:8082/logistics-vehicles", {
+    fetch("/logistics-vehicles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -108,7 +108,7 @@ function LogisticsVehicles() {
 
   const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to remove this vehicle?")) return;
-    fetch(`http://localhost:8082/logistics-vehicles/${id}`, {
+    fetch(`/logistics-vehicles/${id}`, {
       method: "DELETE"
     })
       .then((res) => {
@@ -416,7 +416,7 @@ function LogisticsVehicles() {
               <DashBtn
                 variant="primary"
                 onClick={async () => {
-                  const res = await fetch(`http://localhost:8082/vehicle-locations/${mapPickingVehicle.id}`, {
+                  const res = await fetch(`/vehicle-locations/${mapPickingVehicle.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ latitude: tempLat, longitude: tempLon })

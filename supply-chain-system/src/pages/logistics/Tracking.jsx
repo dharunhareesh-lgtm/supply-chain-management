@@ -16,7 +16,7 @@ function Tracking() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8082/orders/status/In Transit", {
+    fetch("/orders/status/In Transit", {
       headers: {
         "X-User-Email": localStorage.getItem("username") || ""
       }
@@ -34,7 +34,7 @@ function Tracking() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/orders", {
+      const response = await fetch("/orders", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

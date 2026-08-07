@@ -1,13 +1,10 @@
-// Intercept all fetch requests globally to rewrite the hardcoded localhost API URL dynamically
-// based on the environment variables defined in the .env file.
+// Intercept all fetch requests globally to rewrite relative paths to point to the environment's VITE_API_URL
 const originalFetch = window.fetch;
 window.fetch = function (input, init) {
   let url = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : null);
   if (url) {
-    const API_URL = import.meta.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:8082';
-    if (url.startsWith('http://localhost:8082')) {
-      url = url.replace('http://localhost:8082', API_URL);
-    } else if (url.startsWith('/')) {
+    const API_URL = import.meta.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_API_URL || '';
+    if (url.startsWith('/')) {
       url = `${API_URL}${url}`;
     }
     

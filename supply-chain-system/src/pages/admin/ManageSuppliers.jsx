@@ -19,7 +19,7 @@ function ManageSuppliers() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8082/suppliers")
+    fetch("/suppliers")
       .then(r => r.json())
       .then(data => { setSuppliers(data); setLoading(false); })
       .catch(e => { console.log(e); setLoading(false); });
@@ -28,7 +28,7 @@ function ManageSuppliers() {
   const deleteSupplier = async (id) => {
     if (!window.confirm("Are you sure you want to delete this supplier?")) return;
     try {
-      await fetch(`http://localhost:8082/suppliers/${id}`, { method: "DELETE" });
+      await fetch(`/suppliers/${id}`, { method: "DELETE" });
       setSuppliers(suppliers.filter(s => s.supplierId !== id));
     } catch (error) { console.log(error); }
   };

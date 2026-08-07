@@ -76,7 +76,7 @@ function MarketForecast() {
   const [error, setError] = useState("");
 
   const fetchHistory = (product) => {
-    fetch(`http://localhost:8082/api/forecast/history/${encodeURIComponent(product)}`)
+    fetch(`/api/forecast/history/${encodeURIComponent(product)}`)
       .then((res) => res.json())
       .then((data) => setHistory(Array.isArray(data) ? data : []))
       .catch((err) => {
@@ -89,7 +89,7 @@ function MarketForecast() {
     setFetchingParams(true);
     try {
       const response = await fetch(
-        `http://localhost:8082/api/forecast/parameters?productName=${encodeURIComponent(productName)}&region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`
+        `/api/forecast/parameters?productName=${encodeURIComponent(productName)}&region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -107,11 +107,11 @@ function MarketForecast() {
 
   useEffect(() => {
     setLoadingProducts(true);
-    fetch("http://localhost:8082/products")
+    fetch("/products")
       .then((res) => res.json())
       .then((productsData) => {
         setAllProducts(Array.isArray(productsData) ? productsData : []);
-        return fetch("http://localhost:8082/api/forecast/products");
+        return fetch("/api/forecast/products");
       })
       .then((res) => res.json())
       .then((data) => {
@@ -154,7 +154,7 @@ function MarketForecast() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     try {
-      const response = await fetch("http://localhost:8082/api/forecast/predict", {
+      const response = await fetch("/api/forecast/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

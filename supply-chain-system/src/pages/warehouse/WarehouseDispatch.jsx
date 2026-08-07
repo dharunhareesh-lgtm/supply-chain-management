@@ -53,7 +53,7 @@ function WarehouseDispatch() {
         const endLat = order.customerLatitude || whLat;
         const endLng = order.customerLongitude || whLon;
 
-        fetch(`http://localhost:8082/logistics/route-info?fromLat=${startLat}&fromLng=${startLng}&toLat=${endLat}&toLng=${endLng}`)
+        fetch(`/logistics/route-info?fromLat=${startLat}&fromLng=${startLng}&toLat=${endLat}&toLng=${endLng}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => setRouteInfo(data))
           .catch(console.error);
@@ -217,7 +217,7 @@ function WarehouseDispatch() {
         
         const managerEmail = localStorage.getItem("username");
         if (managerEmail && !whId) {
-          const settingsRes = await fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' });
+          const settingsRes = await fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' });
           if (settingsRes.ok) {
             const settingsData = await settingsRes.json();
             setWhLat(settingsData.latitude || 11.0168);
@@ -228,7 +228,7 @@ function WarehouseDispatch() {
         } else if (whId) {
           // Resolve lat/lon from general info or default if we have cached ID
           try {
-            const res = await fetch(`http://localhost:8082/warehouse-locations/${whId}`);
+            const res = await fetch(`/warehouse-locations/${whId}`);
             if (res.ok) {
               const data = await res.json();
               setWhLat(data.latitude || 11.0168);
@@ -240,15 +240,15 @@ function WarehouseDispatch() {
         // Fetch Approved Logistics Partners
         let approvedVehicles = [];
         if (managerEmail) {
-          const approvedRes = await fetch(`http://localhost:8082/warehouse-partnerships/approved-partners?warehouseEmail=${managerEmail}`);
+          const approvedRes = await fetch(`/warehouse-partnerships/approved-partners?warehouseEmail=${managerEmail}`);
           const approvedCompanies = await approvedRes.json();
           const approvedNames = approvedCompanies.map(c => c.companyName.toLowerCase());
           
-          const vehiclesRes = await fetch("http://localhost:8082/logistics-vehicles");
+          const vehiclesRes = await fetch("/logistics-vehicles");
           const vehiclesData = await vehiclesRes.json();
           approvedVehicles = vehiclesData.filter(v => approvedNames.includes(v.companyName.toLowerCase()) && v.status?.toUpperCase() === "AVAILABLE");
         } else {
-          const vehiclesRes = await fetch("http://localhost:8082/logistics-vehicles");
+          const vehiclesRes = await fetch("/logistics-vehicles");
           const vehiclesData = await vehiclesRes.json();
           approvedVehicles = vehiclesData.filter(v => v.status?.toUpperCase() === "AVAILABLE");
         }
@@ -256,8 +256,8 @@ function WarehouseDispatch() {
 
         // 2. Fetch Approved Orders (Processing)
         const orderUrl = whId 
-          ? `http://localhost:8082/orders/status/Processing?warehouseId=${whId}` 
-          : "http://localhost:8082/orders/status/Processing";
+          ? `/orders/status/Processing?warehouseId=${whId}` 
+          : "/orders/status/Processing";
         const ordersRes = await fetch(orderUrl, {
           headers: {
             "X-User-Email": managerEmail || ""
@@ -292,7 +292,7 @@ function WarehouseDispatch() {
           setAllPendingOrders(unassignedOrders);
           
           const orderIds = unassignedOrders.map(o => o.orderId);
-          const recRes = await fetch(`http://localhost:8082/logistics-vehicles/recommend-advanced`, {
+          const recRes = await fetch(`/logistics-vehicles/recommend-advanced`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -338,7 +338,7 @@ function WarehouseDispatch() {
       // Step 1: Assign vehicle for all orders in the batch
       for (const order of ordersToUpdate) {
         const updatedOrder = { ...order, status: 'Processing', vehicleId: selectedVehicle.id };
-        const res = await fetch('http://localhost:8082/orders', {
+        const res = await fetch('/orders', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -357,7 +357,7 @@ function WarehouseDispatch() {
       // Step 2: Generate BCrypt OTP for the first/primary order and email customer
       const primaryOrderId = ordersToUpdate[0].orderId;
       try {
-        const otpRes = await fetch(`http://localhost:8082/orders/${primaryOrderId}/generate-dispatch-otp`, {
+        const otpRes = await fetch(`/orders/${primaryOrderId}/generate-dispatch-otp`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -378,8 +378,8 @@ function WarehouseDispatch() {
       const managerEmail = localStorage.getItem('username') || '';
       const whId = localStorage.getItem('warehouseId');
       const orderUrl = whId && whId !== 'null' && whId !== 'undefined'
-        ? `http://localhost:8082/orders/status/Processing?warehouseId=${whId}`
-        : 'http://localhost:8082/orders/status/Processing';
+        ? `/orders/status/Processing?warehouseId=${whId}`
+        : '/orders/status/Processing';
       const refreshRes = await fetch(orderUrl, { headers: { 'X-User-Email': managerEmail } });
       const refreshData = await refreshRes.json();
       const newAssigned = (refreshData || []).filter(o => o.vehicleId);
@@ -416,7 +416,7 @@ function WarehouseDispatch() {
   const handleVerifyOtp = async (orderId, correctOtp) => {
     const inputOtp = otpInputs[orderId];
     try {
-      const res = await fetch(`http://localhost:8082/orders/${orderId}/verify-dispatch-otp`, {
+      const res = await fetch(`/orders/${orderId}/verify-dispatch-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Email': localStorage.getItem('username') || '' },
         body: JSON.stringify({ otp: inputOtp, verifiedBy: localStorage.getItem('username') || 'warehouse-manager' })
@@ -443,7 +443,7 @@ function WarehouseDispatch() {
     }
     try {
       const updatedOrder = { ...order, status: 'Dispatched' };
-      const response = await fetch('http://localhost:8082/orders', {
+      const response = await fetch('/orders', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-User-Email': localStorage.getItem('username') || '' },
         body: JSON.stringify(updatedOrder)
@@ -510,7 +510,7 @@ function WarehouseDispatch() {
                     alert('Warehouse record not loaded yet.');
                     return;
                   }
-                  const res = await fetch(`http://localhost:8082/warehouse-locations/${warehouseId}`, {
+                  const res = await fetch(`/warehouse-locations/${warehouseId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ latitude: lat, longitude: lon })

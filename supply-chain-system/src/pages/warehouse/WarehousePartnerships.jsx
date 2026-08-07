@@ -11,7 +11,7 @@ function WarehousePartnerships() {
   const fetchStatuses = async () => {
     if (!warehouseEmail) return;
     try {
-      const res = await fetch(`http://localhost:8082/warehouse-partnerships/status?warehouseEmail=${warehouseEmail}`);
+      const res = await fetch(`/warehouse-partnerships/status?warehouseEmail=${warehouseEmail}`);
       const data = await res.json();
       setCompanies(data);
     } catch (e) {
@@ -27,7 +27,7 @@ function WarehousePartnerships() {
 
   const handleRequest = async (companyId) => {
     try {
-      const res = await fetch("http://localhost:8082/warehouse-partnerships/request", {
+      const res = await fetch("/warehouse-partnerships/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

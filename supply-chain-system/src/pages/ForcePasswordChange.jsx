@@ -13,7 +13,7 @@ import {
   SuccessScreen, StaggerForms, cardVariants, TOKENS as T, EASE,
 } from "../components/site/OnboardingLayout";
 
-const API = "http://localhost:8082";
+const API = "";
 
 export default function ForcePasswordChange() {
   const navigate = useNavigate();

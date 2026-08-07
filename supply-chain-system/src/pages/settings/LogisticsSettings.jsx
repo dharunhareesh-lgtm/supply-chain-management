@@ -15,7 +15,7 @@ import {
   AlertTriangle, Shield, MapPin, Settings, Activity, Compass, Upload, FileText
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "deliveries",  label: "Delivery Updates",   hint: "OTP verifications, status changes" },
   { key: "vehicles",    label: "Vehicle Alerts",      hint: "Maintenance, GPS, fuel warnings" },

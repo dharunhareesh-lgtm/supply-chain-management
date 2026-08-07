@@ -31,7 +31,7 @@ function AddSupplier() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/suppliers", {
+      const response = await fetch("/suppliers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

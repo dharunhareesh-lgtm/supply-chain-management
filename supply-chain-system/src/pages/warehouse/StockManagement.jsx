@@ -18,7 +18,7 @@ function StockManagement() {
   const loadCapacities = async (whId) => {
     try {
       const managerEmail = localStorage.getItem("username");
-      const response = await fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`, {
+      const response = await fetch(`/category-capacity?warehouseId=${whId}`, {
         headers: { "X-User-Email": managerEmail || "" }
       });
       const data = await response.json();
@@ -39,7 +39,7 @@ function StockManagement() {
     }
 
     if (managerEmail) {
-      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+      fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
         .then((res) => res.ok ? res.json() : null)
         .then((wl) => {
           if (wl) {
@@ -54,7 +54,7 @@ function StockManagement() {
   const updateCapacity = async (item) => {
     try {
       const response = await fetch(
-        "http://localhost:8082/category-capacity",
+        "/category-capacity",
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

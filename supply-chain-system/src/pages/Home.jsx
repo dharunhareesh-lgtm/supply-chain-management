@@ -27,7 +27,7 @@ import TeamSection from "../components/site/TeamSection";
 /* ─── API config (unchanged) ─────────────────────────────────────────── */
 const API_BASE_URL =
   (typeof import.meta !== "undefined" && (import.meta.env?.VITE_API_BASE_URL || import.meta.env?.VITE_API_URL)) ||
-  "http://localhost:8082";
+  "";
 const REMEMBERED_USERNAME_KEY = "dravix_remembered_username";
 
 /* ══════════════════════════════════════════════════════════════════════════

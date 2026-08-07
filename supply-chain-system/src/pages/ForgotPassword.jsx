@@ -55,7 +55,7 @@ function ForgotPassword() {
     if (!email) return;
     setError(""); setMessage(""); setLoading(true);
     try {
-      const res  = await fetch("http://localhost:8082/api/forgot-password/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const res  = await fetch("/api/forgot-password/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Failed to request OTP. Please try again.");
       else { setMessage(data.message || "If an account with this email exists, an OTP has been sent."); setStep(2); }
@@ -68,7 +68,7 @@ function ForgotPassword() {
     if (!otp) return;
     setError(""); setMessage(""); setLoading(true);
     try {
-      const res  = await fetch("http://localhost:8082/api/forgot-password/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp }) });
+      const res  = await fetch("/api/forgot-password/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp }) });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Invalid OTP.");
       else { setMessage(data.message || "OTP verified successfully."); setStep(3); }
@@ -83,7 +83,7 @@ function ForgotPassword() {
     if (!isPasswordStrong) { setError("Please satisfy all password strength requirements."); return; }
     setError(""); setMessage(""); setLoading(true);
     try {
-      const res  = await fetch("http://localhost:8082/api/forgot-password/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp, password, confirmPassword }) });
+      const res  = await fetch("/api/forgot-password/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp, password, confirmPassword }) });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Password reset failed.");
       else { setMessage("Password has been reset successfully."); setStep(4); }

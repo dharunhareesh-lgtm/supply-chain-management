@@ -54,7 +54,7 @@ function CartPage() {
     try {
       await Promise.all(
         cartItems.map((item) =>
-          fetch("http://localhost:8082/orders", {
+          fetch("/orders", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

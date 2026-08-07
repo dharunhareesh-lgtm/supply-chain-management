@@ -14,7 +14,7 @@ import {
   AlertTriangle, Activity, Upload
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "dispatch",   label: "Dispatch Assignments", hint: "New trips, route changes" },
   { key: "delivery",   label: "Delivery Alerts",      hint: "OTP verifications, customer notices" },

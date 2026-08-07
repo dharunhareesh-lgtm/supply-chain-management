@@ -483,7 +483,7 @@ export default function SupplierRevenue() {
     setLoading(true);
     setError("");
     try {
-      let url = `http://localhost:8082/supplier-finance/summary?supplierId=${supplierId}`;
+      let url = `/supplier-finance/summary?supplierId=${supplierId}`;
       if (startDate) url += `&startDate=${startDate}`;
       if (endDate) url += `&endDate=${endDate}`;
       if (filterWarehouse) url += `&warehouseId=${filterWarehouse}`;
@@ -492,8 +492,8 @@ export default function SupplierRevenue() {
 
       const [summaryRes, productsRes, warehouseRes] = await Promise.all([
         fetch(url),
-        fetch(`http://localhost:8082/supplier-finance/products/${supplierId}`),
-        fetch("http://localhost:8082/warehouse-locations?includeInactive=true"),
+        fetch(`/supplier-finance/products/${supplierId}`),
+        fetch("/warehouse-locations?includeInactive=true"),
       ]);
 
       if (!summaryRes.ok) throw new Error("Failed to load financial data");

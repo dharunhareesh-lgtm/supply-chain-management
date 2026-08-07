@@ -29,7 +29,7 @@ import {
   DashBadge, DashBtn, TableWrap, EmptyState, FormGrid, DashInput, DashSelect, InfoRow
 } from "../../components/dashboard/DashboardEngine";
 
-const API_BASE_URL = "http://localhost:8082";
+const API_BASE_URL = "";
 
 function EditProduct() {
   const { id } = useParams();

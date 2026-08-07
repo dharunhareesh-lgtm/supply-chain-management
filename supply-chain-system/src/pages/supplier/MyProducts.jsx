@@ -20,7 +20,7 @@ function MyProducts() {
 
   useEffect(() => {
     const supplierId = localStorage.getItem("supplierId");
-    fetch(`http://localhost:8082/products/supplier/${supplierId}`)
+    fetch(`/products/supplier/${supplierId}`)
       .then(r => r.json())
       .then(data => { setProducts(data); setLoading(false); })
       .catch(e => { console.log(e); setLoading(false); });

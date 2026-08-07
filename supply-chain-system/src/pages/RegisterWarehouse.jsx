@@ -30,7 +30,7 @@ function RegisterWarehouse() {
 
     try {
       // 1. Verify that email exists in warehouse_locations
-      const checkRes = await fetch(`http://localhost:8082/warehouse-locations/check-email?email=${email}`, {
+      const checkRes = await fetch(`/warehouse-locations/check-email?email=${email}`, {
         method: "POST"
       });
       if (!checkRes.ok) {
@@ -40,7 +40,7 @@ function RegisterWarehouse() {
       }
 
       // 2. Send OTP
-      const res = await fetch("http://localhost:8082/send-otp", {
+      const res = await fetch("/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -71,7 +71,7 @@ function RegisterWarehouse() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8082/register-warehouse", {
+      const response = await fetch("/register-warehouse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, otp })

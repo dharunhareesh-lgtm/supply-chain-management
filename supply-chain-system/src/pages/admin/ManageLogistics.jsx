@@ -26,7 +26,7 @@ function ManageLogistics() {
   const [search, setSearch] = useState("");
 
   const fetchCompanies = () => {
-    fetch("http://localhost:8082/logistics-companies")
+    fetch("/logistics-companies")
       .then(res => res.json())
       .then(data => setCompanies(data))
       .catch(err => console.error(err));
@@ -38,7 +38,7 @@ function ManageLogistics() {
     e.preventDefault();
     setSuccess("");
     const payload = { companyName, contactInfo, email, serviceRegions, companyRating: companyRating ? Number(companyRating) : 5.0, licenseDetails, status };
-    fetch("http://localhost:8082/logistics-companies", {
+    fetch("/logistics-companies", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
     }).then(res => {
       if (res.ok) {
@@ -52,14 +52,14 @@ function ManageLogistics() {
 
   const handleApprove = (company) => {
     const updated = { ...company, status: "APPROVED" };
-    fetch("http://localhost:8082/logistics-companies", {
+    fetch("/logistics-companies", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated)
     }).then(res => { if (res.ok) fetchCompanies(); }).catch(err => console.error(err));
   };
 
   const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to delete this logistics company?")) return;
-    fetch(`http://localhost:8082/logistics-companies/${id}`, { method: "DELETE" })
+    fetch(`/logistics-companies/${id}`, { method: "DELETE" })
       .then(res => { if (res.ok) fetchCompanies(); }).catch(err => console.error(err));
   };
 

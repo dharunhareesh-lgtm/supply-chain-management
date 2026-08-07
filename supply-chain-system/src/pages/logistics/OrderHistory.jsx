@@ -16,7 +16,7 @@ function OrderHistory() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8082/orders", {
+    fetch("/orders", {
       headers: {
         "X-User-Email": localStorage.getItem("username") || ""
       }

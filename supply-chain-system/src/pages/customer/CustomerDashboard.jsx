@@ -42,21 +42,21 @@ function CustomerDashboard() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const prodRes = await fetch("http://localhost:8082/products?status=APPROVED");
+        const prodRes = await fetch("/products?status=APPROVED");
         if (prodRes.ok) setProducts(await prodRes.json());
 
         if (username) {
-          const ordRes = await fetch(`http://localhost:8082/orders/customer/${username}`);
+          const ordRes = await fetch(`/orders/customer/${username}`);
           if (ordRes.ok) setOrders(await ordRes.json());
 
-          const userRes = await fetch(`http://localhost:8082/users/username/${username}`);
+          const userRes = await fetch(`/users/username/${username}`);
           if (userRes.ok) {
             const userData = await userRes.json();
             if (userData.latitude)  setCustLat(userData.latitude.toString());
             if (userData.longitude) setCustLon(userData.longitude.toString());
           }
 
-          const verRes = await fetch(`http://localhost:8082/api/customer/verification/status?email=${encodeURIComponent(username)}`);
+          const verRes = await fetch(`/api/customer/verification/status?email=${encodeURIComponent(username)}`);
           if (verRes.ok) {
             const verData = await verRes.json();
             if (verData.found) setCustLevel(verData.profile?.customerLevel || "NORMAL");

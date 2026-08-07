@@ -22,7 +22,7 @@ function EditSupplier() {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:8082/suppliers/${id}`)
+    fetch(`/suppliers/${id}`)
       .then((response) => response.json())
       .then((data) => {
         setSupplierName(data.supplierName || "");
@@ -44,7 +44,7 @@ function EditSupplier() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/suppliers", {
+      const response = await fetch("/suppliers", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

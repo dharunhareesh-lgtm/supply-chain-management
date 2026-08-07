@@ -19,7 +19,7 @@ function AdminPackaging() {
   const [success, setSuccess] = useState("");
 
   const fetchStandards = () => {
-    fetch("http://localhost:8082/packaging-standards")
+    fetch("/packaging-standards")
       .then((res) => res.json())
       .then((data) => {
         setStandards(data);
@@ -45,7 +45,7 @@ function AdminPackaging() {
       return;
     }
 
-    fetch("http://localhost:8082/packaging-standards", {
+    fetch("/packaging-standards", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ size: Number(newSize), active: true })
@@ -67,7 +67,7 @@ function AdminPackaging() {
 
   const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to delete this packaging standard?")) return;
-    fetch(`http://localhost:8082/packaging-standards/${id}`, {
+    fetch(`/packaging-standards/${id}`, {
       method: "DELETE"
     })
       .then((res) => {

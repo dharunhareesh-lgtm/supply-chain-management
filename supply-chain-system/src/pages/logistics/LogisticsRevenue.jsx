@@ -24,7 +24,7 @@ export default function LogisticsRevenue() {
     if (!companyEmail) return;
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8082/logistics-companies/revenue?email=${companyEmail}`);
+      const res = await fetch(`/logistics-companies/revenue?email=${companyEmail}`);
       if (res.ok) {
         const json = await res.json();
         setData(json);

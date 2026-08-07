@@ -43,11 +43,11 @@ function AdminDashboard() {
   // ── All original data fetching preserved ──
   useEffect(() => {
     Promise.all([
-      fetch("http://localhost:8082/suppliers").then(r => r.json()),
-      fetch("http://localhost:8082/products?includeInactive=true").then(r => r.json()),
-      fetch("http://localhost:8082/orders").then(r => r.json()),
-      fetch("http://localhost:8082/warehouse-locations?includeInactive=true").then(r => r.json()),
-      fetch("http://localhost:8082/category-capacity").then(r => r.json()),
+      fetch("/suppliers").then(r => r.json()),
+      fetch("/products?includeInactive=true").then(r => r.json()),
+      fetch("/orders").then(r => r.json()),
+      fetch("/warehouse-locations?includeInactive=true").then(r => r.json()),
+      fetch("/category-capacity").then(r => r.json()),
     ])
       .then(([suppliers, products, orders, warehouses, capacities]) => {
         setSupplierCount(suppliers.length);

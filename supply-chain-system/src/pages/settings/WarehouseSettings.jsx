@@ -15,7 +15,7 @@ import {
   AlertTriangle, Shield, Building2, Clock, Activity, Compass, Upload, FileText
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "orders",      label: "Order Arrivals",     hint: "Incoming product orders" },
   { key: "inventory",   label: "Inventory Alerts",   hint: "Low stock, expiry warnings" },

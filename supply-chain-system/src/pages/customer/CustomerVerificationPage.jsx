@@ -229,7 +229,7 @@ function CustomerVerificationPage() {
   // Sync missing DOB
   const handleSyncDob = async (extractedDob) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/customer/profile/dob?email=${encodeURIComponent(email)}&dob=${encodeURIComponent(extractedDob)}`, {
+      const res = await fetch(`/api/customer/profile/dob?email=${encodeURIComponent(email)}&dob=${encodeURIComponent(extractedDob)}`, {
         method: "PUT"
       });
       const data = await res.json();
@@ -289,7 +289,7 @@ function CustomerVerificationPage() {
   const fetchAllData = async () => {
     try {
       // 1. Verification status
-      const resStatus = await fetch(`http://localhost:8082/api/customer/verification/status?email=${encodeURIComponent(email)}`);
+      const resStatus = await fetch(`/api/customer/verification/status?email=${encodeURIComponent(email)}`);
       if (resStatus.ok) {
         const data = await resStatus.json();
         if (data.found) {
@@ -314,14 +314,14 @@ function CustomerVerificationPage() {
       }
 
       // 2. Settings (contains phone, address, coordinates)
-      const resSettings = await fetch(`http://localhost:8082/api/settings/customer?email=${encodeURIComponent(email)}`);
+      const resSettings = await fetch(`/api/settings/customer?email=${encodeURIComponent(email)}`);
       if (resSettings.ok) {
         const d = await resSettings.json();
         setSettingsData(d);
       }
 
       // 3. Trust Score history
-      const resTrust = await fetch(`http://localhost:8082/api/customer/trust-score?email=${encodeURIComponent(email)}`);
+      const resTrust = await fetch(`/api/customer/trust-score?email=${encodeURIComponent(email)}`);
       if (resTrust.ok) {
         const trustData = await resTrust.json();
         if (trustData.history) {
@@ -330,7 +330,7 @@ function CustomerVerificationPage() {
       }
 
       // 4. Pending Document View Consent Requests from Admin
-      const resConsent = await fetch(`http://localhost:8082/api/customer/verification/consent/pending?email=${encodeURIComponent(email)}`);
+      const resConsent = await fetch(`/api/customer/verification/consent/pending?email=${encodeURIComponent(email)}`);
       if (resConsent.ok) {
         const consentData = await resConsent.json();
         setPendingConsents(consentData || []);
@@ -345,7 +345,7 @@ function CustomerVerificationPage() {
 
   const handleApproveConsent = async (consentId) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/approve?email=${encodeURIComponent(email)}`, {
+      const res = await fetch(`/api/customer/verification/consent/${consentId}/approve?email=${encodeURIComponent(email)}`, {
         method: "POST"
       });
       const data = await res.json();
@@ -364,7 +364,7 @@ function CustomerVerificationPage() {
 
   const handleRejectConsent = async (consentId) => {
     try {
-      const res = await fetch(`http://localhost:8082/api/customer/verification/consent/${consentId}/reject?email=${encodeURIComponent(email)}`, {
+      const res = await fetch(`/api/customer/verification/consent/${consentId}/reject?email=${encodeURIComponent(email)}`, {
         method: "POST"
       });
       const data = await res.json();
@@ -384,7 +384,7 @@ function CustomerVerificationPage() {
     if (email) {
       fetchAllData();
       const consentPoll = setInterval(() => {
-        fetch(`http://localhost:8082/api/customer/verification/consent/pending?email=${encodeURIComponent(email)}`)
+        fetch(`/api/customer/verification/consent/pending?email=${encodeURIComponent(email)}`)
           .then(res => res.ok ? res.json() : [])
           .then(data => setPendingConsents(data || []))
           .catch(() => {});
@@ -521,7 +521,7 @@ function CustomerVerificationPage() {
     formData.append("documentFile", documentFile);
 
     try {
-      const response = await fetch("http://localhost:8082/api/customer/verification/document", {
+      const response = await fetch("/api/customer/verification/document", {
         method: "POST",
         body: formData
       });
@@ -598,7 +598,7 @@ function CustomerVerificationPage() {
     
     setUpgradingBusiness(true);
     try {
-      const response = await fetch("http://localhost:8082/api/customer/business/request", {
+      const response = await fetch("/api/customer/business/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -639,7 +639,7 @@ function CustomerVerificationPage() {
       formData.append("email", email);
       formData.append("documentFile", documentFile);
 
-      const response = await fetch("http://localhost:8082/api/customer/verification/request-manual-review", {
+      const response = await fetch("/api/customer/verification/request-manual-review", {
         method: "POST",
         body: formData
       });

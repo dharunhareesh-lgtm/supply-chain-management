@@ -16,7 +16,7 @@ import {
   DashBadge, DashBtn, TableWrap, EmptyState, InfoRow, FormGrid
 } from "../../components/dashboard/DashboardEngine";
 
-const API = "http://localhost:8082";
+const API = "";
 
 function AdminPartnerDetail() {
   const { id } = useParams();

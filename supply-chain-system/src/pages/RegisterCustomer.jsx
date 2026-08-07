@@ -167,7 +167,7 @@ function RegisterCustomer() {
     if (!isEmailValid()) { setError("Please enter a valid email address first."); return; }
     setError(""); setSendingOtp(true);
     try {
-      const res = await fetch("http://localhost:8082/api/customer/auth/send-otp", {
+      const res = await fetch("/api/customer/auth/send-otp", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
@@ -183,7 +183,7 @@ function RegisterCustomer() {
     if (!otp || otp.trim().length < 6) { setError("Please enter a valid 6-digit OTP."); return; }
     setError(""); setVerifyingOtp(true);
     try {
-      const res = await fetch("http://localhost:8082/api/customer/auth/verify-otp", {
+      const res = await fetch("/api/customer/auth/verify-otp", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
       });
@@ -208,7 +208,7 @@ function RegisterCustomer() {
     if (!isConfirmPwValid()) { setError("Passwords do not match."); return; }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8082/api/customer/auth/register", {
+      const res = await fetch("/api/customer/auth/register", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fullName, mobileNumber, email, dateOfBirth, panNumber, password, otp }),
       });

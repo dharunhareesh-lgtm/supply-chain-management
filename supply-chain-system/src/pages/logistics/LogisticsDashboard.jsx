@@ -27,7 +27,7 @@ function LogisticsDashboard() {
 
   // ── All original data fetching preserved ──
   const fetchDashboardData = () => {
-    fetch("http://localhost:8082/orders")
+    fetch("/orders")
       .then(r => r.json())
       .then(data => {
         setProcessingOrders(data.filter(o => o.status === "Processing").length);
@@ -37,7 +37,7 @@ function LogisticsDashboard() {
       .catch(e => console.log(e));
 
     if (companyEmail) {
-      fetch(`http://localhost:8082/vehicle-locations/my-vehicles?companyEmail=${companyEmail}`)
+      fetch(`/vehicle-locations/my-vehicles?companyEmail=${companyEmail}`)
         .then(r => r.json())
         .then(data => {
           setVehicles(data || []);
@@ -67,7 +67,7 @@ function LogisticsDashboard() {
     e.preventDefault();
     if (!selectedVehicle) return;
     try {
-      const res = await fetch(`http://localhost:8082/vehicle-locations/${selectedVehicle.id}`, {
+      const res = await fetch(`/vehicle-locations/${selectedVehicle.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ latitude: parseFloat(editLat), longitude: parseFloat(editLon), status: editStatus, currentRoute: editRoute })

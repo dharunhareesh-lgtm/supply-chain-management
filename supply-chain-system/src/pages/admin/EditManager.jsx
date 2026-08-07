@@ -27,19 +27,19 @@ function EditManager() {
 
   useEffect(() => {
     // Load warehouses
-    fetch("http://localhost:8082/warehouse-locations?includeInactive=false")
+    fetch("/warehouse-locations?includeInactive=false")
       .then(res => res.json())
       .then(data => setWarehouses(data || []))
       .catch(err => console.error(err));
 
     // Load categories
-    fetch("http://localhost:8082/products/allowed-categories")
+    fetch("/products/allowed-categories")
       .then(res => res.json())
       .then(data => setCategories(data || []))
       .catch(err => console.error(err));
 
     // Load current manager details
-    fetch(`http://localhost:8082/managers/${id}`)
+    fetch(`/managers/${id}`)
       .then((response) => response.json())
       .then((data) => {
         setUsername(data.username || "");
@@ -64,7 +64,7 @@ function EditManager() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/managers", {
+      const response = await fetch("/managers", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

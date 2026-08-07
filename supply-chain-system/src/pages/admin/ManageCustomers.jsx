@@ -27,10 +27,10 @@ function ManageCustomers() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const resCust = await fetch("http://localhost:8082/api/admin/customers");
+      const resCust = await fetch("/api/admin/customers");
       const dataCust = await resCust.json();
       setCustomers(dataCust || []);
-      const resVer = await fetch("http://localhost:8082/api/admin/customer-verifications");
+      const resVer = await fetch("/api/admin/customer-verifications");
       const dataVer = await resVer.json();
       setVerifications(dataVer || []);
     } catch (err) {
@@ -52,7 +52,7 @@ function ManageCustomers() {
   const confirmDelete = async () => {
     if (!customerToDelete) return;
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customers/${customerToDelete.id}`, { method: "DELETE" });
+      const response = await fetch(`/api/admin/customers/${customerToDelete.id}`, { method: "DELETE" });
       const data = await response.json();
       if (data.success) {
         setShowDeleteModal(false); setCustomerToDelete(null); fetchData();

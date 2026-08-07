@@ -32,7 +32,7 @@ function CustomerDetailView() {
   const fetchCustomerDetails = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customers/${id}`);
+      const response = await fetch(`/api/admin/customers/${id}`);
       if (response.ok) {
         const data = await response.json();
         setDetails(data);
@@ -56,7 +56,7 @@ function CustomerDetailView() {
     if (!details?.verification?.id) return;
     setProcessing(true);
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customer-verification/${details.verification.id}/${actionType}`, {
+      const response = await fetch(`/api/admin/customer-verification/${details.verification.id}/${actionType}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,7 +83,7 @@ function CustomerDetailView() {
 
   const confirmDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customers/${id}`, {
+      const response = await fetch(`/api/admin/customers/${id}`, {
         method: "DELETE"
       });
       const data = await response.json();

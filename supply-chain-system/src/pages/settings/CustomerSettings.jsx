@@ -14,7 +14,7 @@ import {
   AlertTriangle, Download, Trash2, Plus, X, Activity, Compass, Upload
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "orders",    label: "Order Updates",     hint: "Placed, confirmed, shipped" },
   { key: "delivery",  label: "Delivery Updates",  hint: "Out for delivery, delivered" },

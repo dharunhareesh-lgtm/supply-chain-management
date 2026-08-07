@@ -129,13 +129,13 @@ export default function WarehouseRevenue() {
 
   const fetchSummary = useCallback(async (whId) => {
     try {
-      let sumUrl = `http://localhost:8082/warehouse-finance/summary?warehouseId=${whId}`;
+      let sumUrl = `/warehouse-finance/summary?warehouseId=${whId}`;
       if (startDate) sumUrl += `&startDate=${startDate}`;
       if (endDate) sumUrl += `&endDate=${endDate}`;
 
       const [sumRes, ordersRes] = await Promise.all([
         fetch(sumUrl),
-        fetch(`http://localhost:8082/warehouse-finance/orders?warehouseId=${whId}`)
+        fetch(`/warehouse-finance/orders?warehouseId=${whId}`)
       ]);
 
       if (sumRes.ok && ordersRes.ok) {
@@ -165,7 +165,7 @@ export default function WarehouseRevenue() {
       setLoading(false);
       return;
     }
-    fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+    fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
       .then(res => res.ok ? res.json() : null)
       .then(wl => {
         if (wl) {

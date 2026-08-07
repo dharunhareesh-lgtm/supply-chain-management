@@ -37,13 +37,13 @@ function PendingProducts() {
 
     const loadPendingData = (whId) => {
       Promise.all([
-        fetch(`http://localhost:8082/products?warehouseId=${whId}&status=ALL`, {
+        fetch(`/products?warehouseId=${whId}&status=ALL`, {
           headers: { "X-User-Email": managerEmail || "" }
         }).then((r) => r.json()),
 
-        fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`).then((r) => r.json()),
+        fetch(`/category-capacity?warehouseId=${whId}`).then((r) => r.json()),
 
-        fetch("http://localhost:8082/suppliers").then((r) => r.json())
+        fetch("/suppliers").then((r) => r.json())
       ])
         .then(([productsData, capsData, suppliersData]) => {
           let filtered = productsData.filter((p) => p.status === "PENDING");
@@ -74,7 +74,7 @@ function PendingProducts() {
     }
 
     if (managerEmail) {
-      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
+      fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
         .then((res) => (res.ok ? res.json() : null))
         .then((wl) => {
           if (wl) {
@@ -98,7 +98,7 @@ function PendingProducts() {
     setActionLoading(product.productId);
 
     try {
-      const response = await fetch(`http://localhost:8082/products/${product.productId}/approve`, {
+      const response = await fetch(`/products/${product.productId}/approve`, {
         method: "POST"
       });
 
@@ -132,7 +132,7 @@ function PendingProducts() {
     setActionLoading(product.productId);
 
     try {
-      const response = await fetch(`http://localhost:8082/products/${product.productId}/reject`, {
+      const response = await fetch(`/products/${product.productId}/reject`, {
         method: "POST"
       });
 

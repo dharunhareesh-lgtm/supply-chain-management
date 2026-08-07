@@ -51,13 +51,13 @@ function WarehouseDashboard() {
 
     const loadDashboardData = (whId) => {
       // Fetch warehouse full details
-      fetch(`http://localhost:8082/warehouse-locations/${whId}`)
+      fetch(`/warehouse-locations/${whId}`)
         .then(res => res.json())
         .then(data => setWarehouseLocation(data))
         .catch(console.error);
 
       // Fetch suppliers and filter by warehouseId
-      fetch("http://localhost:8082/suppliers")
+      fetch("/suppliers")
         .then(res => res.json())
         .then(data => {
           const filtered = data.filter(s => s.warehouseId === whId);
@@ -66,7 +66,7 @@ function WarehouseDashboard() {
         .catch(console.error);
 
       // Fetch orders and extract customer locations
-      fetch("http://localhost:8082/orders", { headers: { "X-User-Email": managerEmail || "" } })
+      fetch("/orders", { headers: { "X-User-Email": managerEmail || "" } })
         .then(res => res.json())
         .then(data => {
           const custs = data
@@ -89,12 +89,12 @@ function WarehouseDashboard() {
         .catch(console.error);
 
       // Fetch vehicle locations
-      fetch("http://localhost:8082/vehicle-locations")
+      fetch("/vehicle-locations")
         .then(res => res.json())
         .then(data => setMapVehicles(data))
         .catch(console.error);
 
-      fetch(`http://localhost:8082/products?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+      fetch(`/products?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
         .then((response) => response.json())
         .then((data) => {
           setTotalProducts(data.length);
@@ -109,14 +109,14 @@ function WarehouseDashboard() {
         })
         .catch((error) => console.log(error));
 
-      fetch(`http://localhost:8082/inventory/details?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+      fetch(`/inventory/details?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
         .then((response) => response.json())
         .then((data) => {
           setInventoryData(data);
         })
         .catch((error) => console.log(error));
 
-      fetch(`http://localhost:8082/category-capacity?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
+      fetch(`/category-capacity?warehouseId=${whId}`, { headers: { "X-User-Email": managerEmail || "" } })
         .then((response) => response.json())
         .then((data) => {
           setCapacities(data);
@@ -136,7 +136,7 @@ function WarehouseDashboard() {
     }
 
     if (managerEmail) {
-      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
+      fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' })
         .then((res) => res.ok ? res.json() : null)
         .then((wl) => {
           if (wl) {

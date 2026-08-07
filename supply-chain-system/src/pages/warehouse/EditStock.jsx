@@ -14,7 +14,7 @@ function EditStock() {
 
   useEffect(() => {
 
-    fetch(`http://localhost:8082/inventory/${id}`)
+    fetch(`/inventory/${id}`)
       .then((response) => response.json())
       .then((data) => {
 
@@ -38,7 +38,7 @@ function EditStock() {
     };
 
     const response = await fetch(
-      "http://localhost:8082/inventory",
+      "/inventory",
       {
         method: "PUT",
         headers: {

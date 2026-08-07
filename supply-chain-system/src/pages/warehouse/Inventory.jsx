@@ -30,7 +30,7 @@ function Inventory() {
     const cachedWhId = localStorage.getItem("warehouseId");
 
     const loadInventoryData = (whId) => {
-      fetch(`http://localhost:8082/inventory/details?warehouseId=${whId}`, {
+      fetch(`/inventory/details?warehouseId=${whId}`, {
         headers: { "X-User-Email": managerEmail || "" }
       })
         .then(r => r.json())
@@ -45,7 +45,7 @@ function Inventory() {
       return;
     }
     if (managerEmail) {
-      fetch(`http://localhost:8082/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
+      fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: "POST" })
         .then(res => res.ok ? res.json() : null)
         .then(wl => { if (wl) { setWarehouseId(wl.id); loadInventoryData(wl.id); } else setLoading(false); })
         .catch(err => { console.error(err); setLoading(false); });
@@ -57,7 +57,7 @@ function Inventory() {
   const deleteInventory = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this stock?")) return;
     try {
-      await fetch(`http://localhost:8082/products/${productId}`, { method: "DELETE" });
+      await fetch(`/products/${productId}`, { method: "DELETE" });
       setInventory(inventory.filter(item => item.productId !== productId));
       alert("Stock Deleted Successfully");
     } catch (error) { console.log(error); }

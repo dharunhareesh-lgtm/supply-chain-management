@@ -22,7 +22,7 @@ function AddStock() {
     };
 
     const response = await fetch(
-      "http://localhost:8082/inventory",
+      "/inventory",
       {
         method: "POST",
         headers: {

@@ -20,12 +20,12 @@ function AdminInsurance() {
   const [success, setSuccess] = useState("");
 
   const fetchData = () => {
-    fetch("http://localhost:8082/insurance-policies")
+    fetch("/insurance-policies")
       .then((res) => res.json())
       .then((data) => setPolicies(data))
       .catch((err) => console.error(err));
 
-    fetch("http://localhost:8082/insurance-claims")
+    fetch("/insurance-claims")
       .then((res) => res.json())
       .then((data) => setClaims(data))
       .catch((err) => console.error(err));
@@ -45,7 +45,7 @@ function AdminInsurance() {
       return;
     }
 
-    fetch("http://localhost:8082/insurance-policies", {
+    fetch("/insurance-policies", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -66,7 +66,7 @@ function AdminInsurance() {
   };
 
   const handleUpdateClaimStatus = (id, newStatus) => {
-    fetch(`http://localhost:8082/insurance-claims/${id}/status?status=${newStatus}`, {
+    fetch(`/insurance-claims/${id}/status?status=${newStatus}`, {
       method: "PUT"
     })
       .then((res) => {

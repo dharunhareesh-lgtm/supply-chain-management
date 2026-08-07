@@ -13,12 +13,12 @@ function OrderDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:8082/orders/${id}`)
+    fetch(`/orders/${id}`)
       .then((response) => response.json())
       .then((orderData) => {
         setOrder(orderData);
 
-        fetch("http://localhost:8082/products")
+        fetch("/products")
           .then((response) => response.json())
           .then((products) => {
             const selectedProduct = products.find(

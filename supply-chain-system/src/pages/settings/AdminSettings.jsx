@@ -15,7 +15,7 @@ import {
   CheckCircle2, AlertTriangle, Activity, Database, Sparkles, Navigation, Globe
 } from "lucide-react";
 
-const BASE = "http://localhost:8082";
+const BASE = "";
 const NOTIF_ROWS = [
   { key: "orders",      label: "Order Updates",       hint: "New orders, status changes" },
   { key: "kyc",         label: "KYC Verifications",   hint: "Pending approvals, rejections" },

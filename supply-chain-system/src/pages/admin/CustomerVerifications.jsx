@@ -99,7 +99,7 @@ function CustomerVerifications() {
   const fetchVerifications = async (statusFilter) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customer-verifications?status=${statusFilter}`);
+      const response = await fetch(`/api/admin/customer-verifications?status=${statusFilter}`);
       const data = await response.json();
       setVerifications(data || []);
     } catch (err) {
@@ -115,7 +115,7 @@ function CustomerVerifications() {
   useEffect(() => {
     if (selectedDetail && selectedDetail.documents && selectedDetail.documents.length > 0) {
       selectedDetail.documents.forEach(doc => {
-        fetch(`http://localhost:8082/api/admin/verification/consent/latest/${doc.id}?adminEmail=${encodeURIComponent(adminEmail)}`)
+        fetch(`/api/admin/verification/consent/latest/${doc.id}?adminEmail=${encodeURIComponent(adminEmail)}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (data && data.success && data.status !== "NONE") {
@@ -137,7 +137,7 @@ function CustomerVerifications() {
       selectedDetail.documents.forEach(doc => {
         const state = consentStates[doc.id];
         if (state && (state.status === "PENDING" || state.status === "REQUESTING") && state.consentId) {
-          fetch(`http://localhost:8082/api/admin/verification/consent-status/${state.consentId}`)
+          fetch(`/api/admin/verification/consent-status/${state.consentId}`)
             .then(res => res.ok ? res.json() : null)
             .then(data => {
               if (data && data.success) {
@@ -157,7 +157,7 @@ function CustomerVerifications() {
   const handleAction = async (id, actionType) => {
     setProcessingId(id);
     try {
-      const response = await fetch(`http://localhost:8082/api/admin/customer-verification/${id}/${actionType}`, {
+      const response = await fetch(`/api/admin/customer-verification/${id}/${actionType}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, remarks: remarks || `Action ${actionType.toUpperCase()} executed by Admin.` })
       });
@@ -172,7 +172,7 @@ function CustomerVerifications() {
     const docId = doc.id;
     setConsentStates(prev => ({ ...prev, [docId]: { status: "REQUESTING", loading: true } }));
     try {
-      const res = await fetch(`http://localhost:8082/api/admin/verification/request-document-access/${docId}`, {
+      const res = await fetch(`/api/admin/verification/request-document-access/${docId}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, customerEmail, reason: "Routine KYC compliance review by DRAVIX admin." })
       });
@@ -191,7 +191,7 @@ function CustomerVerifications() {
     if (!state?.consentId) return;
     setConsentStates(prev => ({ ...prev, [docId]: { ...prev[docId], loading: true } }));
     try {
-      const res = await fetch(`http://localhost:8082/api/admin/verification/consent-status/${state.consentId}`);
+      const res = await fetch(`/api/admin/verification/consent-status/${state.consentId}`);
       const data = await res.json();
       setConsentStates(prev => ({ ...prev, [docId]: { ...prev[docId], status: data.status, loading: false } }));
     } catch { setConsentStates(prev => ({ ...prev, [docId]: { ...prev[docId], loading: false } })); }
@@ -200,7 +200,7 @@ function CustomerVerifications() {
   const handleViewDocument = async (docId, docMeta, consentId) => {
     setConsentStates(prev => ({ ...prev, [docId]: { ...prev[docId], loading: true } }));
     try {
-      const res = await fetch(`http://localhost:8082/api/admin/verification/document/${docId}?adminEmail=${encodeURIComponent(adminEmail)}&consentId=${consentId}`);
+      const res = await fetch(`/api/admin/verification/document/${docId}?adminEmail=${encodeURIComponent(adminEmail)}&consentId=${consentId}`);
       const data = await res.json();
       if (data.success) {
         setConsentStates(prev => ({ ...prev, [docId]: { ...prev[docId], status: "USED", loading: false } }));

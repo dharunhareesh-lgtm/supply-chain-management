@@ -13,7 +13,7 @@ function TrackOrder() {
   useEffect(() => {
 
     fetch(
-      `http://localhost:8082/orders/${id}`
+      `/orders/${id}`
     )
       .then((response) =>
         response.json()

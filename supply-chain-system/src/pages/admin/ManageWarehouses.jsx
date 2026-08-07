@@ -37,7 +37,7 @@ function ManageWarehouses() {
   // ── All original data fetching preserved ──
   const fetchWarehouses = async () => {
     try {
-      const res = await fetch("http://localhost:8082/warehouse-locations?includeInactive=true");
+      const res = await fetch("/warehouse-locations?includeInactive=true");
       const data = await res.json();
       setWarehouses(data);
     } catch (e) {
@@ -51,7 +51,7 @@ function ManageWarehouses() {
     const nextStatus = (w.status === "INACTIVE") ? "ACTIVE" : "INACTIVE";
     const payload = { ...w, status: nextStatus };
     try {
-      const res = await fetch(`http://localhost:8082/warehouse-locations/${w.id}`, {
+      const res = await fetch(`/warehouse-locations/${w.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -75,7 +75,7 @@ function ManageWarehouses() {
     setForceSave(false);
     if (locationData.latitude && locationData.longitude) {
       const excludeParam = isEditing && editId ? `&excludeId=${editId}` : "";
-      fetch(`http://localhost:8082/warehouse-locations/check-duplicate?latitude=${locationData.latitude}&longitude=${locationData.longitude}${excludeParam}`)
+      fetch(`/warehouse-locations/check-duplicate?latitude=${locationData.latitude}&longitude=${locationData.longitude}${excludeParam}`)
         .then(res => res.json())
         .then(data => { if (data.hasDuplicate) setDuplicateWarning(data.nearbyWarehouses); else setDuplicateWarning(null); })
         .catch(console.error);
@@ -88,7 +88,7 @@ function ManageWarehouses() {
     const coverageList = coverageArea.split(",").map(s => s.trim()).filter(Boolean);
     const payload = { warehouseName: name, registeredEmail: email, address, district, state, country, postalCode, latitude, longitude, coverageRadiusKm, coverageArea: coverageList };
     try {
-      const url = isEditing ? `http://localhost:8082/warehouse-locations/${editId}` : "http://localhost:8082/warehouse-locations";
+      const url = isEditing ? `/warehouse-locations/${editId}` : "/warehouse-locations";
       const method = isEditing ? "PUT" : "POST";
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (res.status === 409) {

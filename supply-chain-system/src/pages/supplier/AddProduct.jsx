@@ -46,12 +46,12 @@ function AddProduct() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:8082/products/allowed-categories")
+    fetch("/products/allowed-categories")
       .then((res) => res.json())
       .then((data) => setAllowedCategories(data))
       .catch((err) => console.error("Failed to load categories:", err));
 
-    fetch("http://localhost:8082/packaging-standards")
+    fetch("/packaging-standards")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
@@ -73,7 +73,7 @@ function AddProduct() {
         setBagCounts({});
       });
 
-    fetch("http://localhost:8082/warehouse-locations")
+    fetch("/warehouse-locations")
       .then((res) => res.json())
       .then((data) => {
         setWarehouses(data);
@@ -91,8 +91,8 @@ function AddProduct() {
       .catch((err) => console.error(err));
 
     // Fetch all products for capacity display — replaced by live endpoint
-    // fetch("http://localhost:8082/products") removed
-    // fetch("http://localhost:8082/category-capacity") removed
+    // fetch("/products") removed
+    // fetch("/category-capacity") removed
   }, []);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -155,7 +155,7 @@ function AddProduct() {
       return;
     }
     setCapacityLoading(true);
-    fetch(`http://localhost:8082/warehouse-locations/${selectedWarehouse}/capacity`)
+    fetch(`/warehouse-locations/${selectedWarehouse}/capacity`)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         setWarehouseCapacity(data);
@@ -216,7 +216,7 @@ function AddProduct() {
     };
 
     try {
-      const response = await fetch("http://localhost:8082/products", {
+      const response = await fetch("/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(product)
