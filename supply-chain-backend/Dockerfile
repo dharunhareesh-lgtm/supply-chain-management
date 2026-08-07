@@ -1,13 +1,35 @@
-# Build stage
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
+# ==========================================
+# Stage 1: Build Java Spring Boot Application
+# ==========================================
+FROM maven:3.8.5-openjdk-17 AS builder
+WORKDIR /build
 
-# Run stage
-FROM eclipse-temurin:17-jre-alpine
+# Copy Maven POM and dependency files
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source code and build jar
+COPY src ./src
+RUN mvn package -DskipTests -B
+
+# ==========================================
+# Stage 2: Runtime Environment with OCR Engine
+# ==========================================
+FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/supply-chain-backend-0.0.1-SNAPSHOT.jar app.jar
+
+# Install native Tesseract OCR libraries and English training models
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the built jar from stage 1
+COPY --from=builder /build/target/supply-chain-backend-0.0.1-SNAPSHOT.jar app.jar
+
+# Copy local tessdata models into container path
+COPY tessdata /app/tessdata
+
+# Expose port and run application
 EXPOSE 8082
-ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xss256k", "-XX:MaxRAMPercentage=75.0", "-XX:InitialRAMPercentage=50.0", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
