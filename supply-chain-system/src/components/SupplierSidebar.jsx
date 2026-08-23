@@ -10,7 +10,8 @@ import {
   TrendingUp,
   ShieldCheck,
   Settings,
-  LogOut
+  LogOut,
+  Search
 } from "lucide-react";
 import { PremiumSidebar } from "./dashboard/DashboardEngine";
 
@@ -25,7 +26,9 @@ const NAV_ITEMS = [
   // ── Financials ──
   { to: "/supplier/revenue",          label: "Revenue & Earnings",icon: BarChart2,                   section: "Financials" },
   { to: "/supplier/forecast",         label: "Market Forecast",   icon: TrendingUp,                  section: "Financials" },
+  { to: "/supplier/price-explorer",   label: "Price Explorer",    icon: Search,                      section: "Financials" },
   { to: "/supplier/insurance-claims", label: "Insurance Claims",  icon: ShieldCheck,                 section: "Financials" },
+
 
   // ── Account ──
   { to: "/settings",                  label: "Settings",          icon: Settings,                    section: "Account"    },

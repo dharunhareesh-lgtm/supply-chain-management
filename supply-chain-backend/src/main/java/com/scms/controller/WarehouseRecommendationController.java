@@ -1,132 +1,81 @@
 package com.scms.controller;
 
-import com.scms.entity.WarehouseLocation;
-import com.scms.entity.CategoryCapacity;
-import com.scms.entity.Inventory;
-import com.scms.repository.WarehouseLocationRepository;
-import com.scms.repository.CategoryCapacityRepository;
-import com.scms.repository.InventoryRepository;
-import com.scms.util.HaversineUtil;
+import com.scms.entity.WarehouseModelMetadata;
+import com.scms.repository.WarehouseModelMetadataRepository;
+import com.scms.service.WarehouseMLReadinessService;
+import com.scms.service.WarehouseMLTrainingService;
+import com.scms.service.WarehouseRecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/warehouse")
+@RequestMapping("/api/warehouse-recommendations")
 @CrossOrigin(origins = "*")
 public class WarehouseRecommendationController {
 
     @Autowired
-    private WarehouseLocationRepository warehouseRepository;
+    private WarehouseRecommendationService recommendationService;
 
     @Autowired
-    private CategoryCapacityRepository categoryCapacityRepository;
+    private WarehouseMLReadinessService readinessService;
 
     @Autowired
-    private InventoryRepository inventoryRepository;
+    private WarehouseMLTrainingService trainingService;
 
-    /**
-     * POST /warehouse/ai-recommend
-     * AI-driven warehouse recommendation for order placement.
-     * Evaluates warehouses on: distance, coverage, capacity, status, stock.
-     */
-    @PostMapping("/ai-recommend")
-    public ResponseEntity<?> aiRecommend(@RequestBody Map<String, Object> payload) {
-        Double customerLat = payload.get("customerLatitude") != null
-                ? Double.parseDouble(payload.get("customerLatitude").toString()) : null;
-        Double customerLng = payload.get("customerLongitude") != null
-                ? Double.parseDouble(payload.get("customerLongitude").toString()) : null;
-        String productName = (String) payload.get("productName");
-        Integer productId = payload.get("productId") != null
-                ? Integer.parseInt(payload.get("productId").toString()) : null;
+    @Autowired
+    private WarehouseModelMetadataRepository metadataRepository;
 
-        List<WarehouseLocation> warehouses = warehouseRepository.findAll();
-        List<Inventory> allInventory = inventoryRepository.findAll();
+    @PostMapping
+    public ResponseEntity<?> recommend(@RequestBody Map<String, Object> req) {
+        Integer supplierId = req.get("supplierId") != null ? ((Number) req.get("supplierId")).intValue() : null;
+        String category = (String) req.get("category");
+        int quantity = req.get("quantity") != null ? ((Number) req.get("quantity")).intValue() : 0;
+        Double latitude = req.get("latitude") != null ? ((Number) req.get("latitude")).doubleValue() : null;
+        Double longitude = req.get("longitude") != null ? ((Number) req.get("longitude")).doubleValue() : null;
 
-        List<Map<String, Object>> scored = new ArrayList<>();
+        Map<String, Object> result = recommendationService.recommendWarehouse(supplierId, category, quantity, latitude, longitude);
+        return ResponseEntity.ok(result);
+    }
 
-        for (WarehouseLocation wl : warehouses) {
-            if (!"ACTIVE".equalsIgnoreCase(wl.getStatus())) continue;
-            if (wl.getLatitude() == null || wl.getLongitude() == null) continue;
+    @GetMapping("/status")
+    public ResponseEntity<?> getStatus() {
+        Optional<WarehouseModelMetadata> active = metadataRepository.findFirstByStatusOrderByLastTrainingDateDesc("ACTIVE");
+        Map<String, Object> statusMap = new LinkedHashMap<>();
 
-            double score = 0.0;
-            List<String> reasons = new ArrayList<>();
-
-            // 1. Distance score (max 40 points — closer = higher)
-            double distance = 0;
-            if (customerLat != null && customerLng != null) {
-                distance = HaversineUtil.calculateDistance(customerLat, customerLng, wl.getLatitude(), wl.getLongitude());
-                double distScore = Math.max(0, 40 - (distance / 10)); // lose 1 point per 10km
-                score += distScore;
-                reasons.add(String.format("Distance: %.1f km", distance));
-            }
-
-            // 2. Coverage score (20 points if within coverage radius)
-            boolean withinCoverage = wl.getCoverageRadiusKm() != null && distance <= wl.getCoverageRadiusKm();
-            if (withinCoverage) {
-                score += 20;
-                reasons.add("Within coverage area");
-            } else if (wl.getCoverageRadiusKm() != null) {
-                reasons.add("Outside coverage area");
-            }
-
-            // 3. Capacity score (max 20 points — more available = higher)
-            List<CategoryCapacity> cats = categoryCapacityRepository.findByWarehouseId(wl.getId());
-            long totalKg = cats.stream().mapToLong(CategoryCapacity::getMaxCapacity).sum();
-            long usedKg = cats.stream().mapToLong(CategoryCapacity::getUsedCapacity).sum();
-            long availableKg = Math.max(0, totalKg - usedKg);
-            double utilizationPct = totalKg > 0 ? (usedKg * 100.0 / totalKg) : 0;
-
-            if (totalKg > 0) {
-                double capacityScore = 20 * (1 - (utilizationPct / 100.0));
-                score += capacityScore;
-                reasons.add(String.format("Capacity: %d/%d kg (%.1f%% used)", usedKg, totalKg, utilizationPct));
-            }
-
-            // 4. Stock availability score (20 points if product in stock)
-            boolean hasStock = false;
-            if (productName != null) {
-                hasStock = allInventory.stream()
-                        .anyMatch(inv -> inv.getWarehouseId() != null
-                                && inv.getWarehouseId() == wl.getId()
-                                && inv.getProductName().equalsIgnoreCase(productName)
-                                && inv.getQuantity() > 0);
-            }
-            if (hasStock) {
-                score += 20;
-                reasons.add("Product in stock");
-            } else if (productName != null) {
-                reasons.add("Product not in stock at this warehouse");
-            }
-
-            Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("warehouseId", wl.getId());
-            entry.put("warehouseName", wl.getWarehouseName());
-            entry.put("district", wl.getDistrict());
-            entry.put("state", wl.getState());
-            entry.put("latitude", wl.getLatitude());
-            entry.put("longitude", wl.getLongitude());
-            entry.put("distance", Math.round(distance * 10.0) / 10.0);
-            entry.put("coverageRadiusKm", wl.getCoverageRadiusKm());
-            entry.put("withinCoverage", withinCoverage);
-            entry.put("availableCapacityKg", availableKg);
-            entry.put("capacityUtilization", Math.round(utilizationPct * 10.0) / 10.0);
-            entry.put("hasStock", hasStock);
-            entry.put("score", Math.round(score * 10.0) / 10.0);
-            entry.put("reasons", reasons);
-            scored.add(entry);
+        if (active.isPresent()) {
+            WarehouseModelMetadata m = active.get();
+            statusMap.put("recommendationMode", "ML");
+            statusMap.put("modelStatus", m.getStatus());
+            statusMap.put("modelVersion", m.getModelVersion());
+            statusMap.put("trainingRecords", m.getTrainingRecordCount());
+            statusMap.put("warehousesRepresented", m.getWarehouseCount());
+            statusMap.put("lastTrainingDate", m.getLastTrainingDate().toString().substring(0, 10));
+            statusMap.put("validationScore", Math.round(m.getValidationScore() * 100.0) / 100.0);
+        } else {
+            statusMap.put("recommendationMode", "RULE_BASED");
+            statusMap.put("modelStatus", "NOT_READY");
+            statusMap.put("readinessMessage", readinessService.getReadinessStatusMessage());
         }
 
-        // Sort by score descending
-        scored.sort((a, b) -> Double.compare((double) b.get("score"), (double) a.get("score")));
+        return ResponseEntity.ok(statusMap);
+    }
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("recommendations", scored);
-        if (!scored.isEmpty()) {
-            response.put("bestWarehouse", scored.get(0));
+    @PostMapping("/train")
+    public ResponseEntity<?> triggerManualTraining() {
+        WarehouseModelMetadata model = trainingService.trainAndValidateModel();
+        if (model == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "ERROR", 
+                "message", "Failed to train model. " + readinessService.getReadinessStatusMessage()
+            ));
         }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of(
+            "status", "SUCCESS", 
+            "modelVersion", model.getModelVersion(), 
+            "modelStatus", model.getStatus(), 
+            "score", model.getValidationScore()
+        ));
     }
 }

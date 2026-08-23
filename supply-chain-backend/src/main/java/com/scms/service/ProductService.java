@@ -17,7 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.scms.entity.Product;
+import com.scms.entity.Supplier;
+import com.scms.entity.WarehousePerformanceHistory;
 import com.scms.repository.ProductRepository;
+import com.scms.repository.WarehousePerformanceHistoryRepository;
+import com.scms.service.WarehouseMLTrainingService;
+import java.time.LocalDateTime;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +31,13 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private WarehousePerformanceHistoryRepository performanceHistoryRepository;
+
+    @Autowired
+    private WarehouseMLTrainingService trainingService;
+
 
     @Autowired
     private WarehouseLocationRepository warehouseLocationRepository;
@@ -282,6 +294,49 @@ public class ProductService {
         if (capacity != null) {
             capacity.setUsedCapacity(capacity.getUsedCapacity() + stockWeight);
             categoryCapacityRepository.save(capacity);
+        }
+
+        // 5. Save performance history record
+        try {
+            if (warehouseId != null) {
+                WarehouseLocation wl = warehouseLocationRepository.findById(warehouseId).orElse(null);
+                Supplier sup = supplierRepository.findById(product.getSupplierId()).orElse(null);
+                if (wl != null && sup != null) {
+                    double dist = com.scms.util.HaversineUtil.calculateDistance(
+                        sup.getLatitude() != null ? sup.getLatitude() : 11.0168,
+                        sup.getLongitude() != null ? sup.getLongitude() : 76.9558,
+                        wl.getLatitude() != null ? wl.getLatitude() : 11.0168,
+                        wl.getLongitude() != null ? wl.getLongitude() : 76.9558
+                    );
+                    
+                    long totalCap = capacity != null ? capacity.getMaxCapacity() : 0;
+                    long usedCap = capacity != null ? capacity.getUsedCapacity() : 0;
+                    double utilPercent = totalCap > 0 ? ((double) usedCap / totalCap * 100.0) : 0.0;
+
+                    WarehousePerformanceHistory hist = new WarehousePerformanceHistory();
+                    hist.setWarehouseId(warehouseId);
+                    hist.setSupplierId(product.getSupplierId());
+                    hist.setProductId(product.getProductId());
+                    hist.setProductName(product.getProductName());
+                    hist.setProductCategory(category);
+                    hist.setDistanceKm(dist);
+                    hist.setWarehouseTotalCapacity((double) totalCap);
+                    hist.setWarehouseAvailableCapacity((double) Math.max(0, totalCap - usedCap));
+                    hist.setWarehouseUtilizationPercentage(utilPercent);
+                    hist.setStorageCostPerKg(1.5); // standard baseline cost
+                    hist.setQuantityStored((double) stockWeight);
+                    hist.setMarketPricePerKg(product.getPrice());
+                    hist.setSuccessfulFulfillment(true); // default true on storage approval
+                    hist.setRecordedDate(LocalDateTime.now());
+                    
+                    performanceHistoryRepository.save(hist);
+                    
+                    // Trigger training check synchronously
+                    trainingService.trainAndValidateModel();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to save performance history on product approval: " + e.getMessage());
         }
 
         // Build response

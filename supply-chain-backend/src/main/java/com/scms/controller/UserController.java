@@ -44,6 +44,12 @@ public class UserController {
     @Autowired
     private TemporaryPasswordRepository temporaryPasswordRepository;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private javax.sql.DataSource dataSource;
+
     @PostMapping("/login")
     public org.springframework.http.ResponseEntity<?> login(@RequestBody LoginRequest request) {
         String username = request.getUsername();
@@ -54,6 +60,7 @@ public class UserController {
         }
 
         User user = userRepository.findByUsername(username);
+
         if (user == null) {
             return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
                     .body(java.util.Map.of("error", "❌ Account not found"));

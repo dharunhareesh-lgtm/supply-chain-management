@@ -54,7 +54,8 @@ function OrderDetails() {
     return `₹${Number(val).toLocaleString("en-IN")}`;
   };
 
-  const total = product ? (product.price || 0) * (order?.quantity || 0) : 0;
+  const total = order?.grossRevenue || 0;
+  const unitPrice = order?.quantity ? (total / order.quantity) : 0;
 
   return (
     <>
@@ -156,9 +157,9 @@ function OrderDetails() {
                         </tr>
                         <tr>
                           <td>Unit Price</td>
-                          <td style={{ fontWeight: 600, color: 'var(--ink)' }}>
-                            {formatPrice(product?.price)}
-                          </td>
+                           <td style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                             {formatPrice(unitPrice)}
+                           </td>
                         </tr>
                         <tr>
                           <td>Quantity</td>

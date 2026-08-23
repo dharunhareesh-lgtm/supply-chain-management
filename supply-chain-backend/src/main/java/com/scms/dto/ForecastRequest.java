@@ -9,6 +9,9 @@ public class ForecastRequest {
     private String month;
     private double warehouseStock;
     private String region;
+    private String district;
+    private String market;
+    private String variety;
 
     public ForecastRequest() {
     }
@@ -68,4 +71,29 @@ public class ForecastRequest {
     public void setRegion(String region) {
         this.region = region;
     }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public String getMarket() {
+        return market;
+    }
+
+    public void setMarket(String market) {
+        this.market = market;
+    }
+
+    public String getVariety() {
+        return variety;
+    }
+
+    public void setVariety(String variety) {
+        this.variety = variety;
+    }
 }
+

@@ -22,14 +22,11 @@ public class AwsS3Config {
     private String region;
 
     @Bean
+    @org.springframework.context.annotation.Lazy
     public S3Client s3Client() {
-        System.out.println("[S3-CONFIG] Initializing S3Client Bean...");
+        System.out.println("[S3-CONFIG] Initializing S3Client Bean lazily...");
         System.out.println("[S3-CONFIG] Target Region: " + region);
         System.out.println("[S3-CONFIG] Access Key Present: " + (accessKey != null && !accessKey.isBlank()));
-        if (accessKey != null) {
-            System.out.println("[S3-CONFIG] Access Key Length: " + accessKey.length());
-            System.out.println("[S3-CONFIG] Access Key Value: " + (accessKey.length() > 5 ? accessKey.substring(0, 5) + "..." : accessKey));
-        }
         return S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(
@@ -39,6 +36,7 @@ public class AwsS3Config {
     }
 
     @Bean
+    @org.springframework.context.annotation.Lazy
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
                 .region(Region.of(region))

@@ -48,9 +48,9 @@ function Orders() {
 
   const getDisplayStatus = (status) => status === "Dispatched" ? "In Transit" : (status || "Unknown");
 
-  const formatPrice = (price, quantity) => {
-    const total = (price || 0) * (quantity || 0);
-    return isNaN(total) ? "—" : `₹${total.toLocaleString("en-IN")}`;
+  const formatPrice = (amount) => {
+    const val = amount || 0;
+    return isNaN(val) ? "—" : `₹${val.toLocaleString("en-IN")}`;
   };
 
   const delivered   = orders.filter(o => o.status === "Delivered").length;
@@ -119,7 +119,7 @@ function Orders() {
                       </div>
                     </td>
                     <td>{order.quantity ?? "—"} units</td>
-                    <td style={{ fontWeight: 700, color: "#10b981" }}>{formatPrice(order.price, order.quantity)}</td>
+                    <td style={{ fontWeight: 700, color: "#10b981" }}>{formatPrice(order.grossRevenue)}</td>
                     <td><DashBadge status={getStatusKey(order.status)} label={getDisplayStatus(order.status)} /></td>
                     <td style={{ textAlign: "right" }}>
                       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

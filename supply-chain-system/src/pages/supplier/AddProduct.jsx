@@ -106,23 +106,54 @@ function AddProduct() {
     return R * c;
   };
 
-  const recommendWarehouse = (list, lat, lon) => {
-    let best = null;
-    let minDist = Infinity;
-    list.forEach(w => {
-      const dist = calculateDistance(lat, lon, w.latitude, w.longitude);
-      if (dist < minDist) {
-        minDist = dist;
-        best = w;
-      }
-    });
-    if (best) {
-      setRecommendation({
-        warehouse: best,
-        distance: Math.round(minDist * 10) / 10,
-        reason: `Closest warehouse geographically (${Math.round(minDist * 10) / 10} km away).`
+  const recommendWarehouse = async (list, lat, lon) => {
+    try {
+      const supplierId = localStorage.getItem("supplierId");
+      const res = await fetch("/api/warehouse-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierId: supplierId ? Number(supplierId) : null,
+          category: category || "Grains",
+          quantity: calculatedStock || 100,
+          latitude: lat,
+          longitude: lon
+        })
       });
-      setSelectedWarehouse(best.id.toString());
+      const data = await res.json();
+      if (data && data.recommendedWarehouse) {
+        setRecommendation({
+          mode: data.mode,
+          warehouse: data.recommendedWarehouse,
+          suitabilityScore: data.suitabilityScore,
+          distance: data.recommendedWarehouse.latitude ? Math.round(calculateDistance(lat, lon, data.recommendedWarehouse.latitude, data.recommendedWarehouse.longitude) * 10) / 10 : 0.0,
+          reasons: data.reasons || [],
+          alternatives: data.alternatives || []
+        });
+        setSelectedWarehouse(data.recommendedWarehouse.id.toString());
+      }
+    } catch (err) {
+      console.error("Failed to fetch ML recommendation:", err);
+      let best = null;
+      let minDist = Infinity;
+      list.forEach(w => {
+        const dist = calculateDistance(lat, lon, w.latitude, w.longitude);
+        if (dist < minDist) {
+          minDist = dist;
+          best = w;
+        }
+      });
+      if (best) {
+        setRecommendation({
+          mode: "RULE_BASED",
+          warehouse: best,
+          suitabilityScore: null,
+          distance: Math.round(minDist * 10) / 10,
+          reasons: [`Closest warehouse geographically (${Math.round(minDist * 10) / 10} km away).`],
+          alternatives: []
+        });
+        setSelectedWarehouse(best.id.toString());
+      }
     }
   };
 
@@ -382,14 +413,39 @@ function AddProduct() {
                   {recommendation && (
                     <div style={{ marginTop: "12px", padding: "12px", border: "1px dashed rgba(22,199,132,0.4)", borderRadius: "8px", background: "rgba(22,199,132,0.03)" }}>
                       <span style={{ fontSize: "11px", fontWeight: "bold", color: "#34D399", textTransform: "uppercase", display: "block" }}>
-                        ✨ AI Recommended Warehouse
+                        {recommendation.mode === "ML" ? "✨ AI Recommended Warehouse" : "Recommended Warehouse"}
                       </span>
                       <strong style={{ fontSize: "14px", color: "white", display: "block", marginTop: "4px" }}>
                         {recommendation.warehouse.warehouseName}
                       </strong>
-                      <span style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block", marginTop: "2px" }}>
-                        {recommendation.reason} (Distance: {recommendation.distance} km)
-                      </span>
+                      <div style={{ fontSize: "12px", color: "var(--ink-soft)", display: "block", marginTop: "4px" }}>
+                        {recommendation.suitabilityScore !== null && (
+                          <div style={{ color: "#34D399", fontWeight: "bold", marginBottom: "4px" }}>
+                            AI Suitability: {recommendation.suitabilityScore}%
+                          </div>
+                        )}
+                        <div>Distance: {recommendation.distance} km</div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                          Recommendation Mode: {recommendation.mode === "ML" ? "AI/ML" : "Rule-Based"}
+                        </div>
+                        {recommendation.reasons && recommendation.reasons.length > 0 && (
+                          <div style={{ marginTop: "6px", paddingLeft: "12px", borderLeft: "2px solid #34D399" }}>
+                            {recommendation.reasons.map((r, idx) => (
+                              <div key={idx} style={{ fontSize: "11px" }}>• {r}</div>
+                            ))}
+                          </div>
+                        )}
+                        {recommendation.alternatives && recommendation.alternatives.length > 0 && (
+                          <div style={{ marginTop: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "6px" }}>
+                            <div style={{ fontSize: "10px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "4px" }}>Alternative Options:</div>
+                            {recommendation.alternatives.map((alt, idx) => (
+                              <div key={idx} style={{ fontSize: "11px", color: "var(--ink-soft)" }}>
+                                {idx + 2}. {alt.warehouseName} {alt.suitabilityScore ? `(${alt.suitabilityScore}%)` : `(${alt.distance} km)`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

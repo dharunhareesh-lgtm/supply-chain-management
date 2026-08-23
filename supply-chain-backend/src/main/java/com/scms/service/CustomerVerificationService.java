@@ -57,7 +57,7 @@ public class CustomerVerificationService {
     @Value("${scms.kyc.debug-mode:false}")
     private boolean debugMode;
 
-    @Value("${scms.kyc.upload-dir:C:/Users/dharu/OneDrive/Desktop/capstone/uploads/}")
+    @Value("${scms.kyc.upload-dir:uploads/}")
     private String uploadDir;
 
     @Transactional

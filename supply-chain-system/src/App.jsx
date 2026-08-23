@@ -27,7 +27,9 @@ import CartPage from "./pages/customer/CartPage";
 import WishlistPage from "./pages/customer/WishlistPage";
 import ComparePage from "./pages/customer/ComparePage";
 import MarketForecast from "./pages/supplier/MarketForecast";
+import MarketPriceExplorer from "./pages/supplier/MarketPriceExplorer";
 import SupplierRevenue from "./pages/supplier/SupplierRevenue";
+
 
 import LogisticsDashboard from "./pages/logistics/LogisticsDashboard";
 import Deliveries from "./pages/logistics/Deliveries";
@@ -396,6 +398,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/supplier/price-explorer"
+            element={
+              <ProtectedRoute role="SUPPLIER">
+                <MarketPriceExplorer />
+              </ProtectedRoute>
+            }
+          />
+
 
           <Route
             path="/warehouse"

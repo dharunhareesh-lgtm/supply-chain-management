@@ -9,6 +9,9 @@ import com.scms.entity.Order;
 import com.scms.repository.OrderRepository;
 import com.scms.entity.Product;
 import com.scms.repository.ProductRepository;
+import com.scms.repository.WarehousePerformanceHistoryRepository;
+import com.scms.service.WarehouseMLTrainingService;
+import java.time.LocalDateTime;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -17,6 +20,12 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
     
+    @Autowired
+    private WarehousePerformanceHistoryRepository performanceHistoryRepository;
+
+    @Autowired
+    private WarehouseMLTrainingService trainingService;
+
     @Autowired
     private ProductRepository productRepository;
 
@@ -534,6 +543,31 @@ public class OrderService {
 
         if (isCompletedOrDelivered) {
             settlementEngine.distributeRevenue(saved);
+        }
+
+        try {
+            if ("Delivered".equalsIgnoreCase(saved.getStatus())) {
+                List<com.scms.entity.WarehousePerformanceHistory> histList = performanceHistoryRepository.findByWarehouseId(saved.getWarehouseId());
+                com.scms.entity.WarehousePerformanceHistory matched = histList.stream()
+                    .filter(h -> h.getProductId() == saved.getProductId() && h.getSupplierId() == saved.getSupplierId() && h.getOrderId() == null)
+                    .findFirst().orElse(null);
+
+                if (matched != null) {
+                    matched.setOrderId(saved.getOrderId());
+                    matched.setOrderQuantity((double) saved.getQuantity());
+                    matched.setOrderStatus("DELIVERED");
+                    matched.setDispatchTime(LocalDateTime.now().minusHours(2));
+                    matched.setDeliveryTime(LocalDateTime.now());
+                    matched.setFulfillmentDurationHours(2.0);
+                    matched.setSuccessfulFulfillment(true);
+                    performanceHistoryRepository.save(matched);
+
+                    // Trigger retraining check
+                    trainingService.trainAndValidateModel();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to update performance history on order delivery: " + e.getMessage());
         }
 
         return saved;

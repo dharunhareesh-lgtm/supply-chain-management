@@ -47,6 +47,9 @@ public class CustomerModuleController {
     @Autowired
     private TrustScoreService trustScoreService;
 
+    @org.springframework.beans.factory.annotation.Value("${scms.kyc.upload-dir:uploads/}")
+    private String uploadDir;
+
     @Autowired
     private DocumentViewConsentRepository documentViewConsentRepository;
 
@@ -127,7 +130,7 @@ public class CustomerModuleController {
             if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
                 return ResponseEntity.badRequest().build();
             }
-            File file = new File("C:/Users/dharu/OneDrive/Desktop/capstone/uploads/" + filename);
+            File file = new File(uploadDir + filename);
             if (!file.exists()) {
                 return ResponseEntity.notFound().build();
             }

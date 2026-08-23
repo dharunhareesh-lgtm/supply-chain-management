@@ -70,7 +70,9 @@ function SupplierDashboard() {
               { label: "Manage Products",    subtitle: "View and edit your product catalog",      path: "/supplier/products",         color: "#10b981" },
               { label: "Revenue & Earnings", subtitle: "Track your financial performance",         path: "/supplier/revenue",          color: "#3b82f6" },
               { label: "Market Forecast",    subtitle: "AI-powered demand predictions",             path: "/supplier/forecast",         color: "#8b5cf6" },
+              { label: "Market Price Explorer", subtitle: "Explore government mandi prices",       path: "/supplier/price-explorer",   color: "#06b6d4" },
               { label: "Insurance Claims",   subtitle: "Manage product insurance claims",          path: "/supplier/insurance-claims", color: "#fbbf24" },
+
             ].map((item, i) => (
               <button
                 key={i}

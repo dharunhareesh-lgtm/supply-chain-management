@@ -220,6 +220,8 @@ export default function FuturisticDashboardWrapper({ children }) {
     { label: "Add New Product", path: "/supplier/add-product", icon: FaBox, category: "Navigation (Supplier)" },
     { label: "My Product Catalog", path: "/supplier/products", icon: FaBox, category: "Navigation (Supplier)" },
     { label: "AI Market Price Forecasting", path: "/supplier/forecast", icon: FaLaptop, category: "Navigation (Supplier)" },
+    { label: "Mandi Price Explorer", path: "/supplier/price-explorer", icon: FaLaptop, category: "Navigation (Supplier)" },
+
 
     // Warehouse
     { label: "Go to Warehouse Dashboard", path: "/warehouse", icon: FaWarehouse, category: "Navigation (Warehouse)" },

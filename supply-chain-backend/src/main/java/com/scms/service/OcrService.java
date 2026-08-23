@@ -31,10 +31,10 @@ public class OcrService {
 
     private final ITesseract tesseract;
 
-    @Value("${scms.ocr.tessdata-path:C:/Users/dharu/OneDrive/Desktop/capstone/tessdata}")
+    @Value("${scms.ocr.tessdata-path:tessdata}")
     private String tessdataPath;
 
-    @Value("${scms.kyc.upload-dir:C:/Users/dharu/OneDrive/Desktop/capstone/uploads/}")
+    @Value("${scms.kyc.upload-dir:uploads/}")
     private String uploadDir;
 
     public OcrService() {

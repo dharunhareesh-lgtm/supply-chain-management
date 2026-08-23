@@ -60,7 +60,21 @@ function MarketForecast() {
   const [currentPrice, setCurrentPrice] = useState(0);
   const [quantityAvailable, setQuantityAvailable] = useState(0);
   const [month, setMonth] = useState(currentMonthName);
-  const [region, setRegion] = useState(REGIONS[0]);
+  const [region, setRegion] = useState(""); // region is the state
+  const [district, setDistrict] = useState("");
+  const [market, setMarket] = useState("");
+  const [variety, setVariety] = useState("");
+
+  const [availableStates, setAvailableStates] = useState([]);
+  const [availableDistricts, setAvailableDistricts] = useState([]);
+  const [availableMarkets, setAvailableMarkets] = useState([]);
+  const [availableVarieties, setAvailableVarieties] = useState([]);
+
+  // Filter loading states
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingMarkets, setLoadingMarkets] = useState(false);
+  const [loadingVarieties, setLoadingVarieties] = useState(false);
 
   // System calculated states
   const [demandIndex, setDemandIndex] = useState(0);
@@ -74,6 +88,31 @@ function MarketForecast() {
   const [forecast, setForecast] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState("");
+  const [dataStatus, setDataStatus] = useState(null);
+
+  const fetchDataStatus = () => {
+    let url = "/api/forecast/data-status";
+    if (productName || region) {
+      const params = new URLSearchParams();
+      if (productName) params.append("commodity", productName);
+      if (region) params.append("state", region);
+      if (district) params.append("district", district);
+      if (market) params.append("market", market);
+      if (variety && variety !== "No variety data available for this market" && variety !== "Select a market to view available varieties") {
+        params.append("variety", variety);
+      }
+      url += "?" + params.toString();
+    }
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => setDataStatus(data))
+      .catch((err) => console.error("Error fetching data status:", err));
+  };
+
+  const fetchFilters = () => {
+    // Left for backwards compatibility but we load states dynamically in useEffect [productName]
+  };
+
 
   const fetchHistory = (product) => {
     fetch(`/api/forecast/history/${encodeURIComponent(product)}`)
@@ -126,8 +165,89 @@ function MarketForecast() {
         setAllProducts([]);
         setForecastProducts([]);
       })
-      .finally(() => setLoadingProducts(false));
+      .finally(() => {
+        setLoadingProducts(false);
+        fetchDataStatus();
+      });
   }, []);
+
+  // Commodity change resets dependent fields and loads states
+  useEffect(() => {
+    setRegion("");
+    setDistrict("");
+    setMarket("");
+    setVariety("");
+    if (productName) {
+      setLoadingStates(true);
+      fetch(`/api/forecast/filters/states?commodity=${encodeURIComponent(productName)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableStates(data.states || []);
+        })
+        .catch((err) => console.error("Error loading states for commodity:", err))
+        .finally(() => setLoadingStates(false));
+    } else {
+      setAvailableStates([]);
+    }
+  }, [productName]);
+
+  // State change resets dependent fields and loads districts
+  useEffect(() => {
+    setDistrict("");
+    setMarket("");
+    setVariety("");
+    if (region && productName) {
+      setLoadingDistricts(true);
+      fetch(`/api/forecast/filters/districts?commodity=${encodeURIComponent(productName)}&state=${encodeURIComponent(region)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableDistricts(data.districts || []);
+        })
+        .catch((err) => console.error(err))
+        .finally(() => setLoadingDistricts(false));
+    } else {
+      setAvailableDistricts([]);
+    }
+  }, [region, productName]);
+
+  // District change resets dependent fields and loads markets
+  useEffect(() => {
+    setMarket("");
+    setVariety("");
+    if (region && district && productName) {
+      setLoadingMarkets(true);
+      fetch(`/api/forecast/filters/markets?commodity=${encodeURIComponent(productName)}&state=${encodeURIComponent(region)}&district=${encodeURIComponent(district)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableMarkets(data.markets || []);
+        })
+        .catch((err) => console.error(err))
+        .finally(() => setLoadingMarkets(false));
+    } else {
+      setAvailableMarkets([]);
+    }
+  }, [region, district, productName]);
+
+  // Market change resets dependent fields and loads varieties
+  useEffect(() => {
+    setVariety("");
+    if (productName && region && district && market) {
+      setLoadingVarieties(true);
+      fetch(`/api/forecast/filters/varieties?commodity=${encodeURIComponent(productName)}&state=${encodeURIComponent(region)}&district=${encodeURIComponent(district)}&market=${encodeURIComponent(market)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableVarieties(data.varieties || []);
+        })
+        .catch((err) => console.error(err))
+        .finally(() => setLoadingVarieties(false));
+    } else {
+      setAvailableVarieties([]);
+    }
+  }, [productName, region, district, market]);
+
+  useEffect(() => {
+    fetchDataStatus();
+  }, [productName, region, district, market, variety]);
 
   useEffect(() => {
     if (productName && Array.isArray(allProducts)) {
@@ -144,6 +264,7 @@ function MarketForecast() {
       }
     }
   }, [productName, allProducts, region, month]);
+
 
   const handleForecast = async (e) => {
     e.preventDefault();
@@ -164,8 +285,13 @@ function MarketForecast() {
           demandIndex: Number(demandIndex),
           month,
           warehouseStock: Number(warehouseStock),
-          region
+          region,
+          district,
+          market,
+          variety: (variety && variety !== "No variety data available for this market" && variety !== "Select a market to view available varieties") ? variety : ""
         })
+
+
       });
 
       if (!response.ok) {
@@ -174,19 +300,27 @@ function MarketForecast() {
 
       const data = await response.json();
       if (data.error) {
-        setError(data.error);
+        if (data.error === "GOVERNMENT_DATA_UNAVAILABLE") {
+          setError("Government market data is temporarily unavailable for this commodity in the selected region (mandi prices not found). Regional daily observations could not be fetched.");
+        } else {
+          setError(data.error);
+        }
         setForecast(null);
       } else {
         setForecast(data);
+        setError("");
         fetchHistory(productName);
+        fetchDataStatus();
       }
     } catch (err) {
+
       console.error(err);
       setError("Failed to generate prediction. Please verify that the backend is running.");
     } finally {
       setLoading(false);
     }
   };
+
 
   const getDemandColor = (level) => {
     if (level === "High") return "#10B981";
@@ -246,20 +380,108 @@ function MarketForecast() {
                   </DashSelect>
 
                   <DashSelect
-                    label="Region"
+                    label="State"
                     value={region}
                     onChange={(e) => setRegion(e.target.value)}
                     required
+                    disabled={loadingStates}
                   >
-                    {REGIONS.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                    {loadingStates ? (
+                      <option value="">Loading states...</option>
+                    ) : (
+                      <>
+                        <option value="">-- Select State --</option>
+                        {availableStates.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </>
+                    )}
+                  </DashSelect>
+                </FormGrid>
+
+                <FormGrid cols={2}>
+                  <DashSelect
+                    label="District"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    required
+                    disabled={!region || loadingDistricts}
+                  >
+                    {loadingDistricts ? (
+                      <option value="">Loading districts...</option>
+                    ) : !region ? (
+                      <option value="">Select a state first</option>
+                    ) : (
+                      <>
+                        <option value="">-- Select District --</option>
+                        {availableDistricts.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </>
+                    )}
+                  </DashSelect>
+
+                  <DashSelect
+                    label="Market / Mandi"
+                    value={market}
+                    onChange={(e) => setMarket(e.target.value)}
+                    required
+                    disabled={!district || loadingMarkets}
+                  >
+                    {loadingMarkets ? (
+                      <option value="">Loading markets...</option>
+                    ) : !district ? (
+                      <option value="">Select a district first</option>
+                    ) : (
+                      <>
+                        <option value="">-- Select Market --</option>
+                        {availableMarkets.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </>
+                    )}
+                  </DashSelect>
+                </FormGrid>
+
+                <FormGrid cols={2}>
+                  <DashSelect
+                    label="Variety"
+                    value={variety}
+                    onChange={(e) => setVariety(e.target.value)}
+                    required={market && availableVarieties.length > 0}
+                    disabled={!market || loadingVarieties}
+                  >
+                    {loadingVarieties ? (
+                      <option value="">Loading varieties...</option>
+                    ) : !market ? (
+                      <option value="">Select a market to view available varieties</option>
+                    ) : availableVarieties.length === 0 ? (
+                      <option value="">No variety data available for this market</option>
+                    ) : (
+                      <>
+                        <option value="">-- Select Variety --</option>
+                        {availableVarieties.map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </>
+                    )}
+                  </DashSelect>
+
+
+                  <DashSelect
+                    label="Current Month"
+                    value={month}
+                    onChange={(e) => setMonth(e.target.value)}
+                  >
+                    {MONTHS.map((m) => (
+                      <option key={m} value={m}>{m}</option>
                     ))}
                   </DashSelect>
                 </FormGrid>
 
                 <FormGrid cols={2}>
                   <DashInput
-                    label="Current Market Price (₹/kg)"
+                    label="Supplier Price (₹/kg)"
                     type="number"
                     value={currentPrice}
                     onChange={(e) => setCurrentPrice(e.target.value)}
@@ -274,15 +496,7 @@ function MarketForecast() {
                   />
                 </FormGrid>
 
-                <DashSelect
-                  label="Current Month"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                >
-                  {MONTHS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </DashSelect>
+
 
                 {/* System Generated Fields Panel */}
                 <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "20px", marginTop: "10px" }}>
@@ -377,8 +591,13 @@ function MarketForecast() {
                 <DashCard>
                   <CardHeader
                     title={`${forecast.productName} Predictions`}
-                    subtitle="Calculated pricing indices"
+                    subtitle={
+                      forecast.forecastStatus === "ML_READY"
+                        ? "🤖 ML Market Price Forecast"
+                        : "⚠️ Rule-Based Fallback Forecast (Historical data insufficient for ML)"
+                    }
                     icon={Brain}
+
                     actions={
                       <span style={{
                         padding: "4px 12px",
@@ -397,19 +616,148 @@ function MarketForecast() {
                     }
                   />
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "16px", marginBottom: "20px" }}>
-                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontWeight: "600", textTransform: "uppercase" }}>Current Price</span>
-                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#fff", marginTop: "4px" }}>₹{forecast.currentPrice}/kg</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "16px", marginBottom: "20px" }}>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "14px", textAlign: "center" }}>
+                      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: "600", textTransform: "uppercase" }}>Supplier Price (₹/kg)</span>
+                      <div style={{ fontSize: "18px", fontWeight: "800", color: "#fff", marginTop: "4px" }}>₹{forecast.currentPrice}/kg</div>
                     </div>
 
-                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontWeight: "600", textTransform: "uppercase" }}>Confidence</span>
-                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#10b981", marginTop: "4px" }}>{forecast.confidenceScore}%</div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "14px", textAlign: "center" }}>
+                      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: "600", textTransform: "uppercase" }}>Gov Mandi Price (₹/kg)</span>
+                      <div style={{ fontSize: "18px", fontWeight: "800", color: "#60a5fa", marginTop: "4px" }}>
+                        {forecast.governmentPrice ? `₹${forecast.governmentPrice.toFixed(2)}/kg` : "N/A"}
+                      </div>
+                    </div>
+
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "14px", textAlign: "center" }}>
+                      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: "600", textTransform: "uppercase" }}>Confidence Score</span>
+                      <div style={{ fontSize: "18px", fontWeight: "800", color: "#10b981", marginTop: "4px" }}>
+                        {forecast.confidenceScore !== null && forecast.confidenceScore !== undefined ? `${forecast.confidenceScore}%` : "N/A"}
+                      </div>
                     </div>
                   </div>
 
+                  {forecast.forecastStatus === "INSUFFICIENT_HISTORICAL_DATA" && (
+                    <div style={{
+                      background: "rgba(251, 191, 36, 0.05)",
+                      border: "1px solid rgba(251, 191, 36, 0.15)",
+                      borderRadius: "12px",
+                      padding: "14px",
+                      marginBottom: "20px",
+                      fontSize: "12.5px",
+                      color: "#fbbf24",
+                      lineHeight: "1.5"
+                    }}>
+                      <strong>⚠️ Rule-Based Fallback Forecast</strong>
+                      <div style={{ marginTop: "4px", fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
+                        ML forecasting will activate automatically when sufficient real historical market observations are available.
+                      </div>
+                      <div style={{ borderTop: "1px solid rgba(251, 191, 36, 0.1)", margin: "8px 0" }}></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                        <span>Selected Market Progress:</span>
+                        <strong>{dataStatus ? `${dataStatus.numberOfDates} / 30 dates` : "N/A"}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", marginTop: "2px" }}>
+                        <span>ML-Ready Markets:</span>
+                        <strong>{dataStatus ? dataStatus.mlReadyMarkets : 0}</strong>
+                      </div>
+                    </div>
+                  )}
+
+
+                  {forecast.market && (
+                    <div style={{ 
+                      background: "rgba(255, 255, 255, 0.01)", 
+                      border: "1px solid rgba(255, 255, 255, 0.06)", 
+                      borderRadius: "12px", 
+                      padding: "16px", 
+                      marginBottom: "20px", 
+                      fontSize: "12px", 
+                      color: "rgba(255,255,255,0.5)"
+                    }}>
+                      <div style={{ fontSize: "11px", fontWeight: "750", color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
+                        🏛️ Government Market Data (AGMARKNET / OGD)
+                      </div>
+                      
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <strong>Data Source:</strong>
+                        <span style={{ color: "#fff" }}>Government of India OGD ({forecast.dataSource})</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <strong>Commodity:</strong>
+                        <span style={{ color: "#fff" }}>{productName}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <strong>Reference Mandi:</strong>
+                        <span style={{ color: "#fff" }}>{forecast.market} ({forecast.district}, {forecast.state})</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <strong>Variety:</strong>
+                        <span style={{ color: "#fff" }}>{forecast.variety || "Not specified"}</span>
+
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <strong>Market Date:</strong>
+                        <span style={{ color: "#fff" }}>{forecast.observationDate}</span>
+                      </div>
+
+                      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "10px 0" }}></div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span>Minimum Price:</span>
+                        <strong style={{ color: "#fff" }}>₹{forecast.minPrice?.toFixed(2)}/quintal</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span>Modal Price:</span>
+                        <strong style={{ color: "#60a5fa" }}>₹{forecast.modalPrice?.toFixed(2)}/quintal</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span>Maximum Price:</span>
+                        <strong style={{ color: "#fff" }}>₹{forecast.maxPrice?.toFixed(2)}/quintal</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span>Normalized Price:</span>
+                        <strong style={{ color: "#10b981" }}>₹{(forecast.modalPrice / 100.0).toFixed(2)}/kg</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>Arrival Quantity:</span>
+                        <span style={{ color: "rgba(255,255,255,0.4)" }}>Arrival quantity not available in current OGD response</span>
+                      </div>
+
+                      {forecast.modelName && (
+                        <>
+                          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "10px 0" }}></div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <strong>Selected ML Model:</strong>
+                            <span style={{ color: "#a78bfa", fontWeight: "700" }}>{forecast.modelName}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <strong>Train Observations:</strong>
+                            <span style={{ color: "#fff" }}>{forecast.trainingObservations}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <strong>Test Observations:</strong>
+                            <span style={{ color: "#fff" }}>{forecast.testObservations}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <strong>Validation MAE:</strong>
+                            <span style={{ color: "#fff" }}>₹{forecast.mae?.toFixed(2)}/kg</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <strong>Validation RMSE:</strong>
+                            <span style={{ color: "#fff" }}>₹{forecast.rmse?.toFixed(2)}/kg</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <strong>R² Score:</strong>
+                            <span style={{ color: "#fff" }}>{forecast.r2?.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
                   <h4 style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", fontWeight: "750", marginBottom: "12px", letterSpacing: "0.05em" }}>Forecast Horizon</h4>
+
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
                     {[
                       { label: "7 Days Out", val: forecast.predicted7Days },
@@ -439,10 +787,52 @@ function MarketForecast() {
               ) : (
                 <div style={{ height: "100%", minHeight: "440px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: "20px", background: "transparent", color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "24px" }}>
                   <Brain size={48} style={{ color: "rgba(255,255,255,0.2)", marginBottom: "16px" }} />
-                  <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", margin: 0 }}>Awaiting Parameters</h4>
-                  <p style={{ fontSize: "13px", maxWidth: "260px", marginTop: "6px" }}>Configure target variables on the left and run AI evaluation.</p>
+                  <h4 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", margin: 0 }}>
+                    {!region ? "Select a State" : !district ? "Select a District" : !market ? "Select a Market" : (!variety && availableVarieties.length > 0) ? "Select a Variety" : "Awaiting Parameters"}
+                  </h4>
+                  <p style={{ fontSize: "13px", maxWidth: "340px", marginTop: "6px", color: "rgba(255,255,255,0.5)" }}>
+                    {!region 
+                      ? "Select a state to continue geographic selection." 
+                      : !district 
+                      ? "No current government observations are available for this state. Please select a district." 
+                      : !market 
+                      ? "No current OGD market observations found. Please select a reference mandi." 
+                      : (!variety && availableVarieties.length > 0) 
+                      ? "Please select a specific crop variety to generate the forecast." 
+                      : "Configure price and quantity metrics on the left and run the forecast model."}
+                  </p>
+
+                  {region && (
+                    <div style={{
+                      marginTop: "20px",
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                      borderRadius: "10px",
+                      padding: "10px 14px",
+                      fontSize: "12px",
+                      textAlign: "left"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", marginBottom: "4px" }}>
+                        <span>Selected State:</span>
+                        <strong style={{ color: "#fff" }}>{region}</strong>
+                      </div>
+                      {district && (
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", marginBottom: "4px" }}>
+                          <span>Selected District:</span>
+                          <strong style={{ color: "#fff" }}>{district}</strong>
+                        </div>
+                      )}
+                      {market && (
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}>
+                          <span>Selected Market:</span>
+                          <strong style={{ color: "#fff" }}>{market}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
+
             </div>
           </div>
 

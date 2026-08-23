@@ -25,4 +25,9 @@ public class SecurityConfig {
             );
         return http.build();
     }
+
+    @Bean
+    public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
+        return new org.springframework.security.provisioning.InMemoryUserDetailsManager();
+    }
 }
