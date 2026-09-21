@@ -16,10 +16,18 @@ public class CustomerProfile {
 
     private String fullName;
 
-    private String panNumber;
+    private String location;
 
-    public String getPanNumber() { return panNumber; }
-    public void setPanNumber(String panNumber) { this.panNumber = panNumber; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    private String aadhaarHash;
+    private String aadhaarLast4;
+
+    public String getAadhaarHash() { return aadhaarHash; }
+    public void setAadhaarHash(String aadhaarHash) { this.aadhaarHash = aadhaarHash; }
+    public String getAadhaarLast4() { return aadhaarLast4; }
+    public void setAadhaarLast4(String aadhaarLast4) { this.aadhaarLast4 = aadhaarLast4; }
 
     private String mobileNumber;
 

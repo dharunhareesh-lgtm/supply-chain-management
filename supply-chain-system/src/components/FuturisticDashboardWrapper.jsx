@@ -13,6 +13,7 @@ import {
   FaTimes,
   FaLaptop
 } from "react-icons/fa";
+import FarmerAgentModal from "./agent/FarmerAgentModal";
 
 // Global component to render the futuristic backdrop (aurora glow blobs, mesh grid,
 // noise, particles) and implement mouse cursor spotlight and Ctrl+K Command Palette.
@@ -386,6 +387,9 @@ export default function FuturisticDashboardWrapper({ children }) {
       >
         <span>⌘ K</span>
       </div>
+
+      {/* 7. Single Unified DRAVIX Farmer Agent */}
+      <FarmerAgentModal />
     </div>
   );
 }

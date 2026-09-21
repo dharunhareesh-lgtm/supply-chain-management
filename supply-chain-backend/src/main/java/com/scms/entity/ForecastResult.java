@@ -14,6 +14,18 @@ public class ForecastResult {
     @Column(name = "product_name")
     private String productName;
 
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "district")
+    private String district;
+
+    @Column(name = "market")
+    private String market;
+
+    @Column(name = "variety")
+    private String variety;
+
     @Column(name = "predicted_7_days")
     private double predicted7Days;
 
@@ -118,5 +130,37 @@ public class ForecastResult {
 
     public void setGeneratedAt(LocalDateTime generatedAt) {
         this.generatedAt = generatedAt;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public String getMarket() {
+        return market;
+    }
+
+    public void setMarket(String market) {
+        this.market = market;
+    }
+
+    public String getVariety() {
+        return variety;
+    }
+
+    public void setVariety(String variety) {
+        this.variety = variety;
     }
 }

@@ -32,7 +32,7 @@ const ROLE_META = {
 const SEARCH_INDEX = [
   { keywords: ["pass", "password", "pwd", "credentials", "history"], key: "security", label: "Security & Credentials" },
   { keywords: ["otp", "2fa", "code", "two factor", "auth"], key: "security", label: "Two-Factor Auth (OTP)" },
-  { keywords: ["gst", "pan", "fssai", "license", "permit", "cert", "documents"], key: "documents", label: "Compliance Document Center" },
+  { keywords: ["gst", "tax", "fssai", "license", "permit", "cert", "documents"], key: "documents", label: "Compliance Document Center" },
   { keywords: ["radius", "coverage", "commission", "fee", "rate", "gst component"], key: "platform", label: "Marketplace Rules Config" },
   { keywords: ["ocr", "risk", "similarity", "threshold", "model"], key: "ai", label: "AI Optimization Thresholds" },
   { keywords: ["aws", "s3", "bucket", "storage", "cloud"], key: "aws", label: "AWS Cloud S3 Storage" },

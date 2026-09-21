@@ -1,55 +1,42 @@
 /**
- * WarehouseSidebar.jsx — Premium Warehouse navigation sidebar.
- * All routes unchanged. Visual redesign only.
- * Collapsible toggle preserved (original feature).
+ * WarehouseSidebar.jsx — Warehouse Navigation Sidebar.
+ * Strictly configured with the 7 canonical Warehouse modules:
+ * 1. Dashboard
+ * 2. Inventory
+ * 3. Storage Requests
+ * 4. e-NWR
+ * 5. Farmer Produce
+ * 6. Dispatch
+ * 7. Notifications
  */
 import {
   LayoutDashboard,
   Boxes,
-  Layers,
-  ClipboardList,
-  TrendingUp,
-  Zap,
-  CheckCircle,
-  Link2,
-  UserPlus,
-  LogIn,
-  Settings,
+  Inbox,
+  FileCheck,
+  Sprout,
+  Send,
+  Bell,
   LogOut
 } from "lucide-react";
 import { PremiumSidebar } from "./dashboard/DashboardEngine";
 
 const NAV_ITEMS = [
-  // ── Overview ──
-  { to: "/warehouse",                  label: "Dashboard",             icon: LayoutDashboard, exact: true, section: "Overview"     },
-
-  // ── Inventory ──
-  { to: "/warehouse/inventory",        label: "Inventory",             icon: Boxes,                        section: "Inventory"    },
-  { to: "/warehouse/stock",            label: "Stock Management",      icon: Layers,                       section: "Inventory"    },
-  { to: "/warehouse/orders",           label: "Orders",                icon: ClipboardList,                section: "Inventory"    },
-
-  // ── Intelligence ──
-  { to: "/warehouse/revenue",          label: "Revenue & Settlements", icon: TrendingUp,                   section: "Intelligence" },
-  { to: "/warehouse/dispatch",         label: "AI Dispatch",           icon: Zap,                          section: "Intelligence" },
-
-  // ── Compliance ──
-  { to: "/warehouse/claims",           label: "Verify Claims",         icon: CheckCircle,                  section: "Compliance"   },
-  { to: "/warehouse/partnerships",     label: "Partnerships",          icon: Link2,                        section: "Compliance"   },
-
-  // ── Access ──
-  { to: "/warehouse/manager-register", label: "Manager Register",      icon: UserPlus,                     section: "Access"       },
-  { to: "/warehouse/manager-login",    label: "Manager Login",         icon: LogIn,                        section: "Access"       },
-
-  // ── Account ──
-  { to: "/settings",                   label: "Settings",              icon: Settings,                     section: "Account"      },
-  {                                    label: "Logout",                 icon: LogOut,  isLogout: true,      section: "Account"      },
+  { to: "/warehouse",                  label: "Dashboard",        icon: LayoutDashboard, exact: true },
+  { to: "/warehouse/inventory",        label: "Inventory",        icon: Boxes },
+  { to: "/warehouse/stock",            label: "Storage Requests", icon: Inbox },
+  { to: "/warehouse/claims",           label: "e-NWR",            icon: FileCheck },
+  { to: "/warehouse/pending-products", label: "Farmer Produce",   icon: Sprout },
+  { to: "/warehouse/dispatch",         label: "Dispatch",         icon: Send },
+  { to: "/settings",                   label: "Notifications",    icon: Bell },
+  {                                    label: "Logout",           icon: LogOut, isLogout: true },
 ];
 
 function WarehouseSidebar() {
   return (
     <PremiumSidebar
       panelTitle="Warehouse Panel"
-      panelIconLetter="W"
+      panelIconLetter="🏭"
       navItems={NAV_ITEMS}
       collapsible={true}
     />

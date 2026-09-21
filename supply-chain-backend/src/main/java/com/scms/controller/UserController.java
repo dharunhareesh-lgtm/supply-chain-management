@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import com.scms.dto.LoginRequest;
 import com.scms.dto.RegisterSupplierRequest;
 import com.scms.entity.User;
+import com.scms.entity.Supplier;
 import com.scms.entity.TemporaryPassword;
 import com.scms.service.UserService;
 import com.scms.service.PartnerOnboardingService;
@@ -119,14 +120,145 @@ public class UserController {
         response.put("mustChangePassword", user.isMustChangePassword());
         response.put("supplierId", user.getSupplierId());
 
+        // Include supplierType and verificationTier for frontend routing
+        if ("SUPPLIER".equalsIgnoreCase(user.getRole()) && user.getSupplierId() != null) {
+            Supplier loginSupplier = supplierRepository.findById(user.getSupplierId()).orElse(null);
+            if (loginSupplier != null) {
+                response.put("supplierType", loginSupplier.getSupplierType());
+                response.put("verificationTier", loginSupplier.getVerificationTier());
+                response.put("isFpoMember", Boolean.TRUE.equals(loginSupplier.getIsFpoMember()));
+            }
+        }
+
+        // Include warehouseId and warehouseName for WAREHOUSE accounts
+        if ("WAREHOUSE".equalsIgnoreCase(user.getRole()) || "WAREHOUSE_MANAGER".equalsIgnoreCase(user.getRole())) {
+            warehouseLocationRepository.findByRegisteredEmail(user.getUsername()).ifPresent(wl -> {
+                response.put("warehouseId", wl.getId());
+                response.put("warehouseName", wl.getWarehouseName());
+            });
+        }
+
         return org.springframework.http.ResponseEntity.ok(response);
     }
 
+    // Force compile touch comment
     @PostMapping("/register-supplier")
     public String registerSupplier(
             @RequestBody RegisterSupplierRequest request) {
 
         return userService.registerSupplier(request);
+    }
+
+    @PostMapping("/api/supplier/register-self")
+    @org.springframework.transaction.annotation.Transactional
+    public org.springframework.http.ResponseEntity<?> registerSupplierSelf(@RequestBody java.util.Map<String, Object> body) {
+        String name = (String) body.get("name");
+        String phone = (String) body.get("phone");
+        String password = (String) body.get("password");
+        String verificationTier = (String) body.getOrDefault("verificationTier", "BASIC_REGISTERED");
+        String supplierType = (String) body.getOrDefault("supplierType", "FARMER"); // FARMER or FPO_MEMBER
+
+        Boolean isFpoMember = false;
+        if (body.get("isFpoMember") != null) {
+            Object fpoVal = body.get("isFpoMember");
+            if (fpoVal instanceof Boolean) {
+                isFpoMember = (Boolean) fpoVal;
+            } else if (fpoVal instanceof String) {
+                isFpoMember = Boolean.parseBoolean((String) fpoVal);
+            }
+        }
+        if (Boolean.TRUE.equals(isFpoMember) || "FPO_MEMBER".equalsIgnoreCase(supplierType) || "FPO".equalsIgnoreCase(supplierType)) {
+            isFpoMember = true;
+            supplierType = "FPO_MEMBER";
+        } else {
+            supplierType = "FARMER";
+        }
+        
+        String email = (String) body.get("email");
+        if (email == null || email.isBlank()) {
+            if (phone != null && !phone.isBlank()) {
+                email = phone + "@scms-farmer.com";
+            }
+        }
+
+        // New email-based flow: name + email + password are required
+        if (name == null || name.isBlank() || password == null || password.isBlank()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error", "Name and password are required."));
+        }
+
+        if (email == null || email.isBlank()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error", "Email is required."));
+        }
+
+        // Verify email OTP was completed before registration
+        String otp = (String) body.get("otp");
+        if (otp != null && !otp.isBlank()) {
+            java.util.Map<String, Object> otpResult = otpService.verifyEmailOtp(email, otp);
+            if (!(Boolean) otpResult.get("success")) {
+                return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error", otpResult.getOrDefault("message", "Invalid OTP.")));
+            }
+        }
+
+        // Check for existing accounts (by phone or email)
+        if (phone != null && !phone.isBlank() && userRepository.findByUsername(phone) != null) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error", "An account with this mobile number already exists."));
+        }
+        if (userRepository.findByUsername(email) != null) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error", "An account with this email already exists."));
+        }
+
+        Supplier supplier = new Supplier();
+        supplier.setSupplierName(name);
+        supplier.setPhone(phone != null ? phone : "");
+        supplier.setEmail(email);
+        supplier.setStatus("ACTIVE");
+        supplier.setVerificationTier(verificationTier);
+        supplier.setSupplierType(supplierType);
+        supplier.setIsFpoMember(isFpoMember);
+        
+        supplier.setAddress((String) body.get("address"));
+        supplier.setDistrict((String) body.get("district"));
+        supplier.setState((String) body.getOrDefault("state", "Tamil Nadu"));
+        
+        if (body.get("latitude") != null) {
+            supplier.setLatitude(Double.valueOf(body.get("latitude").toString()));
+        }
+        if (body.get("longitude") != null) {
+            supplier.setLongitude(Double.valueOf(body.get("longitude").toString()));
+        }
+
+        if (body.containsKey("aadhaarHash")) {
+            supplier.setAadhaarHash((String) body.get("aadhaarHash"));
+            supplier.setAadhaarName((String) body.get("aadhaarName"));
+            supplier.setAadhaarDob((String) body.get("aadhaarDob"));
+            supplier.setAadhaarAddress((String) body.get("aadhaarAddress"));
+            supplier.setAadhaarGender((String) body.get("aadhaarGender"));
+        }
+
+        supplierRepository.save(supplier);
+
+        // Username: use email for new flow, phone for legacy flow
+        String username = (email != null && !email.isBlank() && !email.endsWith("@scms-farmer.com")) ? email : (phone != null ? phone : email);
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPhone(phone != null ? phone : "");
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole("SUPPLIER");
+        user.setSupplierId(supplier.getSupplierId());
+        user.setDistrict(supplier.getDistrict());
+        user.setState(supplier.getState());
+        user.setAddress(supplier.getAddress());
+        userRepository.save(user);
+
+        return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
+            "success", true,
+            "message", "Registration Successful",
+            "supplierId", supplier.getSupplierId(),
+            "username", username,
+            "supplierType", supplierType,
+            "isFpoMember", isFpoMember
+        ));
     }
 
     @PostMapping("/register-logistics")

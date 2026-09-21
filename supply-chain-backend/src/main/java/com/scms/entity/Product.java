@@ -163,4 +163,14 @@ public class Product {
     public void setStorageDate(String storageDate) {
         this.storageDate = storageDate;
     }
+
+    private Long landRecordId;
+
+    public Long getLandRecordId() { return landRecordId; }
+    public void setLandRecordId(Long landRecordId) { this.landRecordId = landRecordId; }
+
+    private String warningFlags;
+
+    public String getWarningFlags() { return warningFlags; }
+    public void setWarningFlags(String warningFlags) { this.warningFlags = warningFlags; }
 }

@@ -38,4 +38,8 @@ public interface OrderRepository
     long countByWarehouseId(Integer warehouseId);
 
     long countByWarehouseIdAndStatusIgnoreCase(Integer warehouseId, String status);
+
+    List<Order> findByProductId(Integer productId);
+
+    List<Order> findByProductNameIgnoreCase(String productName);
 }

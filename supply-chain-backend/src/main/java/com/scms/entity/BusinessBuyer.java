@@ -20,9 +20,6 @@ public class BusinessBuyer {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String businessAddress;
 
-    @Column(nullable = false)
-    private String businessPan;
-
     private String gstNumber;
 
     private String status = "APPROVED";
@@ -44,9 +41,6 @@ public class BusinessBuyer {
 
     public String getBusinessAddress() { return businessAddress; }
     public void setBusinessAddress(String businessAddress) { this.businessAddress = businessAddress; }
-
-    public String getBusinessPan() { return businessPan; }
-    public void setBusinessPan(String businessPan) { this.businessPan = businessPan; }
 
     public String getGstNumber() { return gstNumber; }
     public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }

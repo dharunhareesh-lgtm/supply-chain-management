@@ -54,6 +54,12 @@ public class ProductService {
     @Autowired
     private CategoryCapacityRepository categoryCapacityRepository;
 
+    @Autowired
+    private com.scms.repository.LandRecordRepository landRecordRepository;
+
+    @Autowired
+    private com.scms.repository.LandLedgerRepository landLedgerRepository;
+
     private static final Set<String> ALLOWED_CATEGORIES = Set.of(
         "Pulses and Dals",
         "Grains",
@@ -216,6 +222,39 @@ public class ProductService {
         product.setStock(totalWeight);
         product.setStatus("PENDING");
 
+        // ── Role-Aware Verification Check ──
+        if (product.getSupplierId() > 0) {
+            Supplier supplier = supplierRepository.findById(product.getSupplierId()).orElse(null);
+            if (supplier != null) {
+                boolean isFpo = "FPO".equalsIgnoreCase(supplier.getSupplierType())
+                        || "FPO_MEMBER".equalsIgnoreCase(supplier.getSupplierType())
+                        || Boolean.TRUE.equals(supplier.getIsFpoMember())
+                        || "FPO_VERIFIED".equalsIgnoreCase(supplier.getVerificationTier())
+                        || "FPO_PENDING".equalsIgnoreCase(supplier.getVerificationTier());
+                String tier = supplier.getVerificationTier();
+
+                if (isFpo) {
+                    boolean fpoApproved = "FPO_VERIFIED".equalsIgnoreCase(tier) || "SELL_VERIFIED".equalsIgnoreCase(tier);
+                    if (!fpoApproved) {
+                        throw new IllegalArgumentException("Your FPO certificate must be approved by the admin before creating product listings.");
+                    }
+                    // For FPOs, individual farmer landRecord is not required
+                } else {
+                    boolean farmerApproved = "SELL_VERIFIED".equalsIgnoreCase(tier);
+                    if (!farmerApproved) {
+                        throw new IllegalArgumentException("You must complete land verification before creating product listings.");
+                    }
+                    if (product.getLandRecordId() == null) {
+                        throw new IllegalArgumentException("Please select a verified land record for this product listing.");
+                    }
+                }
+            }
+        }
+
+        if (product.getLandRecordId() != null) {
+            validateProductYield(product);
+        }
+
         Product saved = productRepository.save(product);
 
         // Save package details
@@ -270,6 +309,20 @@ public class ProductService {
         product.setStatus("APPROVED");
         product.setStorageDate(java.time.LocalDate.now().toString());
         productRepository.save(product);
+
+        // Update land ledger cumulative sold volume on approval
+        if (product.getLandRecordId() != null) {
+            try {
+                com.scms.entity.LandLedger ledger = landLedgerRepository.findByLandRecordId(product.getLandRecordId()).orElse(new com.scms.entity.LandLedger());
+                ledger.setLandRecordId(product.getLandRecordId());
+                double currentSold = ledger.getCumulativeSoldThisSeason() != null ? ledger.getCumulativeSoldThisSeason() : 0.0;
+                ledger.setCumulativeSoldThisSeason(currentSold + stockWeight);
+                ledger.setLastVerifiedCrop(product.getCategory());
+                landLedgerRepository.save(ledger);
+            } catch (Exception e) {
+                System.err.println("Failed to update land ledger cumulative volume: " + e.getMessage());
+            }
+        }
 
         // 3. Create Inventory record
         String warehouseName = "Unknown";
@@ -464,5 +517,37 @@ public class ProductService {
                 .collect(Collectors.toList());
         products.forEach(this::populatePackages);
         return products;
+    }
+
+    private static final Map<String, Double> YIELD_LOOKUP = Map.of(
+        "Cereals", 1500.0,
+        "Dry Fruits", 800.0,
+        "Grains", 1200.0,
+        "Oil Seeds", 700.0,
+        "Pulses and Dals", 600.0,
+        "Spices", 500.0
+    );
+
+    private void validateProductYield(Product product) {
+        if (product.getLandRecordId() == null) return;
+        
+        com.scms.entity.LandRecord land = landRecordRepository.findById(product.getLandRecordId()).orElse(null);
+        if (land == null) return;
+
+        com.scms.entity.LandLedger ledger = landLedgerRepository.findByLandRecordId(land.getId()).orElse(null);
+        double cumulativeSold = (ledger != null && ledger.getCumulativeSoldThisSeason() != null) 
+            ? ledger.getCumulativeSoldThisSeason() 
+            : 0.0;
+
+        String category = product.getCategory();
+        double yieldPerAcre = YIELD_LOOKUP.getOrDefault(category, 1000.0);
+
+        double extent = land.getExtentAcres() != null ? land.getExtentAcres() : 0.0;
+        double maxExpectedYield = extent * yieldPerAcre;
+
+        double totalSoldPlusNew = cumulativeSold + product.getStock();
+        if (totalSoldPlusNew > maxExpectedYield) {
+            product.setWarningFlags("Exceeds expected yield for this land's extent");
+        }
     }
 }

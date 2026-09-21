@@ -5,9 +5,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
-  User, CheckCircle2, ShieldAlert, ArrowLeft,
-  MapPin, ShoppingBag, History, FileText, UserCheck,
-  Trash2, ShieldCheck, Clock
+  User, ShieldAlert, ArrowLeft,
+  MapPin, ShoppingBag, History,
+  Trash2, Clock
 } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
 import Navbar from "../../components/Navbar";
@@ -23,11 +23,7 @@ function CustomerDetailView() {
   const [activeTab, setActiveTab] = useState("profile");
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [remarks, setRemarks] = useState("");
-  const [processing, setProcessing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const adminEmail = localStorage.getItem("username") || "admin@dravix.com";
 
   const fetchCustomerDetails = async () => {
     setLoading(true);
@@ -51,35 +47,6 @@ function CustomerDetailView() {
   useEffect(() => {
     fetchCustomerDetails();
   }, [id]);
-
-  const handleAction = async (actionType) => {
-    if (!details?.verification?.id) return;
-    setProcessing(true);
-    try {
-      const response = await fetch(`/api/admin/customer-verification/${details.verification.id}/${actionType}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          adminEmail,
-          remarks: remarks || `Action ${actionType.toUpperCase()} executed by Admin.`
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        alert(data.message);
-        setRemarks("");
-        fetchCustomerDetails();
-      } else {
-        alert(data.message || "Action failed.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error connecting to admin verification endpoint.");
-    } finally {
-      setProcessing(false);
-    }
-  };
 
   const confirmDelete = async () => {
     try {
@@ -113,7 +80,7 @@ function CustomerDetailView() {
     );
   }
 
-  const { profile, verification, ocrExtraction, orders = [], audits = [] } = details || {};
+  const { profile, orders = [], audits = [] } = details || {};
 
   return (
     <>
@@ -153,7 +120,6 @@ function CustomerDetailView() {
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', overflowX: 'auto', gap: "8px" }}>
             {[
               { id: "profile", label: "Profile", icon: User },
-              { id: "verification", label: "Verification Settings", icon: ShieldCheck },
               { id: "orders", label: `Orders (${orders.length})`, icon: ShoppingBag },
               { id: "addresses", label: "Addresses", icon: MapPin },
               { id: "activity", label: "Activity Log", icon: History }
@@ -198,15 +164,14 @@ function CustomerDetailView() {
                     <InfoRow label="Full Name" value={profile?.fullName} />
                     <InfoRow label="Email Address" value={profile?.email} />
                     <InfoRow label="Mobile Number" value={profile?.mobileNumber || "—"} />
-                    <InfoRow label="PAN Number" value={profile?.panNumber ? profile.panNumber.slice(0,5) + "****" + profile.panNumber.slice(-1) : "—"} />
-                    <InfoRow label="Date of Birth" value={profile?.dob || "—"} />
+                    <InfoRow label="Location" value={profile?.location || "—"} />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: '750', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '8px', margin: 0, textTransform: "uppercase" }}>Business & Pinned Location</h3>
                     <InfoRow label="Shop Name" value={profile?.shopName || "—"} />
-                    <InfoRow label="District & State" value={`${profile?.district}, ${profile?.state}`} />
-                    <InfoRow label="Pincode" value={profile?.pincode} />
+                    <InfoRow label="District & State" value={`${profile?.district || '—'}, ${profile?.state || '—'}`} />
+                    <InfoRow label="Pincode" value={profile?.pincode || "—"} />
                     <InfoRow label="Registration Date" value={profile?.createdAt ? new Date(profile.createdAt).toLocaleString() : "—"} />
                     <InfoRow label="Level Tier" value={profile?.customerLevel} badge />
                   </div>
@@ -214,100 +179,7 @@ function CustomerDetailView() {
               </DashCard>
             )}
 
-            {/* TAB 2: VERIFICATION DASHBOARD */}
-            {activeTab === "verification" && (
-              <DashCard>
-                {!verification ? (
-                  <EmptyState
-                    icon={ShieldAlert}
-                    title="No verification document has been uploaded yet for this customer."
-                  />
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-                    {/* Comparison data */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
-                        <h4 style={{ fontWeight: '700', color: '#10b981', marginBottom: '12px', fontSize: '13px', marginTop: 0 }}>Registered Customer Data</h4>
-                        <p style={{ margin: '6px 0' }}><strong>Full Name:</strong> {profile?.fullName}</p>
-                        <p style={{ margin: '6px 0' }}><strong>PAN Number:</strong> {profile?.panNumber ? profile.panNumber.slice(0,5) + "****" + profile.panNumber.slice(-1) : "—"}</p>
-                        <p style={{ margin: '6px 0' }}><strong>Date of Birth:</strong> {profile?.dob || "—"}</p>
-                        <p style={{ margin: '6px 0' }}><strong>Email:</strong> {profile?.email}</p>
-                      </div>
-
-                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
-                        <h4 style={{ fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: '12px', fontSize: '13px', marginTop: 0 }}>OCR Extracted Data (Tesseract Engine)</h4>
-                        <p style={{ margin: '6px 0' }}><span style={{ color: 'rgba(255,255,255,0.4)' }}>Extracted Name:</span> <strong>{ocrExtraction?.extractedName || "Unreadable"}</strong></p>
-                        <p style={{ margin: '6px 0' }}><span style={{ color: 'rgba(255,255,255,0.4)' }}>Extracted PAN:</span> <strong>{ocrExtraction?.extractedDocumentNumber && ocrExtraction.extractedDocumentNumber.length >= 10 ? ocrExtraction.extractedDocumentNumber.slice(0, 5) + "****" + ocrExtraction.extractedDocumentNumber.slice(-1) : (ocrExtraction?.extractedDocumentNumber || "Unreadable")}</strong></p>
-                        <p style={{ margin: '6px 0' }}><span style={{ color: 'rgba(255,255,255,0.4)' }}>Extracted DOB:</span> <strong>{ocrExtraction?.extractedDob || "—"}</strong></p>
-                        <p style={{ margin: '6px 0' }}><span style={{ color: 'rgba(255,255,255,0.4)' }}>Confidence Score:</span> <strong>{ocrExtraction?.confidenceScore ? `${ocrExtraction.confidenceScore}%` : "—"}</strong></p>
-                      </div>
-                    </div>
-
-                    {/* Actions and Similarity */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '11px', marginBottom: '8px', textTransform: "uppercase" }}>Name Similarity Score</div>
-                        <div style={{ fontSize: '32px', fontWeight: '800', color: verification.nameMatchPassed ? '#10b981' : '#ef4444' }}>
-                          {verification.nameSimilarityPercentage}%
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>Acceptance Threshold: 90%</div>
-                      </div>
-
-                      {verification.status !== "APPROVED" ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                          <div className="dash-field">
-                            <label className="dash-label">Remarks / Justification Notes</label>
-                            <textarea
-                              rows="3"
-                              className="dash-input"
-                              placeholder="Enter audit remarks or rejection reasons..."
-                              value={remarks}
-                              onChange={(e) => setRemarks(e.target.value)}
-                              style={{ height: "auto", padding: "10px 12px" }}
-                            ></textarea>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <DashBtn
-                              onClick={() => handleAction("approve")}
-                              disabled={processing}
-                              variant="primary"
-                            >
-                              {processing ? "Executing..." : "Approve & Upgrade Account"}
-                            </DashBtn>
-
-                            <DashBtn
-                              onClick={() => handleAction("reupload")}
-                              disabled={processing}
-                              variant="secondary"
-                            >
-                              Request Document Reupload
-                            </DashBtn>
-
-                            <DashBtn
-                              onClick={() => handleAction("reject")}
-                              disabled={processing}
-                              variant="danger"
-                            >
-                              Reject & Flag Mismatch
-                            </DashBtn>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <CheckCircle2 size={20} />
-                          <div style={{ fontSize: '13px' }}>
-                            <strong>Verified Profile:</strong> This customer's registration credentials have been audited and approved.
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </DashCard>
-            )}
-
-            {/* TAB 3: ORDERS */}
+            {/* TAB 2: ORDERS */}
             {activeTab === "orders" && (
               <DashCard noPad>
                 {orders.length === 0 ? (

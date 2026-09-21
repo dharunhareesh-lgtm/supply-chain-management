@@ -5,9 +5,9 @@ public class EnhancedRegisterCustomerRequest {
     private String fullName;
     private String email;
     private String mobileNumber;
-    private String dateOfBirth;
-    private String panNumber;
+    private String location;
     private String password;
+    private String confirmPassword;
     private String otp;
 
     public EnhancedRegisterCustomerRequest() {}
@@ -21,14 +21,14 @@ public class EnhancedRegisterCustomerRequest {
     public String getMobileNumber() { return mobileNumber; }
     public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
 
-    public String getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-
-    public String getPanNumber() { return panNumber; }
-    public void setPanNumber(String panNumber) { this.panNumber = panNumber; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getConfirmPassword() { return confirmPassword; }
+    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 
     public String getOtp() { return otp; }
     public void setOtp(String otp) { this.otp = otp; }

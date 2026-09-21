@@ -80,7 +80,7 @@ export default function SupplierSettings({ email, activeTabOverride, onTabChange
 
   // Documents
   const [gstStatus, setGstStatus] = useState("Approved");
-  const [panStatus, setPanStatus] = useState("Approved");
+  const [licenseStatus, setLicenseStatus] = useState("Approved");
   const [fssaiStatus, setFssaiStatus] = useState("Pending");
 
   const load = async () => {
@@ -151,9 +151,9 @@ export default function SupplierSettings({ email, activeTabOverride, onTabChange
   };
 
   const handleDocUpload = (type, dataBase64) => {
-    if (type === "gst")   { setGstStatus("Pending"); toast.success("GST Document replaced! Pending review."); }
-    if (type === "pan")   { setPanStatus("Pending"); toast.success("PAN document updated."); }
-    if (type === "fssai") { setFssaiStatus("Pending"); toast.success("FSSAI license upload success."); }
+    if (type === "gst")     { setGstStatus("Pending"); toast.success("GST Document replaced! Pending review."); }
+    if (type === "license") { setLicenseStatus("Pending"); toast.success("Business license document updated."); }
+    if (type === "fssai")   { setFssaiStatus("Pending"); toast.success("FSSAI license upload success."); }
     setTimelineItems(p => [
       { action: `Uploaded Document: ${type.toUpperCase()}`, details: "Corporate compliance document submitted for AI audit", timestamp: "Just now", type: "CREATE" },
       ...p
@@ -192,7 +192,7 @@ export default function SupplierSettings({ email, activeTabOverride, onTabChange
     { key: "profile",       title: "Profile Identity",    desc: "Your company/farm details and supplier SCM contact", icon: User, pct: completion(), status: "Active" },
     { key: "business",      title: "Business Info",       desc: "Corporate registration details, GST and compliance records", icon: Building2, pct: 100, status: "Verified" },
     { key: "bank",          title: "Bank Details",        desc: "Configure settlement account for payments and earnings", icon: CreditCard, pct: bankName ? 100 : 0, status: "Configured" },
-    { key: "documents",     title: "Compliance Center",   desc: "Status logs for GST, PAN registration and FSSAI licenses", icon: FileText, pct: 85, status: "Audited" },
+    { key: "documents",     title: "Compliance Center",   desc: "Status logs for GST, Trade License and FSSAI licenses", icon: FileText, pct: 85, status: "Audited" },
     { key: "notifications", title: "Notification Matrix", desc: "Select preferred channels for orders, dispatches, settlements", icon: Bell, pct: 100, status: "Active" },
     { key: "security",      title: "Security & Logins",   desc: "Enforce OTP credentials change and review active session logs", icon: Lock, pct: 85, status: "Secure" },
     { key: "activity",      title: "Activity Timelines",  desc: "Audit logs of setting updates and successful secure connections", icon: Activity, pct: 100, status: "Active" }
@@ -200,9 +200,9 @@ export default function SupplierSettings({ email, activeTabOverride, onTabChange
 
   const searchItems = [
     { key: "profile",       label: "Profile" },
-    { key: "business",      label: "Business GST PAN Registration" },
+    { key: "business",      label: "Business GST Tax Registration" },
     { key: "bank",          label: "Bank Account Settlement IFSC" },
-    { key: "documents",     label: "Documents Center GST PAN Compliance" },
+    { key: "documents",     label: "Documents Center GST License Compliance" },
     { key: "notifications", label: "Notification Channels matrix" },
     { key: "security",      label: "Security Password 2FA" },
     { key: "activity",      label: "Activity Audit Logs" }
@@ -357,7 +357,7 @@ export default function SupplierSettings({ email, activeTabOverride, onTabChange
 
             <div className="documents-grid">
               <DocumentCard name="GSTIN Certificate" code="gst" status={gstStatus} expiry="12-Dec-2028" onUpload={data => handleDocUpload("gst", data)} />
-              <DocumentCard name="Permanent Account Number (PAN)" code="pan" status={panStatus} expiry="No Expiry" onUpload={data => handleDocUpload("pan", data)} />
+              <DocumentCard name="Trade & Business License" code="license" status={licenseStatus} expiry="No Expiry" onUpload={data => handleDocUpload("license", data)} />
               <DocumentCard name="FSSAI License" code="fssai" status={fssaiStatus} expiry="20-Oct-2026" onUpload={data => handleDocUpload("fssai", data)} />
             </div>
           </div>

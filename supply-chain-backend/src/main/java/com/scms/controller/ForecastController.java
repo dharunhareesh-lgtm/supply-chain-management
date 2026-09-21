@@ -40,15 +40,9 @@ public class ForecastController {
         return forecastService.getForecastableProducts();
     }
 
-    @PostMapping("/sync")
-    public java.util.Map<String, String> syncData(@RequestParam String commodity, @RequestParam String state) {
-        try {
-            forecastService.syncGovMarketPrices(commodity, state);
-            return java.util.Map.of("status", "SUCCESS", "message", "Successfully synchronized " + commodity + " in " + state);
-        } catch (Exception e) {
-            return java.util.Map.of("status", "ERROR", "message", e.getMessage());
-        }
-    }
+
+
+
 
     @GetMapping("/data-status")
     public java.util.Map<String, Object> getDataStatus(

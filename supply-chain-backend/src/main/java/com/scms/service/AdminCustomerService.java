@@ -58,7 +58,7 @@ public class AdminCustomerService {
         return customerProfileRepository.findAll();
     }
 
-    // Get customer details (profile + verification info)
+    // Get customer details (profile + orders)
     public Map<String, Object> getCustomerDetail(Long id) {
         Optional<CustomerProfile> profileOpt = customerProfileRepository.findById(id);
         if (profileOpt.isEmpty()) {
@@ -69,35 +69,9 @@ public class AdminCustomerService {
         Map<String, Object> details = new HashMap<>();
         details.put("profile", profile);
 
-        // Fetch verification details if present
-        List<CustomerVerification> verifications = customerVerificationRepository.findAll().stream()
-                .filter(v -> profile.getEmail().equalsIgnoreCase(v.getEmail()))
-                .toList();
-
-        if (!verifications.isEmpty()) {
-            CustomerVerification verification = verifications.get(verifications.size() - 1);
-            details.put("verification", verification);
-
-            List<OcrExtraction> extractions = ocrExtractionRepository.findAll().stream()
-                    .filter(o -> o.getVerificationId().equals(verification.getId()))
-                    .toList();
-            if (!extractions.isEmpty()) {
-                details.put("ocrExtraction", extractions.get(extractions.size() - 1));
-            }
-
-            List<VerificationDocument> docs = verificationDocumentRepository.findAll().stream()
-                    .filter(d -> d.getVerificationId().equals(verification.getId()))
-                    .toList();
-            details.put("documents", docs);
-        }
-
         // Add order counts
         List<Order> orders = orderRepository.findByCustomerId(profile.getId().intValue());
         details.put("orders", orders);
-
-        // Fetch verification history audit logs
-        List<VerificationAudit> audits = verificationAuditRepository.findByEmailOrderByCreatedAtDesc(profile.getEmail());
-        details.put("audits", audits);
 
         return details;
     }

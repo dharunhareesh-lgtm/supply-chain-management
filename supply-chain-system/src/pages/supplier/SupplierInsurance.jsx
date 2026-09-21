@@ -1376,7 +1376,7 @@ function SupplierInsurance() {
                 <span className="metric-mini-label">Secure Document Verifications</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
                   <div className="doc-check-row">
-                    <span>PAN Tax Verification</span>
+                    <span>Business Tax Verification</span>
                     <span style={{ color: "#10b981", fontWeight: "700" }}>Verified</span>
                   </div>
                   <div className="doc-check-row">
@@ -1847,7 +1847,7 @@ function SupplierInsurance() {
 
                       <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", display: "block" }}>
-                          AI damage assessment reports zero duplicated claim records across similar crop category registers. Tax PAN identification matched active policy details.
+                          AI damage assessment reports zero duplicated claim records across similar crop category registers. Business Tax identification matched active policy details.
                         </span>
                       </div>
                     </div>

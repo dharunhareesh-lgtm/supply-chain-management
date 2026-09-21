@@ -216,26 +216,26 @@ export function Modules() {
 const aiFeatures = [
   {
     Icon: ScanText,
-    title: "AI OCR Document Verification",
-    text: "Extracts PAN information and verifies identity automatically.",
+    title: "Secure Identity Verification",
+    text: "Verifies user identity and credentials with OTP security automatically.",
     accentRgb: "16,185,129",
   },
   {
     Icon: IdCard,
-    title: "Document Classification",
-    text: "Automatically detects PAN, Aadhaar, Driving Licence, Passport and Voter ID.",
+    title: "Partner Document Verification",
+    text: "Automatically detects GST, Business Licenses, Driving Licence, Passport and Voter ID.",
     accentRgb: "6,182,212",
   },
   {
     Icon: FileSearch,
-    title: "Smart OCR Field Extraction",
-    text: "Extracts Name, DOB, PAN Number and Father Name using semantic layout analysis.",
+    title: "Smart Field Extraction",
+    text: "Extracts business credentials and registration data using semantic layout analysis.",
     accentRgb: "139,92,246",
   },
   {
     Icon: Fingerprint,
     title: "Trust Verification Engine",
-    text: "Matches registration details against OCR extracted details using similarity algorithms.",
+    text: "Matches registration details against verification criteria using scoring algorithms.",
     accentRgb: "16,185,129",
   },
   {

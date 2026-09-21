@@ -98,4 +98,38 @@ public class Supplier {
     public void setBankIfscCode(String bankIfscCode) { this.bankIfscCode = bankIfscCode; }
     public String getNotificationPreferences() { return notificationPreferences; }
     public void setNotificationPreferences(String notificationPreferences) { this.notificationPreferences = notificationPreferences; }
+
+    private String verificationTier = "UNVERIFIED";
+    private String supplierType = "FARMER"; // FARMER or FPO_MEMBER
+    private Boolean isFpoMember = false;
+
+    public String getSupplierType() { return supplierType; }
+    public void setSupplierType(String supplierType) { this.supplierType = supplierType; }
+
+    public Boolean getIsFpoMember() { return isFpoMember != null && isFpoMember; }
+    public void setIsFpoMember(Boolean isFpoMember) { this.isFpoMember = isFpoMember; }
+
+    private String aadhaarHash;
+    private String aadhaarName;
+    private String aadhaarDob;
+    private String aadhaarAddress;
+    private String aadhaarGender;
+
+    public String getVerificationTier() { return verificationTier; }
+    public void setVerificationTier(String verificationTier) { this.verificationTier = verificationTier; }
+
+    public String getAadhaarHash() { return aadhaarHash; }
+    public void setAadhaarHash(String aadhaarHash) { this.aadhaarHash = aadhaarHash; }
+
+    public String getAadhaarName() { return aadhaarName; }
+    public void setAadhaarName(String aadhaarName) { this.aadhaarName = aadhaarName; }
+
+    public String getAadhaarDob() { return aadhaarDob; }
+    public void setAadhaarDob(String aadhaarDob) { this.aadhaarDob = aadhaarDob; }
+
+    public String getAadhaarAddress() { return aadhaarAddress; }
+    public void setAadhaarAddress(String aadhaarAddress) { this.aadhaarAddress = aadhaarAddress; }
+
+    public String getAadhaarGender() { return aadhaarGender; }
+    public void setAadhaarGender(String aadhaarGender) { this.aadhaarGender = aadhaarGender; }
 }

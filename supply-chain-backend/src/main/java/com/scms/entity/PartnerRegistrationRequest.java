@@ -55,6 +55,12 @@ public class PartnerRegistrationRequest {
 
     private Integer yearsOfExperience;
 
+    private Double totalCapacity;
+
+    private Boolean coldStorageAvailable = false;
+
+    private Double coldStorageCapacity;
+
     @Column(nullable = false, length = 40)
     private String status = "PENDING";
 
@@ -140,4 +146,13 @@ public class PartnerRegistrationRequest {
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public Double getTotalCapacity() { return totalCapacity; }
+    public void setTotalCapacity(Double totalCapacity) { this.totalCapacity = totalCapacity; }
+
+    public Boolean getColdStorageAvailable() { return coldStorageAvailable != null && coldStorageAvailable; }
+    public void setColdStorageAvailable(Boolean coldStorageAvailable) { this.coldStorageAvailable = coldStorageAvailable; }
+
+    public Double getColdStorageCapacity() { return coldStorageCapacity; }
+    public void setColdStorageCapacity(Double coldStorageCapacity) { this.coldStorageCapacity = coldStorageCapacity; }
 }

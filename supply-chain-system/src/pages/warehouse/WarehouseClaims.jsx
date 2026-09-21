@@ -7,10 +7,28 @@ import { CheckSquare } from "lucide-react";
 function WarehouseClaims() {
   const [claims, setClaims] = useState([]);
 
-  const fetchClaims = () => {
-    const warehouseId = localStorage.getItem("warehouseId");
+  const fetchClaims = async () => {
+    let warehouseId = localStorage.getItem("warehouseId");
     const managerEmail = localStorage.getItem("username") || "";
     
+    if (!warehouseId || warehouseId === "null" || warehouseId === "undefined") {
+      if (managerEmail) {
+        try {
+          const res = await fetch(`/warehouse-locations/check-email?email=${managerEmail}`, { method: 'POST' });
+          if (res.ok) {
+            const wl = await res.json();
+            if (wl && wl.id) {
+              warehouseId = wl.id;
+              localStorage.setItem("warehouseId", String(wl.id));
+              if (wl.warehouseName) localStorage.setItem("warehouseName", wl.warehouseName);
+            }
+          }
+        } catch (e) {
+          console.error("Error resolving warehouse location:", e);
+        }
+      }
+    }
+
     let url = "/insurance-claims";
     if (warehouseId) {
       url += `?warehouseId=${warehouseId}`;
@@ -22,7 +40,7 @@ function WarehouseClaims() {
       }
     })
       .then((res) => res.json())
-      .then((data) => setClaims(data))
+      .then((data) => setClaims(Array.isArray(data) ? data : []))
       .catch((err) => console.error(err));
   };
 

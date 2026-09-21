@@ -19,11 +19,15 @@ public class AdminPartnerRequestController {
     @Autowired
     private PartnerOnboardingService partnerOnboardingService;
 
-    // List all partner requests (optionally filtered by status)
+    // List all partner requests (optionally filtered by status and role)
     @GetMapping
-    public ResponseEntity<?> getAllRequests(@RequestParam(value = "status", required = false) String status) {
+    public ResponseEntity<?> getAllRequests(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "role", required = false) String role) {
         List<PartnerRegistrationRequest> requests;
-        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+        if (role != null && !role.isBlank() && !"ALL".equalsIgnoreCase(role)) {
+            requests = partnerOnboardingService.getRequestsByRoleGroup(role, status);
+        } else if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
             requests = partnerOnboardingService.getRequestsByStatus(status);
         } else {
             requests = partnerOnboardingService.getAllRequests();
@@ -31,9 +35,12 @@ public class AdminPartnerRequestController {
         return ResponseEntity.ok(requests);
     }
 
-    // Get counts by status
+    // Get counts by status (optionally filtered by role)
     @GetMapping("/counts")
-    public ResponseEntity<?> getStatusCounts() {
+    public ResponseEntity<?> getStatusCounts(@RequestParam(value = "role", required = false) String role) {
+        if (role != null && !role.isBlank() && !"ALL".equalsIgnoreCase(role)) {
+            return ResponseEntity.ok(partnerOnboardingService.getStatusCountsByRoleGroup(role));
+        }
         return ResponseEntity.ok(partnerOnboardingService.getStatusCounts());
     }
 

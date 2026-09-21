@@ -47,9 +47,6 @@ function PendingProducts() {
       ])
         .then(([productsData, capsData, suppliersData]) => {
           let filtered = productsData.filter((p) => p.status === "PENDING");
-          if (managerCategory) {
-            filtered = filtered.filter((p) => p.category === managerCategory);
-          }
           setProducts(filtered);
           setCapacities(capsData);
 

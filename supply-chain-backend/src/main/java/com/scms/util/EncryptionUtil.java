@@ -27,7 +27,7 @@ public class EncryptionUtil {
         }
     }
 
-    // Encrypt raw PAN value
+    // Encrypt plain text value
     public String encrypt(String plainText) {
         if (plainText == null || plainText.isBlank()) return null;
         try {
@@ -40,7 +40,7 @@ public class EncryptionUtil {
         }
     }
 
-    // Decrypt PAN value
+    // Decrypt value
     public String decrypt(String encryptedText) {
         if (encryptedText == null || encryptedText.isBlank()) return null;
         try {
@@ -68,12 +68,5 @@ public class EncryptionUtil {
         } catch (Exception e) {
             throw new RuntimeException("Failed to calculate SHA-256 checksum", e);
         }
-    }
-
-    // Mask sensitive PAN helper
-    public static String maskPan(String rawPan) {
-        if (rawPan == null || rawPan.length() < 6) return rawPan;
-        // e.g. ABCDE1234F -> ABCDE****F
-        return rawPan.substring(0, 5) + "****" + rawPan.substring(rawPan.length() - 1);
     }
 }

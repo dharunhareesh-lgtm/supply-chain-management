@@ -12,10 +12,23 @@ function ProtectedRoute({
     return <Navigate to="/change-password" replace />;
   }
 
-  // Allow matching if userRole matches target role exactly, or if user is WAREHOUSE_MANAGER and target is WAREHOUSE
-  const isAllowed = userRole === role || 
-                    (role === "WAREHOUSE" && userRole === "WAREHOUSE_MANAGER") ||
-                    (Array.isArray(role) && role.includes(userRole));
+  const isSupplierRole =
+    userRole === "SUPPLIER" ||
+    userRole === "FPO" ||
+    userRole === "FARMER" ||
+    userRole === "FPO_SUPPLIER" ||
+    userRole === "INDIVIDUAL_FARMER";
+
+  const isWarehouseRole =
+    userRole === "WAREHOUSE" ||
+    userRole === "WAREHOUSE_MANAGER";
+
+  // Allow matching if userRole matches target role, or supplier/warehouse role variations
+  const isAllowed =
+    userRole === role ||
+    (role === "SUPPLIER" && isSupplierRole) ||
+    (role === "WAREHOUSE" && isWarehouseRole) ||
+    (Array.isArray(role) && (role.includes(userRole) || (role.includes("SUPPLIER") && isSupplierRole) || (role.includes("WAREHOUSE") && isWarehouseRole)));
 
   if (!isAllowed) {
     return <Navigate to="/login" replace />;

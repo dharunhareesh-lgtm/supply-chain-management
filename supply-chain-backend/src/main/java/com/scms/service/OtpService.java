@@ -59,6 +59,19 @@ public class OtpService {
 
         String cleanEmail = email.trim().toLowerCase();
 
+        // Check resend cooldown (30 seconds)
+        Optional<EmailOtp> latestOtp = emailOtpRepository.findFirstByEmailOrderByCreatedAtDesc(cleanEmail);
+        if (latestOtp.isPresent() && latestOtp.get().getCreatedAt() != null) {
+            long secondsSinceLast = java.time.Duration.between(latestOtp.get().getCreatedAt(), LocalDateTime.now()).getSeconds();
+            if (secondsSinceLast < 30) {
+                long waitSeconds = 30 - secondsSinceLast;
+                response.put("success", false);
+                response.put("message", "Please wait " + waitSeconds + " second(s) before requesting a new OTP.");
+                response.put("cooldownSeconds", waitSeconds);
+                return response;
+            }
+        }
+
         // Generate 6-digit random numeric OTP
         String otpCode = String.format("%06d", random.nextInt(1000000));
         String otpHash = passwordEncoder.encode(otpCode);
@@ -206,6 +219,13 @@ public class OtpService {
         if (email == null) return;
         List<EmailOtp> all = emailOtpRepository.findByEmailOrderByCreatedAtDesc(email.trim().toLowerCase());
         emailOtpRepository.deleteAll(all);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isEmailOtpVerified(String email) {
+        if (email == null || email.isBlank()) return false;
+        Optional<EmailOtp> opt = emailOtpRepository.findFirstByEmailOrderByCreatedAtDesc(email.trim().toLowerCase());
+        return opt.isPresent() && opt.get().isVerified();
     }
 
     // Standard string fallback for legacy UserController compatibility

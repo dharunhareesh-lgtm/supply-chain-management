@@ -386,7 +386,7 @@ export default function CustomerSettings({ email, activeTabOverride, onTabChange
 
             <SettingsSection title="Account Deletion" icon={Trash2}>
               <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "#f87171", marginBottom: 12, lineHeight: 1.5 }}>
-                ⚠️ Account deletion is irreversible. Your active address registry, PAN and order history will be deleted.
+                ⚠️ Account deletion is irreversible. Your active address registry and order history will be deleted.
               </div>
               <SettingRow label="Request Account Deletion" hint="Submit deletion request for admin review">
                 <SettingsBtn variant="danger" icon={Trash2} onClick={() => setDeleteConfirm(true)}>

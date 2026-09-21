@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 public class SecurityAndMatchingUtil {
 
-    private static final Pattern PAN_PATTERN = Pattern.compile("^[A-Z]{5}[0-9]{4}[A-Z]{1}$");
     private static final Pattern AADHAAR_PATTERN = Pattern.compile("^[0-9]{12}$");
     private static final Pattern DL_PATTERN = Pattern.compile("^[A-Z]{2}[- ]?[0-9]{2}[- ]?[0-9]{11}$|^[A-Z]{2}[0-9]{13}$");
     private static final Pattern VOTER_PATTERN = Pattern.compile("^[A-Z]{3}[0-9]{7}$");
@@ -40,17 +39,10 @@ public class SecurityAndMatchingUtil {
         return AADHAAR_PATTERN.matcher(clean).matches();
     }
 
-    public static boolean isValidPan(String pan) {
-        if (pan == null) return false;
-        return PAN_PATTERN.matcher(pan.trim().toUpperCase(Locale.ROOT)).matches();
-    }
-
     public static boolean isValidDocumentNumber(String docType, String docNumber) {
         if (docNumber == null || docType == null) return false;
         String clean = docNumber.trim().toUpperCase(Locale.ROOT);
         switch (docType.toUpperCase(Locale.ROOT)) {
-            case "PAN":
-                return PAN_PATTERN.matcher(clean).matches();
             case "DRIVING_LICENSE":
                 return DL_PATTERN.matcher(clean).matches() || clean.length() >= 10;
             case "VOTER_ID":
@@ -127,7 +119,7 @@ public class SecurityAndMatchingUtil {
     }
 
     /**
-     * Mask sensitive values (e.g. PAN card, Aadhaar, etc.)
+     * Mask sensitive values (e.g. Aadhaar, ID numbers, etc.)
      */
     public static String maskSensitiveValue(String value) {
         if (value == null || value.length() < 4) return "****";

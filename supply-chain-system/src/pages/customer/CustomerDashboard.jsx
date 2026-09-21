@@ -113,9 +113,9 @@ function CustomerDashboard() {
                     <MapPin size={11} /> {parseFloat(custLat).toFixed(4)}, {parseFloat(custLon).toFixed(4)}
                   </span>
                 )}
-                <DashBtn variant="secondary" size="sm" icon={ShieldCheck} onClick={() => navigate("/customer/verification")}>
-                  {custLevel}
-                </DashBtn>
+                <span style={{ padding: "5px 12px", borderRadius: 8, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", fontSize: 12, fontWeight: 700 }}>
+                  {custLevel} Customer
+                </span>
               </div>
             }
           />
@@ -227,7 +227,6 @@ function CustomerDashboard() {
               { label: "My Orders",       icon: ClipboardList,path: "/customer/orders",   color: "#3b82f6" },
               { label: "My Cart",         icon: ShoppingCart, path: "/customer/cart",     color: "#8b5cf6" },
               { label: "Wishlist",        icon: Heart,        path: "/customer/wishlist",  color: "#ec4899" },
-              { label: "Verification",   icon: ShieldCheck,  path: "/customer/verification", color: "#fbbf24" },
             ].map((item, i) => {
               const Icon = item.icon;
               return (

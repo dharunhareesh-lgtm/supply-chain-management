@@ -71,14 +71,22 @@ import RegisterLogistics from "./pages/RegisterLogistics";
 import WarehousePartnerships from "./pages/warehouse/WarehousePartnerships";
 import LogisticsPartnerships from "./pages/logistics/LogisticsPartnerships";
 
-import CustomerVerificationPage from "./pages/customer/CustomerVerificationPage";
+
 import ManageCustomers from "./pages/admin/ManageCustomers";
 import CustomerDetailView from "./pages/admin/CustomerDetailView";
 import BecomePartner from "./pages/BecomePartner";
 import AdminPartnerRequests from "./pages/admin/AdminPartnerRequests";
 import AdminPartnerDetail from "./pages/admin/AdminPartnerDetail";
-import CustomerVerifications from "./pages/admin/CustomerVerifications";
+
 import ForcePasswordChange from "./pages/ForcePasswordChange";
+import LandVerificationQueue from "./pages/admin/LandVerificationQueue";
+import LandVerificationReview from "./pages/admin/LandVerificationReview";
+import FpoVerificationQueue from "./pages/admin/FpoVerificationQueue";
+import FpoVerificationReview from "./pages/admin/FpoVerificationReview";
+import WarehouseApplications from "./pages/admin/WarehouseApplications";
+import LogisticsApplications from "./pages/admin/LogisticsApplications";
+import AdminMarketData from "./pages/admin/AdminMarketData";
+import AdminSystemMonitoring from "./pages/admin/AdminSystemMonitoring";
 
 function App() {
   return (
@@ -87,7 +95,6 @@ function App() {
         <FuturisticDashboardWrapper>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/customer/verification" element={<CustomerVerificationPage />} />
             <Route path="/admin/customers" element={
               <ProtectedRoute role="ADMIN">
                 <ManageCustomers />
@@ -110,9 +117,35 @@ function App() {
                 <AdminPartnerDetail />
               </ProtectedRoute>
             } />
-            <Route path="/admin/kyc-verifications" element={
+            <Route path="/admin/warehouse-applications" element={
               <ProtectedRoute role="ADMIN">
-                <CustomerVerifications />
+                <WarehouseApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logistics-applications" element={
+              <ProtectedRoute role="ADMIN">
+                <LogisticsApplications />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin/land-verifications" element={
+              <ProtectedRoute role="ADMIN">
+                <LandVerificationQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/land-verification/:id" element={
+              <ProtectedRoute role="ADMIN">
+                <LandVerificationReview />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/fpo-verifications" element={
+              <ProtectedRoute role="ADMIN">
+                <FpoVerificationQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/fpo-verification/:id" element={
+              <ProtectedRoute role="ADMIN">
+                <FpoVerificationReview />
               </ProtectedRoute>
             } />
 
@@ -393,7 +426,7 @@ function App() {
           <Route
             path="/supplier/forecast"
             element={
-              <ProtectedRoute role="SUPPLIER">
+              <ProtectedRoute role={["SUPPLIER", "ADMIN"]}>
                 <MarketForecast />
               </ProtectedRoute>
             }
@@ -402,7 +435,7 @@ function App() {
           <Route
             path="/supplier/price-explorer"
             element={
-              <ProtectedRoute role="SUPPLIER">
+              <ProtectedRoute role={["SUPPLIER", "ADMIN"]}>
                 <MarketPriceExplorer />
               </ProtectedRoute>
             }
@@ -623,6 +656,94 @@ function App() {
   element={
     <ProtectedRoute role="LOGISTICS">
       <LogisticsPartnerships />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Admin Platform Management Routes */}
+<Route
+  path="/admin/market-data"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <AdminMarketData />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/system-monitoring"
+  element={
+    <ProtectedRoute role="ADMIN">
+      <AdminSystemMonitoring />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Customer / Buyer Role Navigation Aliases */}
+<Route
+  path="/customer/market"
+  element={
+    <ProtectedRoute role="CUSTOMER">
+      <ComparePage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/customer/farmers"
+  element={
+    <ProtectedRoute role="CUSTOMER">
+      <Products />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/customer/track-order"
+  element={
+    <ProtectedRoute role="CUSTOMER">
+      <TrackOrder />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Farmer / Supplier Role Navigation Aliases */}
+<Route
+  path="/supplier/buyer-connections"
+  element={
+    <ProtectedRoute role="SUPPLIER">
+      <SupplierRevenue />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/supplier/orders"
+  element={
+    <ProtectedRoute role="SUPPLIER">
+      <SupplierRevenue />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/supplier/warehouse"
+  element={
+    <ProtectedRoute role="SUPPLIER">
+      <SupplierInsurance />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/supplier/logistics"
+  element={
+    <ProtectedRoute role="SUPPLIER">
+      <Tracking />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Logistics Route Optimization Alias */}
+<Route
+  path="/logistics/routes"
+  element={
+    <ProtectedRoute role="LOGISTICS">
+      <Tracking />
     </ProtectedRoute>
   }
 />

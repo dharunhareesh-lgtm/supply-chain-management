@@ -4,10 +4,10 @@ public class ForecastResponse {
 
     private String productName;
     private double currentPrice;
-    private double predicted7Days;
-    private double predicted15Days;
-    private double predicted30Days;
-    private double predicted60Days;
+    private Double predicted7Days;
+    private Double predicted15Days;
+    private Double predicted30Days;
+    private Double predicted60Days;
     private String trend;
     private Double confidenceScore;
     private String reason;
@@ -135,35 +135,35 @@ public class ForecastResponse {
         this.currentPrice = currentPrice;
     }
 
-    public double getPredicted7Days() {
+    public Double getPredicted7Days() {
         return predicted7Days;
     }
 
-    public void setPredicted7Days(double predicted7Days) {
+    public void setPredicted7Days(Double predicted7Days) {
         this.predicted7Days = predicted7Days;
     }
 
-    public double getPredicted15Days() {
+    public Double getPredicted15Days() {
         return predicted15Days;
     }
 
-    public void setPredicted15Days(double predicted15Days) {
+    public void setPredicted15Days(Double predicted15Days) {
         this.predicted15Days = predicted15Days;
     }
 
-    public double getPredicted30Days() {
+    public Double getPredicted30Days() {
         return predicted30Days;
     }
 
-    public void setPredicted30Days(double predicted30Days) {
+    public void setPredicted30Days(Double predicted30Days) {
         this.predicted30Days = predicted30Days;
     }
 
-    public double getPredicted60Days() {
+    public Double getPredicted60Days() {
         return predicted60Days;
     }
 
-    public void setPredicted60Days(double predicted60Days) {
+    public void setPredicted60Days(Double predicted60Days) {
         this.predicted60Days = predicted60Days;
     }
 

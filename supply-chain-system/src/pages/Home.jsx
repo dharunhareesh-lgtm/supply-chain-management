@@ -662,9 +662,9 @@ const AI_CARDS = [
   },
   {
     Icon: ShieldCheck, rgb: "16,185,129",
-    title: "AI Identity Verification Engine",
-    text: "Uses intelligent document understanding and identity verification to verify PAN details and build trusted customer profiles.",
-    features: ["PAN Verification", "Intelligent OCR Processing", "Name Similarity Matching", "Confidence Scoring", "Age Verification (18+)", "Trust Score Generation"],
+    title: "Secure Customer Engine",
+    text: "Uses OTP verification and encrypted authentication to verify credentials and build trusted customer profiles.",
+    features: ["Email OTP Verification", "Secure BCrypt Auth", "Rate-Limiting Protection", "Profile Scoring", "Trust Generation"],
   },
   {
     Icon: Package, rgb: "6,182,212",
@@ -1159,6 +1159,15 @@ function LoginModal({ open, onClose }) {
       localStorage.setItem("role", data.role);
       localStorage.setItem("supplierId", data.supplierId);
       localStorage.setItem("username", data.username);
+      if (data.warehouseId) {
+        localStorage.setItem("warehouseId", String(data.warehouseId));
+      }
+      if (data.warehouseName) {
+        localStorage.setItem("warehouseName", data.warehouseName);
+      }
+      if (data.role === "WAREHOUSE") {
+        localStorage.removeItem("managerCategory");
+      }
       if (data.token) localStorage.setItem("token", data.token);
       if (data.mustChangePassword) { localStorage.setItem("mustChangePassword", "true"); navigate("/change-password"); return; }
       const routes = { ADMIN:"/admin", SUPPLIER:"/supplier", CUSTOMER:"/customer", WAREHOUSE:"/warehouse", LOGISTICS:"/logistics", WAREHOUSE_MANAGER:"/warehouse/manager-dashboard" };

@@ -130,6 +130,9 @@ public class PartnerOnboardingService {
         request.setWebsite(dto.getWebsite());
         request.setDescription(dto.getDescription());
         request.setYearsOfExperience(dto.getYearsOfExperience());
+        request.setTotalCapacity(dto.getTotalCapacity());
+        request.setColdStorageAvailable(dto.getColdStorageAvailable());
+        request.setColdStorageCapacity(dto.getColdStorageCapacity());
         request.setStatus("PENDING");
 
         partnerRequestRepository.save(request);
@@ -178,6 +181,46 @@ public class PartnerOnboardingService {
         counts.put("APPROVED", partnerRequestRepository.countByStatus("APPROVED"));
         counts.put("REJECTED", partnerRequestRepository.countByStatus("REJECTED"));
         counts.put("MORE_INFORMATION_REQUIRED", partnerRequestRepository.countByStatus("MORE_INFORMATION_REQUIRED"));
+        return counts;
+    }
+
+    public List<String> resolveRolesForGroup(String roleGroup) {
+        if (roleGroup == null || roleGroup.isBlank() || "ALL".equalsIgnoreCase(roleGroup)) {
+            return Collections.emptyList();
+        }
+        if ("warehouse".equalsIgnoreCase(roleGroup)) {
+            return List.of("Warehouse", "Warehouse Manager", "WAREHOUSE", "WAREHOUSE_MANAGER");
+        }
+        if ("logistics".equalsIgnoreCase(roleGroup)) {
+            return List.of("Logistics Company", "Logistics Manager", "LOGISTICS");
+        }
+        return List.of(roleGroup);
+    }
+
+    public List<PartnerRegistrationRequest> getRequestsByRoleGroup(String roleGroup, String status) {
+        List<String> roles = resolveRolesForGroup(roleGroup);
+        if (roles.isEmpty()) {
+            if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+                return partnerRequestRepository.findByStatus(status.toUpperCase());
+            }
+            return partnerRequestRepository.findAllByOrderBySubmittedAtDesc();
+        }
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            return partnerRequestRepository.findByRoleRequestedInAndStatus(roles, status.toUpperCase());
+        }
+        return partnerRequestRepository.findByRoleRequestedIn(roles);
+    }
+
+    public Map<String, Long> getStatusCountsByRoleGroup(String roleGroup) {
+        List<String> roles = resolveRolesForGroup(roleGroup);
+        if (roles.isEmpty()) {
+            return getStatusCounts();
+        }
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("PENDING", partnerRequestRepository.countByRoleRequestedInAndStatus(roles, "PENDING"));
+        counts.put("APPROVED", partnerRequestRepository.countByRoleRequestedInAndStatus(roles, "APPROVED"));
+        counts.put("REJECTED", partnerRequestRepository.countByRoleRequestedInAndStatus(roles, "REJECTED"));
+        counts.put("MORE_INFORMATION_REQUIRED", partnerRequestRepository.countByRoleRequestedInAndStatus(roles, "MORE_INFORMATION_REQUIRED"));
         return counts;
     }
 
@@ -251,6 +294,10 @@ public class PartnerOnboardingService {
             warehouse.setCoverageRadiusKm(50.0); // default
             warehouse.setWorkingHours("9 AM - 6 PM");
             warehouse.setLastUpdated(LocalDateTime.now().toString());
+            warehouse.setTotalCapacity(request.getTotalCapacity());
+            warehouse.setColdStorageAvailable(request.getColdStorageAvailable());
+            warehouse.setColdStorageCapacity(request.getColdStorageCapacity());
+            warehouse.setManagerName(request.getContactPerson());
             WarehouseLocation savedWarehouse = warehouseLocationRepository.save(warehouse);
             log.info("[STAGE 3] Warehouse entity successfully created. Assigned ID: {}", savedWarehouse.getId());
         } else if ("LOGISTICS".equalsIgnoreCase(systemRole)) {

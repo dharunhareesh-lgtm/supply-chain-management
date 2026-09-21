@@ -16,6 +16,9 @@ public class PartnerRegistrationDTO {
     private String website;
     private String description;
     private Integer yearsOfExperience;
+    private Double totalCapacity;
+    private Boolean coldStorageAvailable;
+    private Double coldStorageCapacity;
 
     public String getOrganizationName() { return organizationName; }
     public void setOrganizationName(String organizationName) { this.organizationName = organizationName; }
@@ -58,4 +61,13 @@ public class PartnerRegistrationDTO {
 
     public Integer getYearsOfExperience() { return yearsOfExperience; }
     public void setYearsOfExperience(Integer yearsOfExperience) { this.yearsOfExperience = yearsOfExperience; }
+
+    public Double getTotalCapacity() { return totalCapacity; }
+    public void setTotalCapacity(Double totalCapacity) { this.totalCapacity = totalCapacity; }
+
+    public Boolean getColdStorageAvailable() { return coldStorageAvailable; }
+    public void setColdStorageAvailable(Boolean coldStorageAvailable) { this.coldStorageAvailable = coldStorageAvailable; }
+
+    public Double getColdStorageCapacity() { return coldStorageCapacity; }
+    public void setColdStorageCapacity(Double coldStorageCapacity) { this.coldStorageCapacity = coldStorageCapacity; }
 }

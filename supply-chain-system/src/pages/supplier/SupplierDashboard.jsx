@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Package, ShoppingCart, CheckCircle, TrendingUp, Plus, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  PageShell, PageHeader, StatCard, StatGrid, DashCard, CardHeader, DashBtn, EmptyState
+  PageShell, PageHeader, StatCard, StatGrid, DashCard, CardHeader, DashBadge, DashBtn, EmptyState
 } from "../../components/dashboard/DashboardEngine";
 
 function SupplierDashboard() {
@@ -17,9 +17,21 @@ function SupplierDashboard() {
   const [pendingOrders, setPendingOrders] = useState(0);
   const [deliveredOrders, setDeliveredOrders] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [verificationTier, setVerificationTier] = useState("UNVERIFIED");
 
   useEffect(() => {
     const supplierId = localStorage.getItem("supplierId");
+    
+    // Fetch verification status
+    fetch(`/suppliers/${supplierId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(sup => {
+        if (sup && sup.verificationTier) {
+          setVerificationTier(sup.verificationTier);
+        }
+      })
+      .catch(e => console.error("Failed to fetch supplier details", e));
+
     fetch(`/products/supplier/${supplierId}`)
       .then(r => r.json())
       .then(myProducts => {
@@ -40,6 +52,18 @@ function SupplierDashboard() {
 
   const supplierName = localStorage.getItem("username") || "Supplier";
 
+  const getBadgeStatus = (tier) => {
+    switch (tier) {
+      case "SELL_VERIFIED":
+      case "FPO_VERIFIED": return "APPROVED";
+      case "BASIC_REGISTERED":
+      case "BASIC_VERIFIED": return "PENDING";
+      case "SELL_PENDING":
+      case "FPO_PENDING": return "WARNING";
+      default: return "REJECTED";
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -47,7 +71,12 @@ function SupplierDashboard() {
         <SupplierSidebar />
         <PageShell>
           <PageHeader
-            title={`Welcome, ${supplierName}`}
+            title={
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <span>Welcome, {supplierName}</span>
+                <DashBadge status={getBadgeStatus(verificationTier)} label={verificationTier.replace("_", " ")} />
+              </div>
+            }
             subtitle="Your supply chain performance overview and quick actions"
             breadcrumb={["Supplier", "Dashboard"]}
             actions={

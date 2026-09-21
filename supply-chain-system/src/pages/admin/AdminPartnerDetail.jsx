@@ -42,7 +42,6 @@ function AdminPartnerDetail() {
     } catch (err) {
       console.error(err);
     } finally {
-      setRequest(false);
       setLoading(false);
     }
   };
@@ -134,6 +133,15 @@ function AdminPartnerDetail() {
                 <InfoRow label="Organization Name" value={request.organizationName} />
                 <InfoRow label="Business Type" value={request.businessType} />
                 <InfoRow label="Role Requested" value={request.roleRequested} />
+                {request.totalCapacity != null && (
+                  <InfoRow label="Total Storage Capacity" value={`${request.totalCapacity} MT`} />
+                )}
+                {request.coldStorageAvailable != null && (
+                  <InfoRow
+                    label="Cold Storage Available"
+                    value={request.coldStorageAvailable ? `Yes (${request.coldStorageCapacity || 0} MT)` : "No"}
+                  />
+                )}
                 <InfoRow label="GST Number" value={request.gstNumber} />
                 <InfoRow label="Website" value={request.website} />
                 <InfoRow label="Experience" value={request.yearsOfExperience ? `${request.yearsOfExperience} years` : "—"} />

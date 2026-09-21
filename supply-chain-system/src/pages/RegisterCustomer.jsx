@@ -1,19 +1,28 @@
 /**
- * RegisterCustomer.jsx — Premium Customer Registration
- * All business logic, validation, OTP flow, API calls, and field names preserved exactly.
- * Only UI/UX/layout/animations redesigned.
+ * RegisterCustomer.jsx — Simplified Customer Registration
+ * 
+ * Flow:
+ * 1. Full Name
+ * 2. Phone Number
+ * 3. Location
+ * 4. Email
+ * 5. Send OTP to Email
+ * 6. OTP verification
+ * 7. Create Password
+ * 8. Confirm Password
+ * 9. Account Created
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, Lock, KeyRound, ArrowRight, ShieldCheck, Phone,
-  CreditCard, Calendar, Mail, Eye, EyeOff, CheckCircle2,
+  User, Lock, KeyRound, ArrowRight, Phone,
+  Mail, MapPin, CheckCircle2, ShieldCheck
 } from "lucide-react";
 import {
   OnboardingPage, OnboardingNav, GlassCard, PremiumInput, PremiumPasswordInput,
   SubmitButton, SectionTitle, FieldError, ServerError, StaggerForms,
-  SuccessScreen, PasswordStrength, cardVariants, TOKENS as T, EASE,
+  PasswordStrength, cardVariants, TOKENS as T, EASE,
 } from "../components/site/OnboardingLayout";
 
 /* ─── OTP Send/Verify button ─────────────────────────────────────────────── */
@@ -26,9 +35,9 @@ function OtpButton({ onClick, disabled, children }) {
       whileHover={!disabled ? { scale: 1.03 } : undefined}
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       style={{
-        padding: "0 18px", height: 44, borderRadius: 12, flexShrink: 0,
-        background: disabled ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.12)",
-        border: `1px solid ${disabled ? "rgba(255,255,255,0.06)" : "rgba(16,185,129,0.35)"}`,
+        padding: "0 18px", height: 58, borderRadius: 16, flexShrink: 0,
+        background: disabled ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.14)",
+        border: `1px solid ${disabled ? "rgba(255,255,255,0.08)" : "rgba(16,185,129,0.4)"}`,
         color: disabled ? T.subtle : T.em,
         fontSize: 13, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer",
         whiteSpace: "nowrap", transition: "all 0.22s",
@@ -58,99 +67,54 @@ function VerifiedBadge() {
   );
 }
 
-/* ── Input row for email + OTP button ───────────────────────────────────── */
-function EmailRow({ email, setEmail, setError, isEmailValid, otpVerified, otpSent, sendingOtp, handleSendOtp }) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
-        Email Address *
-      </label>
-      <div style={{ display: "flex", gap: 10 }}>
-        <div style={{ position: "relative", flex: 1 }}>
-          <Mail size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: focused ? T.em : T.subtle, transition: "color 0.2s", pointerEvents: "none" }} />
-          <input
-            type="email"
-            placeholder="Enter valid email"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setError(""); }}
-            disabled={otpVerified}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            style={{
-              width: "100%", height: 58, paddingLeft: 48, paddingRight: 18,
-              background: "rgba(9,14,22,0.6)",
-              border: `1.5px solid ${focused ? T.em : "rgba(255,255,255,0.08)"}`,
-              borderRadius: 16, fontSize: 15, color: T.text, outline: "none",
-              boxShadow: focused ? `0 0 0 4px ${T.emDim}` : "none",
-              transition: "border-color 0.22s, box-shadow 0.22s",
-              boxSizing: "border-box", opacity: otpVerified ? 0.6 : 1,
-            }}
-          />
-        </div>
-        <OtpButton
-          onClick={handleSendOtp}
-          disabled={sendingOtp || !email || otpVerified || !isEmailValid()}
-        >
-          {otpVerified ? "Verified ✓" : sendingOtp ? "Sending…" : otpSent ? "Resend OTP" : "Send OTP"}
-        </OtpButton>
-      </div>
-      {otpVerified && <VerifiedBadge />}
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════════════════ */
 function RegisterCustomer() {
   const navigate = useNavigate();
 
-  // Registration Fields
+  // 1. Name, 2. Phone, 3. Location, 4. Email
   const [fullName,        setFullName]        = useState("");
-  const [email,           setEmail]           = useState("");
   const [mobileNumber,    setMobileNumber]    = useState("");
-  const [dateOfBirth,     setDateOfBirth]     = useState("");
-  const [panNumber,       setPanNumber]       = useState("");
+  const [location,        setLocation]        = useState("");
+  const [email,           setEmail]           = useState("");
+
+  // 5. & 6. OTP State
+  const [otp,             setOtp]             = useState("");
+  const [otpSent,         setOtpSent]         = useState(false);
+  const [otpVerified,     setOtpVerified]     = useState(false);
+  const [sendingOtp,      setSendingOtp]      = useState(false);
+  const [verifyingOtp,    setVerifyingOtp]    = useState(false);
+  const [cooldown,        setCooldown]        = useState(0);
+
+  // 7. & 8. Password
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword,    setShowPassword]    = useState(false);
+  const [showConfirm,     setShowConfirm]     = useState(false);
 
-  // OTP State
-  const [otp,           setOtp]           = useState("");
-  const [otpSent,       setOtpSent]       = useState(false);
-  const [otpVerified,   setOtpVerified]   = useState(false);
-  const [sendingOtp,    setSendingOtp]    = useState(false);
-  const [verifyingOtp,  setVerifyingOtp]  = useState(false);
-  const [showPassword,  setShowPassword]  = useState(false);
+  // Status state
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState("");
+  const [successMsg,      setSuccessMsg]      = useState("");
 
-  // General state
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(c => (c > 0 ? c - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
-  // Password visibility
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // ─── Validation helpers (unchanged logic) ────────────────────────────
-  const isNameValid    = () => fullName.trim().length >= 3 && fullName.trim().length <= 100 && /^[A-Za-z\s]+$/.test(fullName);
-  const isEmailValid   = () => email && email.includes("@") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isPhoneValid   = () => /^\d{10}$/.test(mobileNumber);
-  const isDobValid     = () => {
-    if (!dateOfBirth) return false;
-    const d = new Date(dateOfBirth), t = new Date();
-    let age = t.getFullYear() - d.getFullYear();
-    const m = t.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-    return age >= 18;
-  };
-  const isPanValid          = () => /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber.toUpperCase().replace(/\s/g, ""));
-  const isPasswordValid     = () => password && password.length >= 6;
-  const isConfirmPwValid    = () => confirmPassword && password === confirmPassword;
-  const isFormValid         = () => isNameValid() && isEmailValid() && isPhoneValid() && isDobValid() && isPanValid() && isPasswordValid() && isConfirmPwValid() && otpVerified;
-
-  const getMaxDobDate = () => {
-    const t = new Date();
-    return `${t.getFullYear() - 18}-${String(t.getMonth() + 1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-  };
+  // ─── Validation helpers ────────────────────────────────────────────────
+  const isNameValid     = () => fullName.trim().length >= 3 && fullName.trim().length <= 100 && /^[A-Za-z\s]+$/.test(fullName);
+  const isPhoneValid    = () => /^\d{10}$/.test(mobileNumber.trim());
+  const isLocationValid = () => location.trim().length > 0;
+  const isEmailValid    = () => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isPasswordValid = () => password && password.length >= 6;
+  const isConfirmPwValid= () => confirmPassword && password === confirmPassword;
+  const isFormValid     = () => isNameValid() && isPhoneValid() && isLocationValid() && isEmailValid() && otpVerified && isPasswordValid() && isConfirmPwValid();
 
   // Password strength checks
   const pwChecks = {
@@ -162,9 +126,10 @@ function RegisterCustomer() {
     match:   isConfirmPwValid(),
   };
 
-  // ─── OTP handlers (unchanged logic) ──────────────────────────────────
+  // ─── OTP handlers ──────────────────────────────────────────────────────
   const handleSendOtp = async () => {
     if (!isEmailValid()) { setError("Please enter a valid email address first."); return; }
+    if (cooldown > 0) return;
     setError(""); setSendingOtp(true);
     try {
       const res = await fetch("/api/customer/auth/send-otp", {
@@ -173,10 +138,18 @@ function RegisterCustomer() {
       });
       let data;
       try { data = await res.json(); } catch { data = { success: false, message: `Server error (${res.status})` }; }
-      if (res.ok && data.success) { setOtpSent(true); setError(""); alert("✓ OTP has been sent to your email: " + email); }
-      else setError(data.message || "Unable to send OTP email.");
-    } catch { setError("Failed to connect to backend server."); }
-    finally { setSendingOtp(false); }
+      if (res.ok && data.success) {
+        setOtpSent(true);
+        setError("");
+        setCooldown(30);
+      } else {
+        setError(data.message || "Unable to send OTP email.");
+      }
+    } catch {
+      setError("Failed to connect to backend server.");
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -189,37 +162,58 @@ function RegisterCustomer() {
       });
       let data;
       try { data = await res.json(); } catch { data = { success: false, message: `Server error (${res.status})` }; }
-      if (res.ok && data.success) { setOtpVerified(true); setError(""); alert("✓ Email OTP verified successfully!"); }
-      else setError(data.message || "Invalid or Expired OTP.");
-    } catch { setError("Failed to verify OTP. Connection error."); }
-    finally { setVerifyingOtp(false); }
+      if (res.ok && data.success) {
+        setOtpVerified(true);
+        setError("");
+      } else {
+        setError(data.message || "Invalid or Expired OTP.");
+      }
+    } catch {
+      setError("Failed to verify OTP. Connection error.");
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
-  const handlePanChange = e => setPanNumber(e.target.value.toUpperCase().replace(/\s/g, ""));
-
-  // ─── Submit (unchanged logic) ─────────────────────────────────────────
-  const handleRegister = async e => {
+  // ─── Registration submit ───────────────────────────────────────────────
+  const handleRegister = async (e) => {
     e.preventDefault(); setError("");
-    if (!isNameValid())    { setError("Full Name must contain only alphabets and spaces, and be between 3 and 100 characters."); return; }
-    if (!isPhoneValid())   { setError("Phone Number must be exactly 10 digits."); return; }
-    if (!isDobValid())     { setError("You must be at least 18 years old."); return; }
-    if (!isPanValid())     { setError("Invalid PAN Number format. Must match ^[A-Z]{5}[0-9]{4}[A-Z]$"); return; }
-    if (!otpVerified)      { setError("Please verify Email OTP before completing registration."); return; }
+    if (!isNameValid())      { setError("Full Name must contain only alphabets and spaces (3-100 characters)."); return; }
+    if (!isPhoneValid())     { setError("Phone Number must be exactly 10 digits."); return; }
+    if (!isLocationValid())  { setError("Location is required."); return; }
+    if (!isEmailValid())     { setError("Please enter a valid email address."); return; }
+    if (!otpVerified)        { setError("Please verify Email OTP before completing registration."); return; }
+    if (!isPasswordValid())  { setError("Password must be at least 6 characters."); return; }
     if (!isConfirmPwValid()) { setError("Passwords do not match."); return; }
+
     setLoading(true);
     try {
       const res = await fetch("/api/customer/auth/register", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, mobileNumber, email, dateOfBirth, panNumber, password, otp }),
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          mobileNumber: mobileNumber.trim(),
+          location: location.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          confirmPassword,
+          otp: otp.trim(),
+        }),
       });
       const data = await res.json();
-      if (data.success) { alert("Registration Successful! Default level set to Normal Customer (Trust Score: 50)."); navigate("/login"); }
-      else setError(data.message || "Registration failed. Please try again.");
-    } catch { setError("Connection error. Please check your network."); }
-    finally { setLoading(false); }
+      if (res.ok && data.success) {
+        setSuccessMsg("Account created successfully! Redirecting to login...");
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        setError(data.message || "Registration failed. Please try again.");
+      }
+    } catch {
+      setError("Connection error. Please check your network.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────
   return (
     <OnboardingPage>
       <OnboardingNav backTo="/login" backLabel="Back to Login" />
@@ -236,58 +230,32 @@ function RegisterCustomer() {
               Create Your Dravix Account
             </h1>
             <p style={{ margin: 0, fontSize: 15, color: T.muted, lineHeight: 1.7, maxWidth: 500, marginInline: "auto" }}>
-              Create your customer account &amp; secure profile with email OTP verification.
+              Sign up with your details, verify via email OTP, and start purchasing directly from the agricultural supply chain.
             </p>
           </motion.div>
 
-          {/* Security notice */}
-          <GlassCard variants={cardVariants} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "18px 24px" }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(16,185,129,0.1)", color: T.em, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ShieldCheck size={18} />
-            </div>
-            <div>
-              <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 700, color: T.text }}>Duplicate Account Protection</p>
-              <p style={{ margin: 0, fontSize: 13, color: T.muted, lineHeight: 1.6 }}>
-                PAN card number is used strictly for duplicate account prevention and security verification. Never shared or stored in plain text.
-              </p>
-            </div>
-          </GlassCard>
-
           <form onSubmit={handleRegister} noValidate style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            {/* Card 1 — Identity */}
+            {/* Card 1 — Personal & Location Information */}
             <GlassCard variants={cardVariants}>
-              <SectionTitle icon={User}>Personal Information</SectionTitle>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 20 }}>
+              <SectionTitle icon={User}>Personal &amp; Contact Details</SectionTitle>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
                 <div>
                   <PremiumInput
                     label="Full Name *"
                     icon={User}
                     type="text"
-                    placeholder="Full name as per identity documents"
+                    placeholder="Enter your full name"
                     value={fullName}
                     onChange={e => { setFullName(e.target.value); setError(""); }}
                     required
                   />
-                  {fullName && !isNameValid() && <FieldError message="Only letters & spaces (3-100 characters)" />}
+                  {fullName && !isNameValid() && <FieldError message="Letters & spaces only (3-100 characters)" />}
                 </div>
 
                 <div>
                   <PremiumInput
-                    label="PAN Number *"
-                    icon={CreditCard}
-                    type="text"
-                    placeholder="e.g. ABCDE1234F"
-                    value={panNumber}
-                    onChange={handlePanChange}
-                    required
-                  />
-                  {panNumber && !isPanValid() && <FieldError message="Must be in format ABCDE1234F" />}
-                </div>
-
-                <div>
-                  <PremiumInput
-                    label="Mobile Number *"
+                    label="Phone Number *"
                     icon={Phone}
                     type="tel"
                     placeholder="10-digit mobile number"
@@ -298,43 +266,67 @@ function RegisterCustomer() {
                   {mobileNumber && !isPhoneValid() && <FieldError message="Must be exactly 10 digits" />}
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: T.muted, marginBottom: 8 }}>Date of Birth *</label>
-                  <div style={{ position: "relative" }}>
-                    <Calendar size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: T.subtle, pointerEvents: "none" }} />
-                    <input
-                      type="date"
-                      max={getMaxDobDate()}
-                      value={dateOfBirth}
-                      onChange={e => { setDateOfBirth(e.target.value); setError(""); }}
-                      required
-                      style={{ width: "100%", height: 58, paddingLeft: 48, paddingRight: 18, background: "rgba(9,14,22,0.6)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: 16, fontSize: 15, color: T.text, outline: "none", transition: "border-color 0.22s, box-shadow 0.22s", boxSizing: "border-box", colorScheme: "dark" }}
-                      onFocus={e => { e.currentTarget.style.borderColor = T.em; e.currentTarget.style.boxShadow = `0 0 0 4px ${T.emDim}`; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                  {dateOfBirth && !isDobValid() && <FieldError message="You must be at least 18 years old" />}
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <PremiumInput
+                    label="Location *"
+                    icon={MapPin}
+                    type="text"
+                    placeholder="City, District, State (e.g. Coimbatore, Tamil Nadu)"
+                    value={location}
+                    onChange={e => { setLocation(e.target.value); setError(""); }}
+                    required
+                  />
+                  {location && !isLocationValid() && <FieldError message="Location cannot be empty" />}
                 </div>
               </div>
             </GlassCard>
 
-            {/* Card 2 — Email + OTP */}
+            {/* Card 2 — Email + OTP Verification */}
             <GlassCard variants={cardVariants}>
               <SectionTitle icon={Mail} accentRgb="6,182,212">Email Verification</SectionTitle>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                <EmailRow
-                  email={email}
-                  setEmail={setEmail}
-                  setError={setError}
-                  isEmailValid={isEmailValid}
-                  otpVerified={otpVerified}
-                  otpSent={otpSent}
-                  sendingOtp={sendingOtp}
-                  handleSendOtp={handleSendOtp}
-                />
-                {email && !isEmailValid() && <FieldError message="Invalid email format" />}
+                <div>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+                    Email Address *
+                  </label>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <Mail size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: T.subtle, pointerEvents: "none" }} />
+                      <input
+                        type="email"
+                        placeholder="Enter valid email address"
+                        value={email}
+                        onChange={e => { setEmail(e.target.value); setError(""); }}
+                        disabled={otpVerified}
+                        style={{
+                          width: "100%", height: 58, paddingLeft: 48, paddingRight: 18,
+                          background: "rgba(9,14,22,0.6)",
+                          border: "1.5px solid rgba(255,255,255,0.08)",
+                          borderRadius: 16, fontSize: 15, color: T.text, outline: "none",
+                          boxSizing: "border-box", opacity: otpVerified ? 0.6 : 1,
+                        }}
+                      />
+                    </div>
+                    <OtpButton
+                      onClick={handleSendOtp}
+                      disabled={sendingOtp || !email || otpVerified || !isEmailValid() || cooldown > 0}
+                    >
+                      {otpVerified
+                        ? "Verified ✓"
+                        : sendingOtp
+                        ? "Sending…"
+                        : cooldown > 0
+                        ? `Resend in ${cooldown}s`
+                        : otpSent
+                        ? "Resend OTP"
+                        : "Send OTP"}
+                    </OtpButton>
+                  </div>
+                  {email && !isEmailValid() && <FieldError message="Invalid email format" />}
+                  {otpVerified && <VerifiedBadge />}
+                </div>
 
-                {/* OTP input */}
+                {/* OTP input appears when OTP has been dispatched */}
                 <AnimatePresence>
                   {otpSent && !otpVerified && (
                     <motion.div
@@ -345,7 +337,7 @@ function RegisterCustomer() {
                     >
                       <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 16, padding: "16px 20px" }}>
                         <p style={{ margin: "0 0 14px", fontSize: 13, color: "#fcd34d" }}>
-                          ✓ OTP sent to {email}. Check your inbox or spam folder.
+                          ✓ Verification code sent to {email}. Check your inbox.
                         </p>
                         <div style={{ display: "flex", gap: 10 }}>
                           <div style={{ flex: 1, position: "relative" }}>
@@ -356,12 +348,10 @@ function RegisterCustomer() {
                               value={otp}
                               onChange={e => { setOtp(e.target.value); setError(""); }}
                               maxLength={6}
-                              style={{ width: "100%", height: 52, paddingLeft: 48, paddingRight: 18, background: "rgba(9,14,22,0.6)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: 14, fontSize: 15, color: T.text, outline: "none", transition: "border-color 0.22s", boxSizing: "border-box" }}
-                              onFocus={e => { e.currentTarget.style.borderColor = T.em; e.currentTarget.style.boxShadow = `0 0 0 4px ${T.emDim}`; }}
-                              onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
+                              style={{ width: "100%", height: 52, paddingLeft: 48, paddingRight: 18, background: "rgba(9,14,22,0.6)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: 14, fontSize: 15, color: T.text, outline: "none", boxSizing: "border-box" }}
                             />
                           </div>
-                          <OtpButton onClick={handleVerifyOtp} disabled={verifyingOtp || !otp}>
+                          <OtpButton onClick={handleVerifyOtp} disabled={verifyingOtp || !otp || otp.length < 6}>
                             {verifyingOtp ? "Verifying…" : "Verify OTP"}
                           </OtpButton>
                         </div>
@@ -376,12 +366,12 @@ function RegisterCustomer() {
             <GlassCard variants={cardVariants}>
               <SectionTitle icon={Lock} accentRgb="139,92,246">Set Password</SectionTitle>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
                   <div>
                     <PremiumPasswordInput
-                      label="Password *"
+                      label="Create Password *"
                       icon={Lock}
-                      placeholder="Create password (min 6 characters)"
+                      placeholder="Min 6 characters"
                       value={password}
                       onChange={e => { setPassword(e.target.value); setError(""); }}
                       required
@@ -394,7 +384,7 @@ function RegisterCustomer() {
                     <PremiumPasswordInput
                       label="Confirm Password *"
                       icon={Lock}
-                      placeholder="Confirm password"
+                      placeholder="Re-enter password"
                       value={confirmPassword}
                       onChange={e => { setConfirmPassword(e.target.value); setError(""); }}
                       required
@@ -405,14 +395,27 @@ function RegisterCustomer() {
                   </div>
                 </div>
 
-                {/* Password strength */}
                 {password && <PasswordStrength checks={pwChecks} />}
               </div>
             </GlassCard>
 
-            {/* Error + Submit */}
+            {/* Error or Success notification */}
             <ServerError message={error} />
+            {successMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  padding: "14px 18px", borderRadius: 14,
+                  background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)",
+                  color: "#10b981", fontSize: 14, fontWeight: 600, textAlign: "center"
+                }}
+              >
+                ✓ {successMsg}
+              </motion.div>
+            )}
 
+            {/* Submit */}
             <motion.div variants={cardVariants}>
               <SubmitButton loading={loading} disabled={!isFormValid()}>
                 Register Customer Account <ArrowRight size={18} />

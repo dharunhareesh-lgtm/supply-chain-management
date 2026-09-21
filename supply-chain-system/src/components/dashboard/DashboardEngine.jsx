@@ -29,7 +29,7 @@
 
 import "./dashboard.css";
 import React, { useState, useRef, useEffect, Fragment } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -81,6 +81,7 @@ export function PremiumSidebar({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.clear();
@@ -90,56 +91,104 @@ export function PremiumSidebar({
   let lastSection = null;
 
   return (
-    <div className={`dash-sidebar${collapsed ? " collapsed" : ""}`}>
+    <aside className={`dash-sidebar${collapsed ? " collapsed" : ""}`} aria-label={panelTitle}>
       <div className="dash-sidebar-head">
-        <div className="dash-sidebar-logo">{panelIconLetter}</div>
+        <div className="dash-sidebar-logo" title={panelTitle}>{panelIconLetter}</div>
         {!collapsed && <span className="dash-sidebar-title">{panelTitle}</span>}
         {collapsible && (
           <button
             className="dash-sidebar-toggle"
             onClick={() => setCollapsed(c => !c)}
-            aria-label={collapsed ? "Expand" : "Collapse"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
+            {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           </button>
         )}
       </div>
 
-      {navItems.map((item, idx) => {
-        const showSection = !collapsed && item.section && item.section !== lastSection;
-        if (item.section) lastSection = item.section;
-        const Icon = item.icon;
-        const badgeCount = badges[item.to] ?? 0;
+      <nav className="dash-sidebar-nav">
+        {navItems.map((item, idx) => {
+          const showSection = !collapsed && item.section && item.section !== lastSection;
+          if (item.section) lastSection = item.section;
+          const Icon = item.icon;
+          const badgeCount = item.badge !== undefined ? item.badge : (badges[item.to] ?? 0);
 
-        return (
-          <Fragment key={item.isLogout ? `logout-${idx}` : item.to}>
-            {showSection && (
-              <>
-                <hr className="dash-section-divider" />
-                <span className="dash-section-label">{item.section}</span>
-              </>
-            )}
-            {item.isLogout ? (
-              <button className="dash-nav-item dash-logout" onClick={handleLogout} title={collapsed ? item.label : undefined}>
-                <LogOut className="dash-nav-icon" />
-                {!collapsed && <span className="dash-nav-label">{item.label}</span>}
-              </button>
-            ) : (
-              <NavLink
-                to={item.to}
-                end={item.exact}
-                className={({ isActive }) => `dash-nav-item${isActive ? " active" : ""}`}
-                title={collapsed ? item.label : undefined}
-              >
-                {Icon && <Icon className="dash-nav-icon" />}
-                {!collapsed && <span className="dash-nav-label">{item.label}</span>}
-                {!collapsed && badgeCount > 0 && <span className="dash-nav-badge">{badgeCount}</span>}
-              </NavLink>
-            )}
-          </Fragment>
-        );
-      })}
-    </div>
+          const isCurrentlyActive = item.to
+            ? (item.exact
+                ? location.pathname === item.to
+                : location.pathname === item.to || location.pathname.startsWith(item.to + "/"))
+            : false;
+
+          return (
+            <Fragment key={item.isLogout ? `logout-${idx}` : (item.to || item.label || idx)}>
+              {showSection && (
+                <div className="dash-section-wrapper">
+                  <hr className="dash-section-divider" />
+                  <span className="dash-section-label">{item.section}</span>
+                </div>
+              )}
+
+              {item.isLogout ? (
+                <button
+                  type="button"
+                  className="dash-nav-item dash-logout"
+                  onClick={handleLogout}
+                  title={collapsed ? item.label : undefined}
+                  data-tooltip={item.label}
+                >
+                  <span className="dash-nav-icon-wrap">
+                    <LogOut className="dash-nav-icon" />
+                  </span>
+                  {!collapsed && <span className="dash-nav-label">{item.label}</span>}
+                  {collapsed && <span className="dash-hover-tooltip">{item.label}</span>}
+                </button>
+              ) : item.onClick ? (
+                <button
+                  type="button"
+                  className={`dash-nav-item dash-action-btn${item.highlight ? " dash-highlight-btn" : ""}`}
+                  onClick={item.onClick}
+                  title={collapsed ? item.label : undefined}
+                  data-tooltip={item.label}
+                >
+                  <span className="dash-nav-icon-wrap">
+                    {Icon && <Icon className="dash-nav-icon" />}
+                  </span>
+                  {!collapsed && <span className="dash-nav-label">{item.label}</span>}
+                  {!collapsed && item.chip && (
+                    <span className="dash-nav-chip">{item.chip}</span>
+                  )}
+                  {!collapsed && badgeCount > 0 && (
+                    <span className="dash-nav-badge">{badgeCount}</span>
+                  )}
+                  {collapsed && <span className="dash-hover-tooltip">{item.label}</span>}
+                </button>
+              ) : (
+                <NavLink
+                  to={item.to}
+                  end={item.exact}
+                  className={`dash-nav-item${isCurrentlyActive ? " active" : ""}${item.highlight ? " dash-highlight-item" : ""}`}
+                  title={collapsed ? item.label : undefined}
+                  data-tooltip={item.label}
+                >
+                  <span className="dash-nav-icon-wrap">
+                    {Icon && <Icon className="dash-nav-icon" />}
+                  </span>
+                  {!collapsed && <span className="dash-nav-label">{item.label}</span>}
+                  {!collapsed && item.chip && (
+                    <span className="dash-nav-chip">{item.chip}</span>
+                  )}
+                  {!collapsed && badgeCount > 0 && (
+                    <span className="dash-nav-badge">{badgeCount}</span>
+                  )}
+                  {collapsed && <span className="dash-hover-tooltip">{item.label}</span>}
+                </NavLink>
+              )}
+            </Fragment>
+          );
+        })}
+      </nav>
+    </aside>
   );
 }
 

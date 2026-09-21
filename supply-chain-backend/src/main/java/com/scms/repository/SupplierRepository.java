@@ -8,4 +8,8 @@ public interface SupplierRepository
 
     Supplier findFirstByEmail(String email);
 
+    Supplier findFirstByPhone(String phone);
+
+    java.util.List<Supplier> findBySupplierType(String supplierType);
+
 }

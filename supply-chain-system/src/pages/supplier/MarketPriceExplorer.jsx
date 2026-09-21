@@ -4,10 +4,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SupplierSidebar from "../../components/SupplierSidebar";
+import AdminSidebar from "../../components/AdminSidebar";
 import Navbar from "../../components/Navbar";
 import FuturisticDashboardWrapper from "../../components/FuturisticDashboardWrapper";
 import {
-  Search, Info, Calendar, Layers, ShieldCheck, MapPin, AlertCircle, FileText
+  Search, Info, Calendar, Layers, ShieldCheck, MapPin, AlertCircle, FileText, Clock, RefreshCw
 } from "lucide-react";
 import {
   PageShell, PageHeader, DashCard, CardHeader,
@@ -159,11 +160,27 @@ function MarketPriceExplorer() {
     }
   };
 
+  const getFreshnessLabel = (marketDateStr) => {
+    if (!marketDateStr) return { text: "Observation Date Not Reported", color: "#94a3b8", badge: "UNSPECIFIED" };
+    let obsDate = new Date(marketDateStr);
+    if (isNaN(obsDate.getTime()) && marketDateStr.includes("/")) {
+      const parts = marketDateStr.split("/");
+      if (parts.length === 3) obsDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    }
+    if (isNaN(obsDate.getTime())) return { text: `Observed on ${marketDateStr}`, color: "#94a3b8", badge: "REPORTED" };
+    const diffTime = Math.abs(new Date() - obsDate);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return { text: `Live Official Observation (${marketDateStr})`, color: "#10b981", badge: "TODAY" };
+    if (diffDays === 1) return { text: `Yesterday's Observation (${marketDateStr})`, color: "#34d399", badge: "YESTERDAY" };
+    if (diffDays <= 7) return { text: `Observed ${diffDays} days ago (${marketDateStr})`, color: "#60a5fa", badge: "RECENT" };
+    return { text: `Historical Mandi Observation (${marketDateStr})`, color: "#fbbf24", badge: "HISTORICAL" };
+  };
+
   return (
     <>
       <Navbar />
       <div className="layout">
-        <SupplierSidebar />
+        {localStorage.getItem("role") === "ADMIN" ? <AdminSidebar /> : <SupplierSidebar />}
         <PageShell>
           <PageHeader
             title="Market Price Explorer"
@@ -171,7 +188,7 @@ function MarketPriceExplorer() {
             breadcrumb={["Supplier", "Price Explorer"]}
           />
 
-          <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "24px", padding: "0 4px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "24px", padding: "0 4px 24px" }}>
           
           {/* Query Selector Card */}
           <DashCard>
@@ -279,16 +296,38 @@ function MarketPriceExplorer() {
               </DashSelect>
 
               {error && (
-                <div style={{ padding: "12px", borderRadius: "8px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#EF4444", fontSize: "13px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                    <AlertCircle size={16} />
+                <div style={{ padding: "14px", borderRadius: "10px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#EF4444", fontSize: "13px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
                     <strong>{error}</strong>
                   </div>
                   {errorDesc && (
-                    <span style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.7)", marginLeft: "22px" }}>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", marginLeft: "24px", lineHeight: "1.4" }}>
                       {errorDesc}
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    style={{
+                      alignSelf: "flex-start",
+                      marginLeft: "24px",
+                      marginTop: "4px",
+                      background: "rgba(239, 68, 68, 0.15)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      color: "#fca5a5",
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "11.5px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    <RefreshCw size={12} /> Retry
+                  </button>
                 </div>
               )}
 
@@ -325,6 +364,33 @@ function MarketPriceExplorer() {
                       subtitle="Latest available government mandi observation"
                       icon={ShieldCheck}
                     />
+
+                    {/* Freshness Indicator Banner */}
+                    {(() => {
+                      const freshness = getFreshnessLabel(result.marketDate);
+                      return (
+                        <div style={{
+                          margin: "16px 0 20px",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          background: "rgba(255,255,255,0.03)",
+                          border: `1px solid ${freshness.color}40`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: "8px"
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <Clock size={15} style={{ color: freshness.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: "12.5px", color: "#fff", fontWeight: "600" }}>{freshness.text}</span>
+                          </div>
+                          <span style={{ fontSize: "10px", fontWeight: "800", color: freshness.color, background: `${freshness.color}20`, padding: "2px 8px", borderRadius: "6px", letterSpacing: "0.05em" }}>
+                            {freshness.badge}
+                          </span>
+                        </div>
+                      );
+                    })()}
 
                     {/* Main Price Card */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginTop: "24px", marginBottom: "24px" }}>

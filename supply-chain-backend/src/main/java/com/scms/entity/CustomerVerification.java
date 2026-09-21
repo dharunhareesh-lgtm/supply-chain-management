@@ -15,7 +15,7 @@ public class CustomerVerification {
     private String email;
 
     @Column(nullable = false)
-    private String documentType; // PAN, DRIVING_LICENSE, VOTER_ID, PASSPORT
+    private String documentType; // DRIVING_LICENSE, VOTER_ID, PASSPORT
 
     private String gstNumber;
 
@@ -34,10 +34,7 @@ public class CustomerVerification {
     private LocalDateTime reviewedAt;
 
     private Integer ocrAttemptCount = 0;
-
     private Integer riskScore = 0;
-
-    private String encryptedPan;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -80,9 +77,6 @@ public class CustomerVerification {
 
     public Integer getRiskScore() { return riskScore; }
     public void setRiskScore(Integer riskScore) { this.riskScore = riskScore; }
-
-    public String getEncryptedPan() { return encryptedPan; }
-    public void setEncryptedPan(String encryptedPan) { this.encryptedPan = encryptedPan; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

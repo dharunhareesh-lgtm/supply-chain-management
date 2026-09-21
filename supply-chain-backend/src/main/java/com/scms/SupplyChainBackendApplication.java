@@ -20,7 +20,12 @@ public class SupplyChainBackendApplication {
 		} catch (Exception e) {
 			System.err.println("Could not load root .env file: " + e.getMessage());
 		}
-		SpringApplication.run(SupplyChainBackendApplication.class, args);
+		SpringApplication app = new SpringApplication(SupplyChainBackendApplication.class);
+		if ("true".equalsIgnoreCase(System.getProperty("seed.historical")) || "true".equalsIgnoreCase(System.getProperty("seed.historical.test"))) {
+			System.out.println("[Bootstrap] Seeder mode detected (seed.historical / seed.historical.test). Disabling web server.");
+			app.setWebApplicationType(org.springframework.boot.WebApplicationType.NONE);
+		}
+		app.run(args);
 	}
 
 	@org.springframework.context.annotation.Bean

@@ -17,4 +17,10 @@ public interface PartnerRegistrationRequestRepository extends JpaRepository<Part
     long countByStatus(String status);
 
     List<PartnerRegistrationRequest> findAllByOrderBySubmittedAtDesc();
+
+    List<PartnerRegistrationRequest> findByRoleRequestedIn(List<String> roles);
+
+    List<PartnerRegistrationRequest> findByRoleRequestedInAndStatus(List<String> roles, String status);
+
+    long countByRoleRequestedInAndStatus(List<String> roles, String status);
 }

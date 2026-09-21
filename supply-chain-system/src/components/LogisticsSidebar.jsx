@@ -1,47 +1,41 @@
 /**
- * LogisticsSidebar.jsx — Premium Logistics navigation sidebar.
- * All routes unchanged. Visual redesign only.
+ * LogisticsSidebar.jsx — Logistics Navigation Sidebar.
+ * Strictly configured with the 6 canonical Logistics modules:
+ * 1. Dashboard
+ * 2. Delivery Requests
+ * 3. Active Deliveries
+ * 4. Route Optimization
+ * 5. Vehicles
+ * 6. Delivery History
  */
 import {
   LayoutDashboard,
+  Inbox,
   Truck,
-  Wallet,
-  MapPin,
-  ClipboardList,
+  Route,
   Car,
-  Handshake,
-  Settings,
+  History,
   LogOut
 } from "lucide-react";
 import { PremiumSidebar } from "./dashboard/DashboardEngine";
 
 const NAV_ITEMS = [
-  // ── Overview ──
-  { to: "/logistics",                      label: "Dashboard",           icon: LayoutDashboard, exact: true, section: "Overview"    },
-
-  // ── Operations ──
-  { to: "/logistics/deliveries",           label: "Deliveries",          icon: Truck,                        section: "Operations"  },
-  { to: "/logistics/tracking",             label: "Tracking",            icon: MapPin,                       section: "Operations"  },
-  { to: "/logistics/history",              label: "Order History",       icon: ClipboardList,                section: "Operations"  },
-  { to: "/logistics/vehicles",             label: "My Vehicles",         icon: Car,                          section: "Operations"  },
-
-  // ── Financials ──
-  { to: "/logistics/revenue",              label: "Revenue & Wallet",    icon: Wallet,                       section: "Financials"  },
-
-  // ── Partnerships ──
-  { to: "/logistics/partnership-requests", label: "Partnership Requests",icon: Handshake,                   section: "Partnerships"},
-
-  // ── Account ──
-  { to: "/settings",                       label: "Settings",            icon: Settings,                     section: "Account"     },
-  {                                        label: "Logout",               icon: LogOut, isLogout: true,       section: "Account"     },
+  { to: "/logistics",            label: "Dashboard",          icon: LayoutDashboard, exact: true },
+  { to: "/logistics/deliveries", label: "Delivery Requests",  icon: Inbox },
+  { to: "/logistics/tracking",   label: "Active Deliveries",  icon: Truck },
+  { to: "/logistics/routes",     label: "Route Optimization", icon: Route },
+  { to: "/logistics/vehicles",   label: "Vehicles",           icon: Car },
+  { to: "/logistics/history",    label: "Delivery History",   icon: History },
+  {                              label: "Logout",             icon: LogOut, isLogout: true },
 ];
 
 function LogisticsSidebar() {
   return (
     <PremiumSidebar
       panelTitle="Logistics Panel"
-      panelIconLetter="L"
+      panelIconLetter="🚛"
       navItems={NAV_ITEMS}
+      collapsible={true}
     />
   );
 }

@@ -15,7 +15,7 @@ public class VerificationDocument {
     private Long verificationId;
 
     @Column(nullable = false)
-    private String documentType; // PAN, DRIVING_LICENSE, VOTER_ID, PASSPORT, GST
+    private String documentType; // DRIVING_LICENSE, VOTER_ID, PASSPORT, GST
 
     @Column(nullable = false)
     private String filePath;

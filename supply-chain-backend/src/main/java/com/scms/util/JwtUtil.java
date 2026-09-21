@@ -15,13 +15,16 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @org.springframework.beans.factory.annotation.Value("${jwt.secret:d2d5OTlhMzJmY2I3YTI1NzRlY2U4NWJiYWMyZDU2YjFhMmU4NWI5YmFjMmQ1NmIxYTJlODViOWI=}")
+    @org.springframework.beans.factory.annotation.Value("${jwt.secret:#{null}}")
     private String secretKeyString;
 
     private Key secretKey;
 
     @jakarta.annotation.PostConstruct
     public void init() {
+        if (secretKeyString == null || secretKeyString.trim().isEmpty()) {
+            throw new IllegalStateException("FATAL: JWT_SECRET environment variable is not configured. Application startup aborted.");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
     }
 

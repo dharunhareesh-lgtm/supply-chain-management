@@ -18,7 +18,7 @@ The system implements role-specific views and controls, fully verified by backen
 *   **Logistics Coordination:** Fleet registration, route search preferences (adjustable search radius), driver dispatching, shipment tracking, and revenue-sharing analysis.
 *   **Driver Mobile Workspace:** Route navigation maps, delivery/availability status updates, and delivery verification using OTP codes.
 *   **Customer Portal:** Product catalog browser, shopping cart, interactive delivery address management, live dispatch tracking on OpenStreetMap, and delivery approval.
-*   **AI Document Compliance & OCR:** Automatically extracts text from uploaded PAN/GST cards (using Tesseract OCR), runs Levenshtein fuzzy matching (>80% similarity threshold) to verify identity matching, and flags duplicate credentials.
+*   **Digital Identity & Security:** Secure email OTP verification with rate-limiting, BCrypt credential encryption, and trusted customer profile generation.
 *   **Intelligent Routing & Maps:** Geospatial navigation utilizing Leaflet maps, cached geocoding lookup responses in Caffeine Cache, Haversine formula calculation for distance metrics, and OSRM API routing paths.
 *   **3D Cargo & Fleet Viewer:** Interactive 3D cargo scene using React Three Fiber and Three.js displaying shipment capacities and visual cargo states.
 *   **Multi-Factor OTP Security:** OTP distribution via Spring Mail SMTP server required for sensitive modifications, such as warehouse geospatial coordinate adjustments.
@@ -226,7 +226,7 @@ capstone/
 ---
 
 ## 🤖 AI Features
-- **Tesseract OCR (Tess4J):** Automatically parses documents uploaded in the compliance dashboard to extract metadata such as GST and PAN numbers.
+- **Digital Identity & Compliance:** Verifies registration credentials via automated email OTP checks and secure password hashing.
 - **Levenshtein Fuzzy Verification:** A string comparison metric verifies the document name against the user profile. If the similarity is above 80%, the document is auto-approved.
 - **Spring AI Integrations:** Employs OpenAI Models to detect risk factors, perform fraud audits, and recommend logistics vehicle assignments.
 
